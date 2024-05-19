@@ -1,0 +1,75 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model student {
+  id                                  Int       @id @default(autoincrement()) @db.UnsignedInt
+  current_mosque_name                 String?   @db.VarChar(255)
+  educational_class                   String?   @db.VarChar(255)
+  first_name                          String?   @db.VarChar(255)
+  last_name                           String?   @db.VarChar(255)
+  birth_date                          DateTime? @db.DateTime()
+  student_mobile                      String?   @db.VarChar(255)
+  school                             String?   @db.VarChar(255)
+  in_another_mosque                   Boolean   @default(false)
+  other_mosque_names                  String?   @db.VarChar(255) // comma seperated 
+  student_health_status               String?   @db.VarChar(1024)
+  special_talent                       String?   @db.VarChar(1024)
+  father_name                         String?   @db.VarChar(255)
+  father_status                       STATUS    @default(ALIVE)
+  father_job                          String?   @db.VarChar(255)
+  father_income_level                 String?   @db.VarChar(255)
+  father_education_level              String?   @db.VarChar(255)
+  father_health_status                String?   @db.VarChar(255)
+  father_phone_number                 String?   @db.VarChar(255)
+  father_work_number                  String?   @db.VarChar(255)
+  mother_name                         String?   @db.VarChar(255)
+  mother_status                       STATUS    @default(ALIVE)
+  mother_job                          String?   @db.VarChar(255)
+  mother_income_level                 String?   @db.VarChar(255)
+  mother_education_level              String?   @db.VarChar(255)
+  mother_health_status                String?   @db.VarChar(255)
+  mother_phone_number                 String?   @db.VarChar(255)
+  mother_home_number                  String?   @db.VarChar(255)
+  parent_marital_status               MARITAL   @default(MARRIED)
+  student_mobile_number               String?   @db.VarChar(255)
+  student_home_number                 String?   @db.VarChar(255)
+  original_residence_address_area     String?   @db.VarChar(255)
+  original_residence_address_street   String?   @db.VarChar(255)
+  original_residence_address_building String?   @db.VarChar(255)
+  original_residence_address_floor    String?   @db.VarChar(255)
+  current_residence_address_area      String?   @db.VarChar(255)
+  current_residence_address_street    String?   @db.VarChar(255)
+  current_residence_address_building  String?   @db.VarChar(255)
+  current_residence_address_floor     String?   @db.VarChar(255)
+  preserved_parts                     Json
+  parts_tested_by_the_endowments      Json
+  image_url                           String?   @db.VarChar(2048)
+
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+
+}
+
+enum STATUS {
+  ALIVE
+  DEAD
+  MISSED
+}
+
+enum MARITAL {
+  MARRIED
+  SEPARATED
+  DIVORCED
+}

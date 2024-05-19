@@ -1,0 +1,12 @@
+{
+  "cSpell.words": ["contentdb", "filedb", "recombee", "Spacetoon"],
+  "typescript.tsdk": "node_modules\\typescript\\lib",
+  "prettier.bracketSameLine": true,
+  "prettier.printWidth": 120,
+  "prettier.semi": true,
+
+  "editor.codeActionsOnSave": {
+    "source.fixAll": "explicit"
+  },
+  "editor.formatOnSave": false
+}

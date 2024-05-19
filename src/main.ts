@@ -16,14 +16,14 @@ async function bootstrap() {
   SwaggerModule.setup(docsPath, app, document);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(3001);
+  await app.listen(3002);
 
   Logger.log(
-    `🚀 Application is running on: http://localhost:${3001}`,
+    `🚀 Application is running on: http://localhost:${3002}`,
     'NestApplication',
   );
   Logger.log(
-    `😎 Swagger UI on: http://localhost:${3001}/${docsPath}`,
+    `😎 Swagger UI on: http://localhost:${3002}/${docsPath}`,
     'NestApplication',
   );
 }

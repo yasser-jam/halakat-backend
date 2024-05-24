@@ -7,6 +7,12 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
   const docsPath = `docs`;
 
+  app.enableCors({
+    origin: 'http://localhost:3002', // Replace with your Nuxt.js server URL
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    credentials: true,
+  });
+
   const config = new DocumentBuilder()
     .setTitle('Student API')
     .setDescription('The student API description')

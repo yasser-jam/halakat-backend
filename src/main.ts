@@ -8,9 +8,11 @@ async function bootstrap() {
   const docsPath = `docs`;
 
   app.enableCors({
-    origin: 'http://localhost:3002', // Replace with your Nuxt.js server URL
+    origin: '*', // Replace with your Nuxt.js server URL
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   });
 
   const config = new DocumentBuilder()

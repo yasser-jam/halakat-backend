@@ -10,7 +10,7 @@ generator client {
 
 datasource db {
   provider = "mysql"
-  url      = env("DATABASE_URL")
+  url      = "mysql://root:GQQIcriTmfZsXFCjYXPpQJOFIvgKyVrY@viaduct.proxy.rlwy.net:46638/railway"
 }
 
 model student {

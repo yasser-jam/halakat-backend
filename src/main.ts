@@ -25,7 +25,7 @@ async function bootstrap() {
   await app.listen(3002);
 
   Logger.log(
-    `🚀 Application is running on : http://localhost:${3002}`,
+    `🚀 Application is running on: http://localhost:${3002}`,
     'NestApplication',
   );
   Logger.log(

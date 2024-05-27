@@ -19,7 +19,7 @@ export class StudentService {
 
   async findOne(params: ValidateStudentIdDto) {
     const student = await this.prisma.student.findUnique({
-      where: { id: params.id },
+      where: { id: Number(params.id) },
     });
 
     if (!student) {

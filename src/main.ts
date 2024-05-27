@@ -8,7 +8,7 @@ async function bootstrap() {
   const docsPath = `docs`;
 
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://your-frontend-domain.com'], // Replace with your Nuxt.js server URL
+    origin: '*', // Replace with your Nuxt.js server URL
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Accept, Authorization',
     credentials: true,

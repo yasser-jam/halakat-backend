@@ -3,31 +3,18 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 
-import * as cors from 'cors';
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
-
   const docsPath = `docs`;
-  app.use(
-    cors({
-      origin: [
-        'http://localhost:3000',
-        'https://forms-7c1c4cw0y-yasserjamalaldeens-projects.vercel.app/',
-        'https://forms-rust-seven.vercel.app/',
-      ],
-      methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-      allowedHeaders: 'Content-Type, Accept, Authorization',
-      credentials: true,
-    }),
-  );
-  // app.enableCors({
-  //   origin: ['http://localhost:3000', 'https://your-frontend-domain.com'], // Replace with your Nuxt.js server URL
-  //   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-  //   allowedHeaders: 'Content-Type, Accept, Authorization',
-  //   credentials: true,
-  //   preflightContinue: false,
-  //   optionsSuccessStatus: 204,
-  // });
+
+  app.enableCors({
+    origin: ['http://localhost:3000', 'https://your-frontend-domain.com'], // Replace with your Nuxt.js server URL
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    allowedHeaders: 'Content-Type, Accept, Authorization',
+    credentials: true,
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
+  });
 
   const config = new DocumentBuilder()
     .setTitle('Student API')

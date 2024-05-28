@@ -58,9 +58,10 @@ model student {
   image_url                           String?   @db.VarChar(2048)
   teacher_id                          Int
   teacher                             teacher   @relation(fields: [teacher_id], references: [id])
-
-  created_at DateTime  @default(now())
-  updated_at DateTime? @updatedAt
+  groupId                             Int? // Nullable foreign key for group
+  group                               Group?    @relation(fields: [groupId], references: [id])
+  created_at                          DateTime  @default(now())
+  updated_at                          DateTime? @updatedAt
 }
 
 model teacher {
@@ -89,7 +90,49 @@ model teacher {
 
   students student[] // One-to-many relation
 
+  created_at DateTime  @default(now())
+  updated_at DateTime? @updatedAt
+  Group      Group[]
+
   @@map("teachers") // Optional: map to a custom table name
+}
+
+model Group {
+  id        Int      @id @default(autoincrement())
+  title     String
+  campaignId  Int
+  teacherId Int
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  teacher        teacher?          @relation(fields: [teacherId], references: [id])
+  students       student[]
+  campaigns      GroupCampaigns[]
+
+  @@map("groups") // Optional: map to a custom table name
+}
+
+model Campaign {
+  id        Int      @id @default(autoincrement())
+  name      String
+  startDate DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  groups         GroupCampaigns[]
+
+  @@map("campaigns") // Optional: map to a custom table name
+}
+
+model GroupCampaigns {
+  groupId    Int
+  campaignId Int
+
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, campaignId])
+  @@map("GroupCampaigns") // Optional: map to a custom table name
 }
 
 enum STATUS {

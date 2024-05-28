@@ -31,15 +31,15 @@ export class TeacherService {
 
   async update(params: ValidateTeacherIdDto, updateTeacherDto) {
     const teacher = await this.prisma.teacher.findUnique({
-      where: { id: params.id },
+      where: { id: Number(params.id) },
     });
 
     if (!teacher) {
-      throw new NotFoundException(`Teacher with ID ${params.id} not found`);
+      throw new NotFoundException(`Teacher with ID ${Number(params.id)} not found`);
     }
 
     return this.prisma.teacher.update({
-      where: { id: params.id },
+      where: { id: Number(params.id) },
       data: updateTeacherDto,
     });
   }

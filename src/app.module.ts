@@ -4,11 +4,28 @@ import { AppService } from './app.service';
 import { PrismaService } from './prisma.service';
 import { StudentsController } from './student.controller';
 import { TeachersController } from './teacher/teacher.controller';
+import { GroupsController } from './group/group.controller';
 import { StudentService } from './student.service';
 import { TeacherService } from './teacher/teacher.service';
+import { GroupService } from './group/group.service';
+import { CampaignsController } from './campaign/campaign.controller';
+import { CampaignService } from './campaign/campaign.service';
 
 @Module({
-  controllers: [AppController, StudentsController, TeachersController],
-  providers: [AppService, PrismaService, StudentService, TeacherService],
+  controllers: [
+    AppController,
+    StudentsController,
+    TeachersController,
+    GroupsController,
+    CampaignsController,
+  ],
+  providers: [
+    AppService,
+    PrismaService,
+    StudentService,
+    TeacherService,
+    GroupService,
+    CampaignService,
+  ],
 })
 export class AppModule {}

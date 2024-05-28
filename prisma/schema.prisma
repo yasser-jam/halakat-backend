@@ -21,11 +21,11 @@ model student {
   last_name                           String?   @db.VarChar(255)
   birth_date                          DateTime? @db.DateTime()
   student_mobile                      String?   @db.VarChar(255)
-  school                             String?   @db.VarChar(255)
+  school                              String?   @db.VarChar(255)
   in_another_mosque                   Boolean   @default(false)
   other_mosque_names                  String?   @db.VarChar(255) // comma seperated 
   student_health_status               String?   @db.VarChar(1024)
-  special_talent                       String?   @db.VarChar(1024)
+  special_talent                      String?   @db.VarChar(1024)
   father_name                         String?   @db.VarChar(255)
   father_status                       STATUS    @default(ALIVE)
   father_job                          String?   @db.VarChar(255)
@@ -56,10 +56,40 @@ model student {
   preserved_parts                     Json
   parts_tested_by_the_endowments      Json
   image_url                           String?   @db.VarChar(2048)
+  teacher_id                          Int
+  teacher                             teacher   @relation(fields: [teacher_id], references: [id])
 
   created_at DateTime  @default(now())
   updated_at DateTime? @updatedAt
+}
 
+model teacher {
+  id                                 Int       @id @default(autoincrement())
+  educational_level                  String? // Nullable fields
+  university_name                    String? // Nullable fields
+  college_name                       String? // Nullable fields
+  first_name                         String? // Nullable fields
+  last_name                          String? // Nullable fields
+  birth_date                         DateTime? // Nullable fields
+  mobile_phone_number                String? // Nullable fields
+  in_another_mosque                  Boolean? // Nullable fields
+  other_mosque_names                 String? // Nullable fields
+  special_talent                     String? // Nullable fields
+  father_name                        String? // Nullable fields
+  current_residence_address_area     String? // Nullable fields
+  current_residence_address_street   String? // Nullable fields
+  current_residence_address_building String? // Nullable fields
+  preserved_parts                    Json? // JSON fields
+  parts_tested_by_the_endowments     Json? // JSON fields
+  image_url                          String? // Nullable fields
+  is_mojaz                           Boolean? // Nullable fields
+  is_working                         Boolean? // Nullable fields
+  job_role                           String? // Nullable fields
+  workplace_name                     String? // Nullable fields
+
+  students student[] // One-to-many relation
+
+  @@map("teachers") // Optional: map to a custom table name
 }
 
 enum STATUS {

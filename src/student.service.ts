@@ -46,7 +46,7 @@ export class StudentService {
 
   async delete(params: ValidateStudentIdDto) {
     const student = await this.prisma.student.findUnique({
-      where: { id: params.id },
+      where: { id: Number(params.id) },
     });
 
     if (!student) {
@@ -54,7 +54,7 @@ export class StudentService {
     }
 
     return this.prisma.student.delete({
-      where: { id: params.id },
+      where: { id: Number(params.id) },
     });
   }
 }

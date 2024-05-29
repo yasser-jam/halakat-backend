@@ -50,7 +50,7 @@ export class TeacherService {
     });
 
     if (!teacher) {
-      throw new NotFoundException(`Teacher with ID ${params.id} not found`);
+      throw new NotFoundException(`Teacher with ID ${Number(params.id)} not found`);
     }
 
     return this.prisma.teacher.delete({

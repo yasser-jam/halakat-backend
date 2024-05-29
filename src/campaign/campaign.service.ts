@@ -21,14 +21,21 @@ export class CampaignService {
   async findOne(params: ValidateCampaginIdDto) {
     const campaign = await this.prisma.campaign.findUnique({
       where: { id: Number(params.id) },
-      include: { groups: true }
+      include: {
+        groups: {
+          include: { group: true },
+        },
+      },
     });
 
     if (!campaign) {
       throw new NotFoundException(`Campaign with ID ${params.id} not found`);
     }
 
-    return campaign;
+    return {
+      ...campaign,
+      groups: campaign.groups.map(el => el.group)
+    };
   }
 
   async update(params: ValidateCampaginIdDto, updateCampaignDto) {
@@ -37,7 +44,9 @@ export class CampaignService {
     });
 
     if (!campaign) {
-      throw new NotFoundException(`Campaign with ID ${Number(params.id)} not found`);
+      throw new NotFoundException(
+        `Campaign with ID ${Number(params.id)} not found`,
+      );
     }
 
     return this.prisma.campaign.update({
@@ -48,7 +57,7 @@ export class CampaignService {
 
   async delete(params: ValidateCampaginIdDto) {
     const campaign = await this.prisma.campaign.findUnique({
-      where: { id: Number(params.id) }
+      where: { id: Number(params.id) },
     });
 
     if (!campaign) {

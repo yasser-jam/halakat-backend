@@ -56,8 +56,6 @@ model student {
   preserved_parts                     Json
   parts_tested_by_the_endowments      Json
   image_url                           String?   @db.VarChar(2048)
-  teacher_id                          Int
-  teacher                             teacher   @relation(fields: [teacher_id], references: [id])
   groupId                             Int? // Nullable foreign key for group
   group                               Group?    @relation(fields: [groupId], references: [id])
   created_at                          DateTime  @default(now())
@@ -88,8 +86,6 @@ model teacher {
   job_role                           String? // Nullable fields
   workplace_name                     String? // Nullable fields
 
-  students student[] // One-to-many relation
-
   created_at DateTime  @default(now())
   updated_at DateTime? @updatedAt
   Group      Group[]
@@ -100,7 +96,6 @@ model teacher {
 model Group {
   id        Int      @id @default(autoincrement())
   title     String
-  campaignId  Int
   teacherId Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

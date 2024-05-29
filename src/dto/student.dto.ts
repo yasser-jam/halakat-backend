@@ -5,7 +5,6 @@ import {
   IsOptional,
   IsDate,
   IsEnum,
-  IsJSON,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
@@ -222,12 +221,12 @@ export class CreateStudentDto {
   current_residence_address_floor?: string;
 
   @ApiProperty({ type: 'object' })
-  @IsJSON()
-  preserved_parts: JSON;
+  @IsString()
+  preserved_parts: '';
 
   @ApiProperty({ type: 'object' })
-  @IsJSON()
-  parts_tested_by_the_endowments: JSON;
+  @IsString()
+  parts_tested_by_the_endowments: '';
 
   @ApiProperty({ required: false })
   @IsOptional()

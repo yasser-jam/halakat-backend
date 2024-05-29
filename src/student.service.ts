@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { Injectable, NotFoundException } from '@nestjs/common';
-import {  ValidateStudentIdDto } from './dto/student.dto';
+import {  UpdateStudentDto, ValidateStudentIdDto } from './dto/student.dto';
 import { PrismaService } from './prisma.service';
 
 @Injectable()
@@ -29,7 +29,7 @@ export class StudentService {
     return student;
   }
 
-  async update(params: ValidateStudentIdDto, updateStudentDto) {
+  async update(params: ValidateStudentIdDto, updateStudentDto: UpdateStudentDto) {
     const student = await this.prisma.student.findUnique({
       where: { id: params.id },
     });

@@ -53,8 +53,8 @@ model student {
   current_residence_address_street    String?   @db.VarChar(255)
   current_residence_address_building  String?   @db.VarChar(255)
   current_residence_address_floor     String?   @db.VarChar(255)
-  preserved_parts                     Json
-  parts_tested_by_the_endowments      Json
+  preserved_parts                     String?
+  parts_tested_by_the_endowments      String?
   image_url                           String?   @db.VarChar(2048)
   groupId                             Int? // Nullable foreign key for group
   group                               Group?    @relation(fields: [groupId], references: [id])

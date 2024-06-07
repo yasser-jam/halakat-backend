@@ -17,7 +17,7 @@ export class CreateGroupDto {
   teacherId: number;
 
   @IsArray()
-  students?: { id: number }[];
+  studentsIds?: number[];
 
   @ApiProperty({ required: false })
   @IsOptional()

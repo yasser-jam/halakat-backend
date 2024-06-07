@@ -8,11 +8,30 @@ export class GroupService {
   constructor(private prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.group.findMany();
+    return this.prisma.group.findMany({
+      include: {
+        teacher: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true
+          }
+        },
+        students: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true
+          }
+        }
+      }
+    });
   }
 
   async create(createDto: CreateGroupDto) {
-    const { title, teacherId, campaignIds } = createDto;
+    const { title, teacherId, campaignIds, studentsIds } = createDto;
+  
+    // Create the group first
     const group = await this.prisma.group.create({
       data: {
         title,
@@ -29,7 +48,15 @@ export class GroupService {
         campaigns: true,
       },
     });
-
+  
+    // Associate students with the created group
+    if (studentsIds && studentsIds.length > 0) {
+      await this.prisma.student.updateMany({
+        where: { id: { in: studentsIds } },
+        data: { groupId: group.id },
+      });
+    }
+  
     return group;
   }
 
@@ -55,7 +82,9 @@ export class GroupService {
     };
   }
 
-  async update(params: ValidateGroupIdDto, updateData: any) {
+  async update(params: ValidateGroupIdDto, updateDto: CreateGroupDto) {
+    
+    
     const group = await this.prisma.group.findUnique({
       where: { id: Number(params.id) },
     });
@@ -66,12 +95,37 @@ export class GroupService {
       );
     }
 
-    return this.prisma.group.update({
-      where: { id: Number(params.id) },
+    const { title, teacherId, campaignIds, studentsIds } = updateDto;
+  
+    // Create the group first
+    const updatedGroup = await this.prisma.group.update({
+      where: {
+        id: group.id
+      },
       data: {
-        ...updateData,
+        title,
+        teacherId: teacherId ?? undefined,
+        campaigns: {
+          create: campaignIds?.map((campaignId) => ({
+            campaign: { connect: { id: campaignId } },
+          })),
+        },
+      },
+      include: {
+        campaigns: true,
       },
     });
+
+    // Associate students with the created group
+    if (studentsIds && studentsIds.length > 0) {
+      console.log(studentsIds);
+      // await this.prisma.student.updateMany({
+      //   where: { id: { in: studentsIds } },
+      //   data: { groupId: group.id },
+      // });
+    }
+
+    return updatedGroup
   }
 
   async delete(params: ValidateGroupIdDto) {

@@ -10,6 +10,7 @@ import { TeacherService } from './teacher/teacher.service';
 import { GroupService } from './group/group.service';
 import { CampaignsController } from './campaign/campaign.controller';
 import { CampaignService } from './campaign/campaign.service';
+import { UploadController } from './file/file.controller';
 
 @Module({
   controllers: [
@@ -18,6 +19,7 @@ import { CampaignService } from './campaign/campaign.service';
     TeachersController,
     GroupsController,
     CampaignsController,
+    UploadController,
   ],
   providers: [
     AppService,

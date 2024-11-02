@@ -111,6 +111,7 @@ model Campaign {
   id        Int      @id @default(autoincrement())
   name      String
   startDate DateTime @default(now())
+  endDate DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

@@ -14,6 +14,7 @@ import {
   UpdateStudentDto,
   ValidateStudentIdDto,
   StudentListDto,
+  AssignToGroupDto,
 } from './dto/student.dto';
 
 @ApiTags('students')
@@ -76,5 +77,30 @@ export class StudentsController {
   @Delete(':id')
   async delete(@Param() params: ValidateStudentIdDto) {
     return this.studentService.delete(params);
+  }
+
+  // Assign
+  @ApiOperation({ summary: 'Assign Student to Group' })
+  @ApiResponse({
+    status: 200,
+    description: 'The student has been successfuly assigned.',
+  })
+  @Put('assign/:id')
+  async assign(
+    @Param() params: ValidateStudentIdDto,
+    @Body() assignDto: AssignToGroupDto,
+  ) {
+    return this.studentService.assign(params, assignDto);
+  }
+
+  // UnAssign
+  @ApiOperation({ summary: 'Un-Assign Student from Group' })
+  @ApiResponse({
+    status: 200,
+    description: 'The student has been successfuly un-assigned.',
+  })
+  @Put('unassign/:id')
+  async unassign(@Param() params: ValidateStudentIdDto) {
+    return this.studentService.unassign(params);
   }
 }

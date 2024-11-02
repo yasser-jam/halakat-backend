@@ -1,6 +1,6 @@
 /* eslint-disable prettier/prettier */
 import { Injectable, NotFoundException } from '@nestjs/common';
-import {  UpdateStudentDto, ValidateStudentIdDto } from './dto/student.dto';
+import {  AssignToGroupDto, UpdateStudentDto, ValidateStudentIdDto } from './dto/student.dto';
 import { PrismaService } from './prisma.service';
 
 @Injectable()
@@ -55,6 +55,59 @@ export class StudentService {
 
     return this.prisma.student.delete({
       where: { id: Number(params.id) },
+    });
+  }
+
+  // assign student to group
+  async assign(params: ValidateStudentIdDto, assignDto: AssignToGroupDto) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: Number(assignDto.groupId) },
+    });
+
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${assignDto.groupId} not found`);
+    }
+
+    // Check if the student exists
+    const student = await this.prisma.student.findUnique({
+      where: { id: Number(params.id) },
+    });
+
+    if (!student) {
+      throw new NotFoundException(
+        `Student with ID ${params.id} not found`,
+      );
+    }
+
+    return this.prisma.student.update({
+      where: { id: Number(params.id) },
+      data: {
+        group: {
+          connect: { id: Number(assignDto.groupId) },
+        },
+      },
+    });
+  }
+
+  // unassign student from group
+  async unassign(params: ValidateStudentIdDto) {
+
+    // Check if the student exists
+    const student = await this.prisma.student.findUnique({
+      where: { id: Number(params.id) },
+    });
+
+    if (!student) {
+      throw new NotFoundException(
+        `Student with ID ${params.id} not found`,
+      );
+    }
+
+    return this.prisma.student.update({
+      where: { id: Number(params.id) },
+      data: {
+        groupId: null
+      },
     });
   }
 }

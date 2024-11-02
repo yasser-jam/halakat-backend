@@ -1,6 +1,9 @@
 /* eslint-disable prettier/prettier */
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { CreateGroupDto, ValidateGroupIdDto } from '../dto/group.dto';
+import {
+  CreateGroupDto,
+  ValidateGroupIdDto,
+} from '../dto/group.dto';
 import { PrismaService } from './../prisma.service';
 
 @Injectable()
@@ -14,23 +17,23 @@ export class GroupService {
           select: {
             id: true,
             first_name: true,
-            last_name: true
-          }
+            last_name: true,
+          },
         },
         students: {
           select: {
             id: true,
             first_name: true,
-            last_name: true
-          }
-        }
-      }
+            last_name: true,
+          },
+        },
+      },
     });
   }
 
   async create(createDto: CreateGroupDto) {
     const { title, teacherId, campaignIds, studentsIds } = createDto;
-  
+
     // Create the group first
     const group = await this.prisma.group.create({
       data: {
@@ -48,7 +51,7 @@ export class GroupService {
         campaigns: true,
       },
     });
-  
+
     // Associate students with the created group
     if (studentsIds && studentsIds.length > 0) {
       await this.prisma.student.updateMany({
@@ -56,7 +59,7 @@ export class GroupService {
         data: { groupId: group.id },
       });
     }
-  
+
     return group;
   }
 
@@ -78,13 +81,11 @@ export class GroupService {
 
     return {
       ...group,
-      campaigns: group.campaigns.map(el => el.group)
+      campaigns: group.campaigns.map((el) => el.group),
     };
   }
 
   async update(params: ValidateGroupIdDto, updateDto: CreateGroupDto) {
-    
-    
     const group = await this.prisma.group.findUnique({
       where: { id: Number(params.id) },
     });
@@ -96,11 +97,11 @@ export class GroupService {
     }
 
     const { title, teacherId, campaignIds, studentsIds } = updateDto;
-  
+
     // Create the group first
     const updatedGroup = await this.prisma.group.update({
       where: {
-        id: group.id
+        id: group.id,
       },
       data: {
         title,
@@ -125,7 +126,7 @@ export class GroupService {
       // });
     }
 
-    return updatedGroup
+    return updatedGroup;
   }
 
   async delete(params: ValidateGroupIdDto) {

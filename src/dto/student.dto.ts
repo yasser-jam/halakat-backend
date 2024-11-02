@@ -269,3 +269,9 @@ export class ValidateStudentIdDto {
   @IsInt()
   id: number;
 }
+
+export class AssignToGroupDto {
+  @ApiProperty()
+  @IsInt()
+  groupId: number;
+}

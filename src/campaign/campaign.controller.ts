@@ -38,7 +38,7 @@ export class CampaignsController {
     description: 'The campaign has been successfully created.',
     type: CreateCampaignDto,
   })
-  @Post()
+  @Post(':campaignId')
   async create(@Body() createCampaignDto: CreateCampaignDto) {
     return this.campaignService.create(createCampaignDto);
   }

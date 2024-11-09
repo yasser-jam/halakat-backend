@@ -1,62 +1,83 @@
 /* eslint-disable prettier/prettier */
 import { Injectable, NotFoundException } from '@nestjs/common';
-import {
-  CreateGroupDto,
-  ValidateGroupIdDto,
-} from '../dto/group.dto';
+import { CreateGroupDto, ValidateGroupIdDto } from '../dto/group.dto';
 import { PrismaService } from './../prisma.service';
 
 @Injectable()
 export class GroupService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.group.findMany({
-      include: {
-        teacher: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-          },
+  async findAll(campaignId?: number) {
+    
+    const groups = await this.prisma.group.findMany({
+      select: {
+        id: true,
+        title: true,
+        class: true,
+        teachers: {
+          include: {
+            teacher: true
+          }
         },
-        students: {
-          select: {
-            id: true,
-            first_name: true,
-            last_name: true,
-          },
-        },
+        currentTeacherId: true,        
       },
+      where: campaignId
+        ? {
+            campaigns: {
+              some: {
+                campaignId,
+              },
+            },
+          }
+        : {},
     });
+
+    return groups.map(group => ({
+      ...group,
+      currentTeacher: group.teachers[0]?.teacher,
+      teachers: undefined,
+    }))
   }
+  
+  
 
-  async create(createDto: CreateGroupDto) {
-    const { title, teacherId, campaignIds, studentsIds } = createDto;
+  async create(createDto: CreateGroupDto, campaignId: number) {
+    const { title, currentTeacherId, class: classNumber } = createDto;
 
-    // Create the group first
+    // Create the group first with the specified title and connect to the campaignId
     const group = await this.prisma.group.create({
       data: {
         title,
-        teacherId: teacherId ?? undefined,
         createdAt: new Date(),
         updatedAt: new Date(),
-        campaigns: {
-          create: campaignIds?.map((campaignId) => ({
-            campaign: { connect: { id: campaignId } },
-          })),
-        },
-      },
-      include: {
-        campaigns: true,
+        currentTeacherId: 1,
+        class: classNumber,
       },
     });
 
-    // Associate students with the created group
-    if (studentsIds && studentsIds.length > 0) {
-      await this.prisma.student.updateMany({
-        where: { id: { in: studentsIds } },
-        data: { groupId: group.id },
+    // Connect the group to the specified current teacher via TeacherGroup pivot table
+    if (currentTeacherId) {
+      await this.prisma.teacherGroup.create({
+        data: {
+          teacherId: currentTeacherId,
+          groupId: group.id,
+          created_at: new Date(),
+          updated_at: new Date(),
+        },
+      });
+    }
+
+    // Connect the campaign
+    if (group.id) {
+      await this.prisma.groupCampaigns.createMany({
+        data: [
+          {
+            campaignId: Number(campaignId),
+            groupId: Number(group.id),
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+        ],
       });
     }
 
@@ -66,13 +87,6 @@ export class GroupService {
   async findOne(params: ValidateGroupIdDto) {
     const group = await this.prisma.group.findUnique({
       where: { id: Number(params.id) },
-      include: {
-        teacher: true,
-        students: true,
-        campaigns: {
-          include: { group: true },
-        },
-      },
     });
 
     if (!group) {
@@ -81,11 +95,11 @@ export class GroupService {
 
     return {
       ...group,
-      campaigns: group.campaigns.map((el) => el.group),
     };
   }
 
   async update(params: ValidateGroupIdDto, updateDto: CreateGroupDto) {
+
     const group = await this.prisma.group.findUnique({
       where: { id: Number(params.id) },
     });
@@ -96,7 +110,7 @@ export class GroupService {
       );
     }
 
-    const { title, teacherId, campaignIds, studentsIds } = updateDto;
+    const { title, class: classNumber, currentTeacherId } = updateDto;
 
     // Create the group first
     const updatedGroup = await this.prisma.group.update({
@@ -105,25 +119,19 @@ export class GroupService {
       },
       data: {
         title,
-        teacherId: teacherId ?? undefined,
-        campaigns: {
-          create: campaignIds?.map((campaignId) => ({
-            campaign: { connect: { id: campaignId } },
-          })),
-        },
-      },
-      include: {
-        campaigns: true,
-      },
+        class: classNumber,
+        currentTeacherId,
+      }
     });
 
-    // Associate students with the created group
-    if (studentsIds && studentsIds.length > 0) {
-      console.log(studentsIds);
-      // await this.prisma.student.updateMany({
-      //   where: { id: { in: studentsIds } },
-      //   data: { groupId: group.id },
-      // });
+    // create new relation between teacher and group (when change the teacher)
+    if (currentTeacherId != group.currentTeacherId) {
+      await this.prisma.teacherGroup.createMany({
+        data: {
+          groupId: group.id,
+          teacherId: currentTeacherId
+        }
+      })
     }
 
     return updatedGroup;

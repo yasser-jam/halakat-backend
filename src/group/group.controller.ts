@@ -1,21 +1,28 @@
 import {
   Controller,
-  Get,
   Post,
   Body,
   Param,
-  Put,
+  Get,
+  Query,
   Delete,
+  Put,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiParam,
+} from '@nestjs/swagger';
 
 import { GroupService } from './group.service';
 
 import {
   CreateGroupDto,
+  GroupListDto,
   UpdateGroupDto,
   ValidateGroupIdDto,
-  GroupListDto,
 } from './../dto/group.dto';
 
 @ApiTags('groups')
@@ -23,38 +30,44 @@ import {
 export class GroupsController {
   constructor(private readonly groupService: GroupService) {}
 
+  @ApiQuery({ name: 'campaignId' })
   @ApiOperation({ summary: 'Get all groups' })
   @ApiResponse({
     status: 200,
     description: 'Return all groups',
     type: [GroupListDto],
   })
-  @Get()
-  async findAll() {
-    return this.groupService.findAll();
+  @Get('')
+  async findAll(@Query('campaignId') campaignId?: string) {
+    const campaignIdNumber = campaignId ? Number(campaignId) : undefined;
+    return this.groupService.findAll(campaignIdNumber);
   }
 
   @ApiOperation({ summary: 'Create a new group' })
+  @ApiParam({ name: 'campaignId' })
   @ApiResponse({
     status: 201,
     description: 'The group has been successfully created.',
     type: CreateGroupDto,
   })
-  @Post()
-  async create(@Body() createGroupDto: CreateGroupDto) {
-    return this.groupService.create(createGroupDto);
+  @Post(':campaignId')
+  async create(
+    @Body() createGroupDto: CreateGroupDto,
+    @Param() params: { campaignId: number },
+  ) {
+    return this.groupService.create(createGroupDto, params.campaignId);
   }
 
-  @ApiOperation({ summary: 'Get a group by ID' })
-  @ApiResponse({
-    status: 200,
-    description: 'Return the group with the given ID',
-    type: CreateGroupDto,
-  })
-  @Get(':id')
-  async findOne(@Param() params: ValidateGroupIdDto) {
-    return this.groupService.findOne(params);
-  }
+  // @ApiOperation({ summary: 'Get a group by ID' })
+  // @ApiResponse({
+  //   status: 200,
+  //   description: 'Return the group with the given ID',
+  //   type: CreateGroupDto,
+  // })
+  // @Get(':id')
+  // async findOne(@Param() params: ValidateGroupIdDto) {
+  //   return this.groupService.findOne(params);
+  // }
 
   @ApiOperation({ summary: 'Update a group by ID' })
   @ApiResponse({

@@ -82,9 +82,9 @@ export class StudentService {
     return this.prisma.student.update({
       where: { id: Number(params.id) },
       data: {
-        group: {
-          connect: { id: Number(assignDto.groupId) },
-        },
+        // group: {
+        //   connect: { id: Number(assignDto.groupId) },
+        // },
       },
     });
   }
@@ -106,7 +106,7 @@ export class StudentService {
     return this.prisma.student.update({
       where: { id: Number(params.id) },
       data: {
-        groupId: null
+        // groupId: null
       },
     });
   }

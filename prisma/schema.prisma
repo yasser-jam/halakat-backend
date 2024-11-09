@@ -1,8 +1,4 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
-// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+// This is your Prisma schema file
 
 generator client {
   provider = "prisma-client-js"
@@ -23,7 +19,7 @@ model student {
   student_mobile                      String?   @db.VarChar(255)
   school                              String?   @db.VarChar(255)
   in_another_mosque                   Boolean   @default(false)
-  other_mosque_names                  String?   @db.VarChar(255) // comma seperated 
+  other_mosque_names                  String?   @db.VarChar(255) // comma separated
   student_health_status               String?   @db.VarChar(1024)
   special_talent                      String?   @db.VarChar(1024)
   father_name                         String?   @db.VarChar(255)
@@ -56,8 +52,7 @@ model student {
   preserved_parts                     String?
   parts_tested_by_the_endowments      String?
   image_url                           String?   @db.VarChar(2048)
-  groupId                             Int? // Nullable foreign key for group
-  group                               Group?    @relation(fields: [groupId], references: [id])
+  groups                              StudentGroup[] // Many-to-many relationship with groups
   created_at                          DateTime  @default(now())
   updated_at                          DateTime? @updatedAt
 }
@@ -85,10 +80,10 @@ model teacher {
   is_working                         Boolean? // Nullable fields
   job_role                           String? // Nullable fields
   workplace_name                     String? // Nullable fields
+  groups                             TeacherGroup[] // Many-to-many relationship with groups
 
   created_at DateTime  @default(now())
   updated_at DateTime? @updatedAt
-  Group      Group[]
 
   @@map("teachers") // Optional: map to a custom table name
 }
@@ -96,12 +91,13 @@ model teacher {
 model Group {
   id        Int      @id @default(autoincrement())
   title     String
-  teacherId Int
+  class     Int
+  currentTeacherId Int
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  teacher        teacher?          @relation(fields: [teacherId], references: [id])
-  students       student[]
+  students       StudentGroup[]
+  teachers       TeacherGroup[]
   campaigns      GroupCampaigns[]
 
   @@map("groups") // Optional: map to a custom table name
@@ -111,7 +107,7 @@ model Campaign {
   id        Int      @id @default(autoincrement())
   name      String
   startDate DateTime @default(now())
-  endDate DateTime @default(now())
+  endDate   DateTime @default(now())
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -120,15 +116,44 @@ model Campaign {
   @@map("campaigns") // Optional: map to a custom table name
 }
 
+// Pivot table for Group-Campaign many-to-many relationship
 model GroupCampaigns {
   groupId    Int
   campaignId Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
 
   group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
   @@id([groupId, campaignId])
   @@map("GroupCampaigns") // Optional: map to a custom table name
+}
+
+// Pivot table for Student-Group many-to-many relationship
+model StudentGroup {
+  studentId Int @db.UnsignedInt // Updated to match student.id's type
+  groupId   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  student student @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([studentId, groupId])
+}
+
+// Pivot table for Teacher-Group many-to-many relationship
+model TeacherGroup {
+  teacherId Int
+  groupId   Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  teacher teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  @@id([teacherId, groupId])
 }
 
 enum STATUS {

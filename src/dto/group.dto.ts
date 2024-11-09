@@ -1,10 +1,4 @@
-import {
-  IsString,
-  IsInt,
-  IsArray,
-  IsNumber,
-  IsOptional,
-} from 'class-validator';
+import { IsString, IsInt } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateGroupDto {
@@ -12,18 +6,13 @@ export class CreateGroupDto {
   @IsString()
   title: string;
 
-  @ApiProperty({ required: false })
-  @IsNumber()
-  teacherId: number;
-
-  @IsArray()
-  studentsIds?: number[];
-
-  @ApiProperty({ required: false })
-  @IsOptional()
-  @IsArray()
+  @ApiProperty({ required: true })
   @IsInt({ each: true })
-  campaignIds?: number[];
+  currentTeacherId?: number;
+
+  @ApiProperty({ required: true })
+  @IsInt()
+  class: number;
 }
 
 export class UpdateGroupDto extends CreateGroupDto {}

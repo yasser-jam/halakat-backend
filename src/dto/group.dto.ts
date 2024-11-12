@@ -28,3 +28,17 @@ export class ValidateGroupIdDto {
   @IsInt()
   id: number;
 }
+
+export class GroupAssignDto {
+  @ApiProperty()
+  @IsInt()
+  studentId: number;
+
+  @ApiProperty()
+  @IsInt()
+  campaignId: number;
+
+  @ApiProperty()
+  @IsInt()
+  groupId: number;
+}

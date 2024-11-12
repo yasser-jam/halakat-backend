@@ -20,6 +20,7 @@ import { GroupService } from './group.service';
 
 import {
   CreateGroupDto,
+  GroupAssignDto,
   GroupListDto,
   UpdateGroupDto,
   ValidateGroupIdDto,
@@ -41,6 +42,17 @@ export class GroupsController {
   async findAll(@Query('campaignId') campaignId?: string) {
     const campaignIdNumber = campaignId ? Number(campaignId) : undefined;
     return this.groupService.findAll(campaignIdNumber);
+  }
+
+  // Assign student
+  @ApiOperation({ summary: 'Assign student into group' })
+  @ApiResponse({
+    status: 200,
+    description: 'The student has been assigned successfuly.',
+  })
+  @Post('/assign/:groupId/:studentId/:campaignId')
+  async assign(@Param() params: GroupAssignDto) {
+    return this.groupService.assign(params);
   }
 
   @ApiOperation({ summary: 'Create a new group' })

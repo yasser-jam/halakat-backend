@@ -10,55 +10,55 @@ datasource db {
 }
 
 model student {
-  id                                  Int       @id @default(autoincrement()) @db.UnsignedInt
-  current_mosque_name                 String?   @db.VarChar(255)
-  educational_class                   String?   @db.VarChar(255)
-  first_name                          String?   @db.VarChar(255)
-  last_name                           String?   @db.VarChar(255)
-  birth_date                          DateTime? @db.DateTime()
-  student_mobile                      String?   @db.VarChar(255)
-  school                              String?   @db.VarChar(255)
-  in_another_mosque                   Boolean   @default(false)
-  other_mosque_names                  String?   @db.VarChar(255) // comma separated
-  student_health_status               String?   @db.VarChar(1024)
-  special_talent                      String?   @db.VarChar(1024)
-  father_name                         String?   @db.VarChar(255)
-  father_status                       STATUS    @default(ALIVE)
-  father_job                          String?   @db.VarChar(255)
-  father_income_level                 String?   @db.VarChar(255)
-  father_education_level              String?   @db.VarChar(255)
-  father_health_status                String?   @db.VarChar(255)
-  father_phone_number                 String?   @db.VarChar(255)
-  father_work_number                  String?   @db.VarChar(255)
-  mother_name                         String?   @db.VarChar(255)
-  mother_status                       STATUS    @default(ALIVE)
-  mother_job                          String?   @db.VarChar(255)
-  mother_income_level                 String?   @db.VarChar(255)
-  mother_education_level              String?   @db.VarChar(255)
-  mother_health_status                String?   @db.VarChar(255)
-  mother_phone_number                 String?   @db.VarChar(255)
-  mother_home_number                  String?   @db.VarChar(255)
-  parent_marital_status               MARITAL   @default(MARRIED)
-  student_mobile_number               String?   @db.VarChar(255)
-  student_home_number                 String?   @db.VarChar(255)
-  original_residence_address_area     String?   @db.VarChar(255)
-  original_residence_address_street   String?   @db.VarChar(255)
-  original_residence_address_building String?   @db.VarChar(255)
-  original_residence_address_floor    String?   @db.VarChar(255)
-  current_residence_address_area      String?   @db.VarChar(255)
-  current_residence_address_street    String?   @db.VarChar(255)
-  current_residence_address_building  String?   @db.VarChar(255)
-  current_residence_address_floor     String?   @db.VarChar(255)
+  id                                  Int            @id @default(autoincrement()) @db.UnsignedInt
+  current_mosque_name                 String?        @db.VarChar(255)
+  educational_class                   String?        @db.VarChar(255)
+  first_name                          String?        @db.VarChar(255)
+  last_name                           String?        @db.VarChar(255)
+  birth_date                          DateTime?      @db.DateTime()
+  student_mobile                      String?        @db.VarChar(255)
+  school                              String?        @db.VarChar(255)
+  in_another_mosque                   Boolean        @default(false)
+  other_mosque_names                  String?        @db.VarChar(255) // comma separated
+  student_health_status               String?        @db.VarChar(1024)
+  special_talent                      String?        @db.VarChar(1024)
+  father_name                         String?        @db.VarChar(255)
+  father_status                       STATUS         @default(ALIVE)
+  father_job                          String?        @db.VarChar(255)
+  father_income_level                 String?        @db.VarChar(255)
+  father_education_level              String?        @db.VarChar(255)
+  father_health_status                String?        @db.VarChar(255)
+  father_phone_number                 String?        @db.VarChar(255)
+  father_work_number                  String?        @db.VarChar(255)
+  mother_name                         String?        @db.VarChar(255)
+  mother_status                       STATUS         @default(ALIVE)
+  mother_job                          String?        @db.VarChar(255)
+  mother_income_level                 String?        @db.VarChar(255)
+  mother_education_level              String?        @db.VarChar(255)
+  mother_health_status                String?        @db.VarChar(255)
+  mother_phone_number                 String?        @db.VarChar(255)
+  mother_home_number                  String?        @db.VarChar(255)
+  parent_marital_status               MARITAL        @default(MARRIED)
+  student_mobile_number               String?        @db.VarChar(255)
+  student_home_number                 String?        @db.VarChar(255)
+  original_residence_address_area     String?        @db.VarChar(255)
+  original_residence_address_street   String?        @db.VarChar(255)
+  original_residence_address_building String?        @db.VarChar(255)
+  original_residence_address_floor    String?        @db.VarChar(255)
+  current_residence_address_area      String?        @db.VarChar(255)
+  current_residence_address_street    String?        @db.VarChar(255)
+  current_residence_address_building  String?        @db.VarChar(255)
+  current_residence_address_floor     String?        @db.VarChar(255)
   preserved_parts                     String?
   parts_tested_by_the_endowments      String?
-  image_url                           String?   @db.VarChar(2048)
+  image_url                           String?        @db.VarChar(2048)
   groups                              StudentGroup[] // Many-to-many relationship with groups
-  created_at                          DateTime  @default(now())
-  updated_at                          DateTime? @updatedAt
+  created_at                          DateTime       @default(now())
+  updated_at                          DateTime?      @updatedAt
 }
 
 model teacher {
-  id                                 Int       @id @default(autoincrement())
+  id                                 Int            @id @default(autoincrement())
   educational_level                  String? // Nullable fields
   university_name                    String? // Nullable fields
   college_name                       String? // Nullable fields
@@ -89,16 +89,16 @@ model teacher {
 }
 
 model Group {
-  id        Int      @id @default(autoincrement())
-  title     String
-  class     Int
+  id               Int      @id @default(autoincrement())
+  title            String
+  class            Int
   currentTeacherId Int
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
-  students       StudentGroup[]
-  teachers       TeacherGroup[]
-  campaigns      GroupCampaigns[]
+  students  StudentGroup[]
+  teachers  TeacherGroup[]
+  campaigns GroupCampaigns[]
 
   @@map("groups") // Optional: map to a custom table name
 }
@@ -111,7 +111,8 @@ model Campaign {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  groups         GroupCampaigns[]
+  groups       GroupCampaigns[]
+  StudentGroup StudentGroup[]
 
   @@map("campaigns") // Optional: map to a custom table name
 }
@@ -132,21 +133,23 @@ model GroupCampaigns {
 
 // Pivot table for Student-Group many-to-many relationship
 model StudentGroup {
-  studentId Int @db.UnsignedInt // Updated to match student.id's type
-  groupId   Int
+  studentId  Int      @db.UnsignedInt // Updated to match student.id's type
+  groupId    Int
+  campaignId Int
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 
-  student student @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  student  student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
-  @@id([studentId, groupId])
+  @@id([studentId, groupId, campaignId])
 }
 
 // Pivot table for Teacher-Group many-to-many relationship
 model TeacherGroup {
-  teacherId Int
-  groupId   Int
+  teacherId  Int
+  groupId    Int
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
 

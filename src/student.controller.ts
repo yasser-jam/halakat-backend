@@ -103,4 +103,14 @@ export class StudentsController {
   async unassign(@Param() params: ValidateStudentIdDto) {
     return this.studentService.unassign(params);
   }
+
+  // List un assigned
+  @ApiOperation({ summary: 'List un-assigned students in campaign' })
+  @ApiResponse({
+    status: 200,
+  })
+  @Get('unassigned/:campaignId')
+  async listUnassigned(@Param() params: ValidateStudentIdDto) {
+    return this.studentService.listUnassigned(params);
+  }
 }

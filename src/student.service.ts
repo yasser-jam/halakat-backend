@@ -110,4 +110,17 @@ export class StudentService {
       },
     });
   }
+
+  // Todo: better handling
+  async listUnassigned(params: ValidateStudentIdDto) {
+    const assignedStudents = await this.prisma.studentGroup.findMany({
+      where: {
+        campaignId: params.id,
+      }
+    })
+
+    const allStudents = await this.prisma.student.findMany()
+
+    return allStudents.filter(stud => !assignedStudents.find(item => item.studentId == stud.id))
+  }
 }

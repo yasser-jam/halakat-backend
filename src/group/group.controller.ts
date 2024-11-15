@@ -50,9 +50,20 @@ export class GroupsController {
     status: 200,
     description: 'The student has been assigned successfuly.',
   })
-  @Post('/assign/:groupId/:studentId/:campaignId')
+  @Get('/assign/:groupId/:studentId/:campaignId')
   async assign(@Param() params: GroupAssignDto) {
     return this.groupService.assign(params);
+  }
+
+  // UnAssign student
+  @ApiOperation({ summary: 'Un-assign student from group' })
+  @ApiResponse({
+    status: 200,
+    description: 'The student has been un-assigned successfuly.',
+  })
+  @Get('/unassign/:groupId/:studentId/:campaignId')
+  async unassign(@Param() params: GroupAssignDto) {
+    return this.groupService.unassign(params);
   }
 
   @ApiOperation({ summary: 'Create a new group' })

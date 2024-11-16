@@ -54,6 +54,17 @@ export class TeachersController {
     return this.teacherService.findOne(params);
   }
 
+  @ApiOperation({ summary: 'Get a full teacher info by ID (for mobile)' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return the teacher info with the given ID',
+    type: CreateTeacherDto,
+  })
+  @Get('mobile/:id')
+  async findInfo(@Param() params: ValidateTeacherIdDto) {
+    return this.teacherService.findInfo(params);
+  }
+
   @ApiOperation({ summary: 'Update a teacher by ID' })
   @ApiResponse({
     status: 200,

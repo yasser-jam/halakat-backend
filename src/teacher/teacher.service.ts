@@ -29,6 +29,39 @@ export class TeacherService {
     return teacher;
   }
 
+  async findInfo(params: ValidateTeacherIdDto) {
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { id: Number(params.id) },
+      include: {
+        groups: {
+          include: {
+            group: {
+              include: {
+                students: {
+                  include: {
+                    student: true
+                  }
+                }
+              }
+            }
+          },
+        },
+      }
+    });
+
+    if (!teacher) {
+      throw new NotFoundException(`Teacher with ID ${params.id} not found`);
+    }
+    
+    teacher.groups = teacher.groups.map((g: any) => {
+      g.group.students = g.group.students.map(stud => stud.student) as any
+
+      return g.group
+    }) as any
+
+    return teacher;
+  }
+
   async update(params: ValidateTeacherIdDto, updateTeacherDto) {
     const teacher = await this.prisma.teacher.findUnique({
       where: { id: Number(params.id) },

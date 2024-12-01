@@ -9,6 +9,28 @@ import {
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
+export class RegisterDto {
+  @ApiProperty()
+  @IsString()
+  @ApiProperty({ required: true })
+  mobile_phone_number?: string;
+
+  @ApiProperty({ required: true })
+  @IsString()
+  password?: string;
+}
+
+export class LoginDto {
+  @ApiProperty()
+  @IsString()
+  @ApiProperty({ required: true })
+  mobile_phone_number?: string;
+
+  @ApiProperty({ required: true })
+  @IsString()
+  password?: string;
+}
+
 export class CreateTeacherDto {
   @ApiProperty({ required: false })
   @IsOptional()
@@ -43,10 +65,9 @@ export class CreateTeacherDto {
   @Type(() => Date)
   birth_date?: Date;
 
-  @ApiProperty({ required: false })
-  @IsOptional()
+  @ApiProperty({ required: true })
   @IsString()
-  mobile_phone_number?: string;
+  mobile_phone_number: string;
 
   @ApiProperty()
   @IsBoolean()

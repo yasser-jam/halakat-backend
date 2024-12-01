@@ -65,7 +65,7 @@ model teacher {
   first_name                         String? // Nullable fields
   last_name                          String? // Nullable fields
   birth_date                         DateTime? // Nullable fields
-  mobile_phone_number                String? // Nullable fields
+  mobile_phone_number                String  @unique // Nullable fields 
   in_another_mosque                  Boolean? // Nullable fields
   other_mosque_names                 String? // Nullable fields
   special_talent                     String? // Nullable fields
@@ -81,6 +81,8 @@ model teacher {
   job_role                           String? // Nullable fields
   workplace_name                     String? // Nullable fields
   groups                             TeacherGroup[] // Many-to-many relationship with groups
+  password                           String
+  role                               Role           @default(TEACHER)
 
   created_at DateTime  @default(now())
   updated_at DateTime? @updatedAt
@@ -169,4 +171,14 @@ enum MARITAL {
   MARRIED
   SEPARATED
   DIVORCED
+}
+
+enum Role {
+  TEACHER
+  MANAGER
+  ADMIN
+  SUPER_ADMIN
+  MANAGER_ASSISTANT
+  AUDIBLE
+  AUDIBLE_ASSISTANT
 }

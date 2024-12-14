@@ -42,7 +42,7 @@ async function bootstrap() {
   );
   Logger.log(
     `😎 Swagger UI on: http://localhost:${3002}/${docsPath}`,
-    'NestApplication',
+    'NestApplication2',
   );
 }
 bootstrap();

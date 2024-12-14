@@ -10,10 +10,14 @@ import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { LoginDto, RegisterDto } from 'src/dto/teacher.dto';
 import { ApiBearerAuth } from '@nestjs/swagger';
+import { TeacherService } from './../teacher/teacher.service';
 
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    private teacherService: TeacherService,
+  ) {}
 
   @Post('register')
   async register(@Body() body: RegisterDto) {
@@ -46,5 +50,18 @@ export class AuthController {
   @Post('profile')
   getProfile(@Request() req) {
     return req.user;
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Post('mobile/profile')
+  getMobileProfile(@Request() req) {
+    const user = req.user;
+
+    if (!user) throw new UnauthorizedException('Not Found');
+
+    // get teacher info
+    const teacher = this.teacherService.findInfo({ id: user.id });
+    return teacher;
   }
 }

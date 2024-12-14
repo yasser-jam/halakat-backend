@@ -12,7 +12,7 @@ datasource db {
 model student {
   id                                  Int            @id @default(autoincrement()) @db.UnsignedInt
   current_mosque_name                 String?        @db.VarChar(255)
-  educational_class                   String?        @db.VarChar(255)
+  educational_class                   Int?            
   first_name                          String?        @db.VarChar(255)
   last_name                           String?        @db.VarChar(255)
   birth_date                          DateTime?      @db.DateTime()

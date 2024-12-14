@@ -20,6 +20,15 @@ async function bootstrap() {
     .setTitle('Student API')
     .setDescription('The student API description')
     .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        in: 'header',
+      },
+      'access-token', // The name of the Bearer token in Swagger UI
+    )
     .build();
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup(docsPath, app, document);

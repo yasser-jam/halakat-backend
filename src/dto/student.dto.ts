@@ -30,7 +30,7 @@ export class CreateStudentDto {
   @ApiProperty({ required: false })
   @IsOptional()
   @IsString()
-  educational_class?: string;
+  educational_class?: number;
 
   @ApiProperty()
   @IsString()

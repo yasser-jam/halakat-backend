@@ -8,12 +8,19 @@ export class TeacherService {
   constructor(private prisma: PrismaService) {}
 
   async findAll() {
-    return this.prisma.teacher.findMany();
+    return this.prisma.teacher.findMany({
+      where: {
+        role: 'TEACHER'
+      }
+    });
   }
 
   async create(CreateTeacherDto) {
     return this.prisma.teacher.create({
-      data: CreateTeacherDto,
+      data: {
+        ...CreateTeacherDto,
+        password: 'password'
+      },
     });
   }
 

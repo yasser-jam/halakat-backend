@@ -1,6 +1,7 @@
 // prisma/seed.ts
 
 import { PrismaClient, STATUS, MARITAL } from '@prisma/client'; // Import enums from Prisma client
+import * as bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 async function main() {
@@ -65,7 +66,7 @@ async function main() {
       last_name: 'الأسعد',
       birth_date: new Date('2012-03-15'),
       current_mosque_name: 'مسجد الرحمة',
-      educational_class: 'الصف السادس',
+      educational_class: 6,
       student_mobile: '0945123456',
       school: 'مدرسة اليرموك الابتدائية',
       in_another_mosque: false,
@@ -91,7 +92,7 @@ async function main() {
       last_name: 'الحموي',
       birth_date: new Date('2011-11-25'),
       current_mosque_name: 'مسجد النور',
-      educational_class: 'الصف الخامس',
+      educational_class: 5,
       student_mobile: '0945761234',
       school: 'مدرسة الفتح النموذجية',
       in_another_mosque: true,
@@ -117,7 +118,7 @@ async function main() {
       last_name: 'الشامي',
       birth_date: new Date('2013-06-30'),
       current_mosque_name: 'مسجد الهدى',
-      educational_class: 'الصف الرابع',
+      educational_class: 4,
       student_mobile: '0932456789',
       school: 'مدرسة الشام الحديثة',
       in_another_mosque: false,
@@ -143,7 +144,7 @@ async function main() {
       last_name: 'الحسني',
       birth_date: new Date('2010-12-10'),
       current_mosque_name: 'مسجد الرحمن',
-      educational_class: 'الصف السابع',
+      educational_class: 7,
       student_mobile: '0936547891',
       school: 'مدرسة النبراس',
       in_another_mosque: true,
@@ -170,7 +171,7 @@ async function main() {
       last_name: 'حمدان',
       birth_date: new Date('2014-02-14'),
       current_mosque_name: 'مسجد الإحسان',
-      educational_class: 'الصف الثالث',
+      educational_class: 3,
       student_mobile: '0912345678',
       school: 'مدرسة التعاون',
       in_another_mosque: false,
@@ -196,7 +197,7 @@ async function main() {
       last_name: 'الغالي',
       birth_date: new Date('2015-08-19'),
       current_mosque_name: 'مسجد الفرقان',
-      educational_class: 'الصف الثاني',
+      educational_class: 2,
       student_mobile: '0923456780',
       school: 'مدرسة الفرات',
       in_another_mosque: false,
@@ -217,7 +218,78 @@ async function main() {
       current_residence_address_street: 'شارع الجبل',
       current_residence_address_building: 'البناء رقم 8',
     },
+    {
+      first_name: 'أحمد',
+      last_name: 'المزين',
+      birth_date: new Date('2012-08-20'),
+      current_mosque_name: 'مسجد الرحمة',
+      educational_class: 2,
+      student_mobile: '0923456781',
+      school: 'مدرسة الفرات',
+      in_another_mosque: false,
+      father_name: 'سعد المزين',
+      father_status: STATUS.ALIVE,
+      father_job: 'سائق شاحنة',
+      father_income_level: 'متوسط',
+      father_education_level: 'ثانوي',
+      father_phone_number: '0987654322',
+      mother_name: 'سهى السعيد',
+      mother_status: STATUS.ALIVE,
+      mother_job: 'مساعدة إدارية',
+      mother_income_level: 'متوسط',
+      mother_education_level: 'ثانوي',
+      mother_phone_number: '0912345672',
+      parent_marital_status: MARITAL.MARRIED,
+      current_residence_address_area: 'برزة',
+      current_residence_address_street: 'شارع الجبل',
+      current_residence_address_building: 'البناء رقم 9',
+    },
+    {
+      first_name: 'كريم',
+      last_name: 'الميداني',
+      birth_date: new Date('2011-01-20'),
+      current_mosque_name: 'مسجد الرحمة',
+      educational_class: 2,
+      student_mobile: '0923456711',
+      school: 'مدرسة الفرات',
+      in_another_mosque: true,
+      father_name: 'فهد الميداني',
+      father_status: STATUS.ALIVE,
+      father_job: 'موظف',
+      father_income_level: 'متوسط',
+      father_education_level: 'ثانوي',
+      father_phone_number: '0987614321',
+      mother_name: 'مها الأحمد',
+      mother_status: STATUS.ALIVE,
+      mother_job: 'مساعدة إدارية',
+      mother_income_level: 'متوسط',
+      mother_education_level: 'ثانوي',
+      mother_phone_number: '0922345672',
+      parent_marital_status: MARITAL.MARRIED,
+      current_residence_address_area: 'برزة',
+      current_residence_address_street: 'شارع الجبل',
+      current_residence_address_building: 'البناء رقم 9',
+    },
   ];
+  const hashedPassword = await bcrypt.hash('password', 10);
+
+  // create SUPER_ADMIN
+  await prisma.teacher.create({
+    data: {
+      mobile_phone_number: '0993544811',
+      password: hashedPassword,
+      role: 'SUPER_ADMIN',
+    },
+  });
+
+  // create new teacher
+
+  // create new campaign
+  await prisma.campaign.create({
+    data: {
+      name: 'الدورة الصيفية 2024',
+    },
+  });
 
   for (const student of studentsData) {
     await prisma.student.create({

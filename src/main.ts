@@ -1,4 +1,5 @@
 import { NestFactory } from '@nestjs/core';
+import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { Logger } from '@nestjs/common';
 
@@ -15,23 +16,23 @@ async function bootstrap() {
     optionsSuccessStatus: 204,
   });
 
-  // const config = new DocumentBuilder()
-  //   .setTitle('Student API')
-  //   .setDescription('The student API description')
-  //   .setVersion('1.0')
-  //   .addBearerAuth(
-  //     {
-  //       type: 'http',
-  //       scheme: 'bearer',
-  //       bearerFormat: 'JWT',
-  //       in: 'header',
-  //     },
-  //     'access-token', // The name of the Bearer token in Swagger UI
-  //   )
-  //   .build();
-  // const document = SwaggerModule.createDocument(app, config);
-  // SwaggerModule.setup(docsPath, app, document);
-  // SwaggerModule.setup('api', app, document);
+  const config = new DocumentBuilder()
+    .setTitle('Student API')
+    .setDescription('The student API description')
+    .setVersion('1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        in: 'header',
+      },
+      'access-token', // The name of the Bearer token in Swagger UI
+    )
+    .build();
+  const document = SwaggerModule.createDocument(app, config);
+  SwaggerModule.setup(docsPath, app, document);
+  SwaggerModule.setup('api', app, document);
 
   await app.listen(3002);
 

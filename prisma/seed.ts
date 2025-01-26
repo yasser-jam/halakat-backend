@@ -288,6 +288,7 @@ async function main() {
   await prisma.campaign.create({
     data: {
       name: 'الدورة الصيفية 2024',
+      studentsCount: 200,
     },
   });
 

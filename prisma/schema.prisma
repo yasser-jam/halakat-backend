@@ -12,7 +12,7 @@ datasource db {
 model student {
   id                                  Int            @id @default(autoincrement()) @db.UnsignedInt
   current_mosque_name                 String?        @db.VarChar(255)
-  educational_class                   Int?            
+  educational_class                   Int?
   first_name                          String?        @db.VarChar(255)
   last_name                           String?        @db.VarChar(255)
   birth_date                          DateTime?      @db.DateTime()
@@ -65,7 +65,7 @@ model teacher {
   first_name                         String? // Nullable fields
   last_name                          String? // Nullable fields
   birth_date                         DateTime? // Nullable fields
-  mobile_phone_number                String  @unique // Nullable fields 
+  mobile_phone_number                String         @unique // Nullable fields 
   in_another_mosque                  Boolean? // Nullable fields
   other_mosque_names                 String? // Nullable fields
   special_talent                     String? // Nullable fields
@@ -106,12 +106,23 @@ model Group {
 }
 
 model Campaign {
-  id        Int      @id @default(autoincrement())
-  name      String
-  startDate DateTime @default(now())
-  endDate   DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id                    Int       @id @default(autoincrement())
+  name                  String
+  startDate             DateTime  @default(now())
+  endDate               DateTime? @default(now())
+  assignEndDate         DateTime?
+  assignStartDate       DateTime? @default(now())
+  isCampaignContinous   Boolean   @default(false)
+  limitedStudentsCount  Boolean?
+  studentsCount         Int
+  assignByLink          Boolean?
+  completeCountApproach String    @default("UNLIMIT_ASSIGN")
+  days                  String
+  timingApproach        String?   @default("hours")
+  startTime             DateTime
+  endTime               DateTime
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   groups       GroupCampaigns[]
   StudentGroup StudentGroup[]

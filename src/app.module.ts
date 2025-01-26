@@ -11,8 +11,8 @@ import { GroupService } from './group/group.service';
 import { CampaignsController } from './campaign/campaign.controller';
 import { CampaignService } from './campaign/campaign.service';
 import { UploadController } from './file/file.controller';
-// import { AuthModule } from './auth/auth.module';
-// import { AuthController } from './auth/auth.controller';
+import { AuthModule } from './auth/auth.module';
+import { AuthController } from './auth/auth.controller';
 
 @Module({
   controllers: [
@@ -22,7 +22,7 @@ import { UploadController } from './file/file.controller';
     GroupsController,
     CampaignsController,
     UploadController,
-    // AuthController,
+    AuthController,
   ],
   providers: [
     AppService,
@@ -32,6 +32,6 @@ import { UploadController } from './file/file.controller';
     GroupService,
     CampaignService,
   ],
-  // imports: [AuthModule],
+  imports: [AuthModule],
 })
 export class AppModule {}

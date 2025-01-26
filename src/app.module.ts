@@ -12,7 +12,7 @@ import { CampaignsController } from './campaign/campaign.controller';
 import { CampaignService } from './campaign/campaign.service';
 import { UploadController } from './file/file.controller';
 // import { AuthModule } from './auth/auth.module';
-import { AuthController } from './auth/auth.controller';
+// import { AuthController } from './auth/auth.controller';
 
 @Module({
   controllers: [
@@ -22,7 +22,7 @@ import { AuthController } from './auth/auth.controller';
     GroupsController,
     CampaignsController,
     UploadController,
-    AuthController,
+    // AuthController,
   ],
   providers: [
     AppService,

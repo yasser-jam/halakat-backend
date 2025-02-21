@@ -289,6 +289,9 @@ async function main() {
     data: {
       name: 'الدورة الصيفية 2024',
       studentsCount: 200,
+      startTime: '',
+      endTime: '',
+      days: '',
     },
   });
 

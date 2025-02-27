@@ -94,7 +94,7 @@ model Group {
   id               Int      @id @default(autoincrement())
   title            String
   class            Int
-  currentTeacherId Int
+  currentTeacherId Int?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 

@@ -14,7 +14,7 @@ export class CampaignService {
 
   async create(createDto: CreateCampaignDto) {
     return this.prisma.campaign.create({
-      data: createDto,
+      data: createDto
     });
   }
 

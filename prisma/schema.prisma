@@ -114,13 +114,14 @@ model Campaign {
   assignStartDate       DateTime? @default(now())
   isCampaignContinous   Boolean   @default(false)
   limitedStudentsCount  Boolean?
-  studentsCount         Int
+  studentsCount         Int?
   assignByLink          Boolean?
   completeCountApproach String    @default("UNLIMIT_ASSIGN")
-  days                  String
+  days                  String?
   timingApproach        String?   @default("hours")
-  startTime             DateTime
-  endTime               DateTime
+  startTime             DateTime?
+  status                Boolean   @default(false)
+  endTime               DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
 

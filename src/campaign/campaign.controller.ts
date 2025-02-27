@@ -7,7 +7,7 @@ import {
   Put,
   Delete,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBody } from '@nestjs/swagger';
 
 import { CampaignService } from './campaign.service';
 
@@ -37,6 +37,19 @@ export class CampaignsController {
     status: 201,
     description: 'The campaign has been successfully created.',
     type: CreateCampaignDto,
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+        },
+        startDate: {
+          type: 'string',
+        },
+      },
+    },
   })
   @Post(':campaignId')
   async create(@Body() createCampaignDto: CreateCampaignDto) {

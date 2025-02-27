@@ -1,6 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { ValidateTeacherIdDto } from './../dto/teacher.dto';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from './../prisma.service';
 
 @Injectable()
@@ -19,7 +20,7 @@ export class TeacherService {
     return this.prisma.teacher.create({
       data: {
         ...CreateTeacherDto,
-        password: 'password'
+        password: await bcrypt.hash('password', 10)
       },
     });
   }

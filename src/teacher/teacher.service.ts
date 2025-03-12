@@ -8,12 +8,34 @@ import { PrismaService } from './../prisma.service';
 export class TeacherService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
-    return this.prisma.teacher.findMany({
+  async findAll(campaignId?: number) {
+    let res = await this.prisma.teacher.findMany({
       where: {
         role: 'TEACHER'
+      },
+      include: {
+        groups: {
+          include: {
+            group: {
+              include: {
+                campaigns: {
+                  where: {
+                    campaignId: Number(campaignId)
+                  }
+                }
+              }
+            }
+          }
+        }
       }
     });
+
+    res = res?.map(item => ({
+      ...item,
+      groups: item.groups.map((gr) => gr.group)
+    })) as any
+    
+    return res
   }
 
   async create(CreateTeacherDto) {

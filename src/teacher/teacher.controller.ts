@@ -6,6 +6,7 @@ import {
   Param,
   Put,
   Delete,
+  Query,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { TeacherService } from './teacher.service';
@@ -28,8 +29,8 @@ export class TeachersController {
     type: [TeacherListDto],
   })
   @Get()
-  async findAll() {
-    return this.teacherService.findAll();
+  async findAll(@Query('campaignId') campaignId?: number) {
+    return this.teacherService.findAll(campaignId);
   }
 
   @ApiOperation({ summary: 'Create a new teacher' })

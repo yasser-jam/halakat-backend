@@ -127,7 +127,7 @@ export class GroupService {
   }
 
   async create(createDto: CreateGroupDto, campaignId: number) {
-    const { title, currentTeacherId, class: classNumber } = createDto;
+    const { title, currentTeacherId } = createDto;
 
     // Create the group first with the specified title and connect to the campaignId
     const group = await this.prisma.group.create({
@@ -136,7 +136,6 @@ export class GroupService {
         createdAt: new Date(),
         updatedAt: new Date(),
         currentTeacherId: 1,
-        class: classNumber,
       },
     });
 

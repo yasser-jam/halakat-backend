@@ -169,4 +169,5 @@ export class ValidateTeacherIdDto {
   @ApiProperty()
   @IsInt()
   id: number;
+  campaign_id: number;
 }

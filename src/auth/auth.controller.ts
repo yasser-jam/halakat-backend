@@ -9,7 +9,7 @@ import {
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
 import { LoginDto, RegisterDto } from 'src/dto/teacher.dto';
-import { ApiBearerAuth } from '@nestjs/swagger';
+import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { TeacherService } from './../teacher/teacher.service';
 
 @Controller('auth')
@@ -55,13 +55,20 @@ export class AuthController {
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post('mobile/profile')
+  @ApiParam({
+    name: 'campaign id',
+    type: 'number',
+  })
   getMobileProfile(@Request() req) {
     const user = req.user;
 
     if (!user) throw new UnauthorizedException('Not Found');
 
     // get teacher info
-    const teacher = this.teacherService.findInfo({ id: user.id });
+    const teacher = this.teacherService.findInfo({
+      id: user.id,
+      campaign_id: 1,
+    });
     return teacher;
   }
 }

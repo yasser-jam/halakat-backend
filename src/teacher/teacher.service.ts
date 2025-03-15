@@ -72,9 +72,18 @@ export class TeacherService {
                     student: true
                   }
                 }
-              }
+              },
             }
           },
+          where: {
+            group: {
+              campaigns: {
+                some: {
+                  campaignId: params.campaign_id
+                }
+              }
+            }
+          }
         },
       }
     });

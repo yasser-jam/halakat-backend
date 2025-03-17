@@ -53,6 +53,7 @@ model student {
   groups                              StudentGroup[] // Many-to-many relationship with groups
   created_at                          DateTime       @default(now())
   updated_at                          DateTime?      @updatedAt
+  Attendance                          Attendance[]
 }
 
 model teacher {
@@ -96,9 +97,10 @@ model Group {
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  students  StudentGroup[]
-  teachers  TeacherGroup[]
-  campaigns GroupCampaigns[]
+  students   StudentGroup[]
+  teachers   TeacherGroup[]
+  campaigns  GroupCampaigns[]
+  Attendance Attendance[]
 
   @@map("groups") // Optional: map to a custom table name
 }
@@ -125,6 +127,7 @@ model Campaign {
 
   groups       GroupCampaigns[]
   StudentGroup StudentGroup[]
+  Attendance   Attendance[]
 
   @@map("campaigns") // Optional: map to a custom table name
 }
@@ -169,6 +172,24 @@ model TeacherGroup {
   group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
   @@id([teacherId, groupId])
+}
+
+model Attendance {
+  id         Int      @id @default(autoincrement())
+  studentId  Int      @db.UnsignedInt // Change this to match student.id
+  groupId    Int
+  campaignId Int
+  takenDate  DateTime @default(now())
+  delayTime  Int
+  status     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  student  student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
+  @@map("attendance")
 }
 
 enum STATUS {

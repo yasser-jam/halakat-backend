@@ -13,6 +13,8 @@ import { CampaignService } from './campaign/campaign.service';
 import { UploadController } from './file/file.controller';
 import { AuthModule } from './auth/auth.module';
 import { AuthController } from './auth/auth.controller';
+import { AttendanceController } from './attendance/attendance.controller';
+import { AttendanceService } from './attendance/attendance.service';
 
 @Module({
   controllers: [
@@ -23,6 +25,7 @@ import { AuthController } from './auth/auth.controller';
     CampaignsController,
     UploadController,
     AuthController,
+    AttendanceController,
   ],
   providers: [
     AppService,
@@ -31,6 +34,7 @@ import { AuthController } from './auth/auth.controller';
     TeacherService,
     GroupService,
     CampaignService,
+    AttendanceService,
   ],
   imports: [AuthModule],
 })

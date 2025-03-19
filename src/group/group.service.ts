@@ -48,6 +48,32 @@ export class GroupService {
     }));
   }
 
+
+  getMatchingDaysBetweenDates = (startDate: string, endDate: string, days: string[]) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const dayMap = {
+      sun: 0,
+      mon: 1,
+      tue: 2,
+      wed: 3,
+      thu: 4,
+      fri: 5,
+      sat: 6,
+    };
+
+    const selectedDays = days?.map((day) => dayMap[day]);
+    const result = [];
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      if (selectedDays.includes(d.getDay())) {
+        result.push(new Date(d).toISOString().split('T')[0]); // Returns date in YYYY-MM-DD format
+      }
+    }
+
+    return result;
+  };
+
   async assign(params: GroupAssignDto) {
     const group = await this.prisma.group.findUnique({
       where: { id: Number(params.groupId) },
@@ -75,6 +101,28 @@ export class GroupService {
       throw new NotFoundException(
         `Group with ID ${params.campaignId} not found`,
       );
+    }
+
+    // create all attendance records for the student
+    // divide days from start date of that campaign to the end date
+    const startDate = campaign.startDate;
+    const endDate = campaign.endDate;
+    const days = campaign.days.split(',');
+
+
+    const attendDays = this.getMatchingDaysBetweenDates(String(startDate), String(endDate), days as any)
+
+    for (const day of attendDays) {
+      await this.prisma.attendance.create({
+        data: {
+          studentId: Number(params.studentId),
+          groupId: Number(params.groupId),
+          campaignId: Number(params.campaignId),
+          takenDate: new Date(day).toISOString(),
+          delayTime: -1,
+          status: 'NOT_TAKEN'
+        }
+      })
     }
 
     return this.prisma.studentGroup.create({

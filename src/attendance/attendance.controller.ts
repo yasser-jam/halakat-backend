@@ -1,4 +1,4 @@
-import { Controller, Get, Body, Param, Put } from '@nestjs/common';
+import { Controller, Get, Body, Param, Put, Post } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { UpdateAttendanceDto } from './attendance.dto';
@@ -29,11 +29,26 @@ export class AttendanceController {
     description: 'Update attendance status',
     type: UpdateAttendanceDto,
   })
-  @Put(':id')
+  @Put('attendance/:id')
   async update(
     @Param('id') id: number,
     @Body() updateAttendanceDto: UpdateAttendanceDto,
   ) {
     return this.attendanceService.update(id, updateAttendanceDto);
+  }
+
+  @ApiOperation({ summary: 'Create Attendance Records' })
+  @ApiResponse({
+    status: 200,
+    description: 'Create attendance',
+    type: UpdateAttendanceDto,
+  })
+  @Post('attendance/:campaignId/:groupId/:studentId')
+  async createAll(
+    @Param('campaignId') campaignId: number,
+    @Param('groupId') groupId: number,
+    @Param('studentId') studentId: number,
+  ) {
+    return this.attendanceService.createAll(campaignId, groupId, studentId);
   }
 }

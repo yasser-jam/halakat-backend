@@ -2,55 +2,56 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// prisma/schema.prisma
 datasource db {
-  provider = "mysql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url  	    = env("DATABASE_URL")
+  // uncomment next line if you use Prisma <5.10
 }
-
 model student {
-  id                                  Int            @id @default(autoincrement()) @db.UnsignedInt
-  current_mosque_name                 String?        @db.VarChar(255)
+  id                                  Int            @id @default(autoincrement())
+  current_mosque_name                 String?
   educational_class                   Int?
-  first_name                          String?        @db.VarChar(255)
-  last_name                           String?        @db.VarChar(255)
-  birth_date                          DateTime?      @db.DateTime()
-  student_mobile                      String?        @db.VarChar(255)
-  school                              String?        @db.VarChar(255)
+  first_name                          String?
+  last_name                           String?
+  birth_date                          DateTime?
+  student_mobile                      String?
+  school                              String?
   in_another_mosque                   Boolean        @default(false)
-  other_mosque_names                  String?        @db.VarChar(255) // comma separated
-  student_health_status               String?        @db.VarChar(1024)
-  special_talent                      String?        @db.VarChar(1024)
-  father_name                         String?        @db.VarChar(255)
+  other_mosque_names                  String?
+  student_health_status               String?
+  special_talent                      String?
+  father_name                         String?
   father_status                       STATUS         @default(ALIVE)
-  father_job                          String?        @db.VarChar(255)
-  father_income_level                 String?        @db.VarChar(255)
-  father_education_level              String?        @db.VarChar(255)
-  father_health_status                String?        @db.VarChar(255)
-  father_phone_number                 String?        @db.VarChar(255)
-  father_work_number                  String?        @db.VarChar(255)
-  mother_name                         String?        @db.VarChar(255)
+  father_job                          String?
+  father_income_level                 String?
+  father_education_level              String?
+  father_health_status                String?
+  father_phone_number                 String?
+  father_work_number                  String?
+  mother_name                         String?
   mother_status                       STATUS         @default(ALIVE)
-  mother_job                          String?        @db.VarChar(255)
-  mother_income_level                 String?        @db.VarChar(255)
-  mother_education_level              String?        @db.VarChar(255)
-  mother_health_status                String?        @db.VarChar(255)
-  mother_phone_number                 String?        @db.VarChar(255)
-  mother_home_number                  String?        @db.VarChar(255)
+  mother_job                          String?
+  mother_income_level                 String?
+  mother_education_level              String?
+  mother_health_status                String?
+  mother_phone_number                 String?
+  mother_home_number                  String?
   parent_marital_status               MARITAL        @default(MARRIED)
-  student_mobile_number               String?        @db.VarChar(255)
-  student_home_number                 String?        @db.VarChar(255)
-  original_residence_address_area     String?        @db.VarChar(255)
-  original_residence_address_street   String?        @db.VarChar(255)
-  original_residence_address_building String?        @db.VarChar(255)
-  original_residence_address_floor    String?        @db.VarChar(255)
-  current_residence_address_area      String?        @db.VarChar(255)
-  current_residence_address_street    String?        @db.VarChar(255)
-  current_residence_address_building  String?        @db.VarChar(255)
-  current_residence_address_floor     String?        @db.VarChar(255)
+  student_mobile_number               String?
+  student_home_number                 String?
+  original_residence_address_area     String?
+  original_residence_address_street   String?
+  original_residence_address_building String?
+  original_residence_address_floor    String?
+  current_residence_address_area      String?
+  current_residence_address_street    String?
+  current_residence_address_building  String?
+  current_residence_address_floor     String?
   preserved_parts                     String?
   parts_tested_by_the_endowments      String?
-  image_url                           String?        @db.VarChar(2048)
-  groups                              StudentGroup[] // Many-to-many relationship with groups
+  image_url                           String?
+  groups                              StudentGroup[]
   created_at                          DateTime       @default(now())
   updated_at                          DateTime?      @updatedAt
   Attendance                          Attendance[]
@@ -58,35 +59,32 @@ model student {
 
 model teacher {
   id                                 Int            @id @default(autoincrement())
-  educational_level                  String? // Nullable fields
-  university_name                    String? // Nullable fields
-  college_name                       String? // Nullable fields
-  first_name                         String? // Nullable fields
-  last_name                          String? // Nullable fields
-  birth_date                         DateTime? // Nullable fields
-  mobile_phone_number                String         @unique // Nullable fields 
-  in_another_mosque                  Boolean? // Nullable fields
-  other_mosque_names                 String? // Nullable fields
-  special_talent                     String? // Nullable fields
-  father_name                        String? // Nullable fields
-  current_residence_address_area     String? // Nullable fields
-  current_residence_address_street   String? // Nullable fields
-  current_residence_address_building String? // Nullable fields
-  preserved_parts                    Json? // JSON fields
-  parts_tested_by_the_endowments     Json? // JSON fields
-  image_url                          String? // Nullable fields
-  is_mojaz                           Boolean? // Nullable fields
-  is_working                         Boolean? // Nullable fields
-  job_role                           String? // Nullable fields
-  workplace_name                     String? // Nullable fields
-  groups                             TeacherGroup[] // Many-to-many relationship with groups
+  educational_level                  String?
+  university_name                    String?
+  college_name                       String?
+  first_name                         String?
+  last_name                          String?
+  birth_date                         DateTime?
+  mobile_phone_number                String         @unique
+  in_another_mosque                  Boolean?
+  other_mosque_names                 String?
+  special_talent                     String?
+  father_name                        String?
+  current_residence_address_area     String?
+  current_residence_address_street   String?
+  current_residence_address_building String?
+  preserved_parts                    Json?
+  parts_tested_by_the_endowments     Json?
+  image_url                          String?
+  is_mojaz                           Boolean?
+  is_working                         Boolean?
+  job_role                           String?
+  workplace_name                     String?
+  groups                             TeacherGroup[]
   password                           String
   role                               Role           @default(TEACHER)
-
-  created_at DateTime  @default(now())
-  updated_at DateTime? @updatedAt
-
-  @@map("teachers") // Optional: map to a custom table name
+  created_at                         DateTime       @default(now())
+  updated_at                         DateTime?      @updatedAt
 }
 
 model Group {
@@ -96,20 +94,17 @@ model Group {
   currentTeacherId Int?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
-
-  students   StudentGroup[]
-  teachers   TeacherGroup[]
-  campaigns  GroupCampaigns[]
-  Attendance Attendance[]
-
-  @@map("groups") // Optional: map to a custom table name
+  students         StudentGroup[]
+  teachers         TeacherGroup[]
+  campaigns        GroupCampaigns[]
+  Attendance       Attendance[]
 }
 
 model Campaign {
   id                    Int       @id @default(autoincrement())
   name                  String
   startDate             DateTime  @default(now())
-  endDate               DateTime? @default(now())
+  endDate               DateTime?
   assignEndDate         DateTime?
   assignStartDate       DateTime? @default(now())
   isCampaignContinous   Boolean   @default(false)
@@ -124,59 +119,46 @@ model Campaign {
   endTime               DateTime?
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
-
-  groups       GroupCampaigns[]
-  StudentGroup StudentGroup[]
-  Attendance   Attendance[]
-
-  @@map("campaigns") // Optional: map to a custom table name
+  groups                GroupCampaigns[]
+  StudentGroup          StudentGroup[]
+  Attendance            Attendance[]
 }
 
-// Pivot table for Group-Campaign many-to-many relationship
 model GroupCampaigns {
   groupId    Int
   campaignId Int
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-
-  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   @@id([groupId, campaignId])
-  @@map("GroupCampaigns") // Optional: map to a custom table name
 }
 
-// Pivot table for Student-Group many-to-many relationship
 model StudentGroup {
-  studentId  Int      @db.UnsignedInt // Updated to match student.id's type
+  studentId  Int
   groupId    Int
   campaignId Int
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-
-  student  student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-
+  student    student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   @@id([studentId, groupId, campaignId])
 }
 
-// Pivot table for Teacher-Group many-to-many relationship
 model TeacherGroup {
   teacherId  Int
   groupId    Int
   created_at DateTime @default(now())
   updated_at DateTime @updatedAt
-
-  teacher teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  group   Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-
+  teacher    teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  group      Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
   @@id([teacherId, groupId])
 }
 
 model Attendance {
   id         Int      @id @default(autoincrement())
-  studentId  Int      @db.UnsignedInt // Change this to match student.id
+  studentId  Int
   groupId    Int
   campaignId Int
   takenDate  DateTime @default(now())
@@ -184,12 +166,9 @@ model Attendance {
   status     String
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
-  student  student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-
-  @@map("attendance")
+  student    student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 }
 
 enum STATUS {

@@ -119,7 +119,7 @@ export class GroupService {
           groupId: Number(params.groupId),
           campaignId: Number(params.campaignId),
           takenDate: new Date(day).toISOString(),
-          delayTime: -1,
+          delayTime: -1,    
           status: 'NOT_TAKEN'
         }
       })

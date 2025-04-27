@@ -124,6 +124,9 @@ export class GroupService {
         }
       })
     }
+    console.log('test for test')
+    console.log(attendDays)
+
 
     return this.prisma.studentGroup.create({
       data: {

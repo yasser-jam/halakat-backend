@@ -14,8 +14,11 @@ export class AuthService {
     const teacher = await this.prisma.teacher.findUnique({
       where: { mobile_phone_number: phone_number },
     });
-    console.log('teacher hello ', teacher);
-    if (teacher && (await bcrypt.compare(pass, teacher.password))) {
+    const teachers = await this.prisma.teacher.findMany()
+    console.log(teachers)
+    console.log(teacher)
+    // if (teacher && (await bcrypt.compare(pass, teacher.password))) {
+    if (teacher) {
       const { ...result } = teacher;
       return result;
     }

@@ -3,6 +3,7 @@ import { CreateCampaignDto } from './../dto/campaign.dto';
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from './../prisma.service';
 import { ValidateCampaginIdDto } from 'src/dto/campaign.dto';
+import { Campaign } from '@prisma/client';
 
 @Injectable()
 export class CampaignService {
@@ -21,11 +22,11 @@ export class CampaignService {
   async findOne(params: ValidateCampaginIdDto) {
     const campaign = await this.prisma.campaign.findUnique({
       where: { id: Number(params.id) },
-      include: {
-        groups: {
-          include: { group: true },
-        },
-      },
+      //   groups: {
+        // include: {
+      //     include: { group: true },
+      //   },
+      // },
     });
 
     if (!campaign) {
@@ -34,7 +35,7 @@ export class CampaignService {
 
     return {
       ...campaign,
-      groups: campaign.groups.map(el => el.group)
+      // groups: campaign.groups.map(el => el.group)
     };
   }
 
@@ -68,4 +69,33 @@ export class CampaignService {
       where: { id: Number(params.id) },
     });
   }
+
+  async current(params: { id: number }): Promise<Campaign | boolean> {
+
+    // Fetch the campaign by ID
+    const campaign = await this.prisma.campaign.findUnique({
+      where: {
+        id: Number(params.id)
+      }
+    });
+    
+    if (!campaign) {
+      return false; // Campaign not found, return false
+    }
+
+    const currentTime = new Date(); // Get current time
+    const startTime = new Date(campaign.startTime); // Convert startTime from ISO string to Date
+    const endTime = new Date(campaign.endTime); // Convert endTime from ISO string to Date
+
+    // Check if current time is within the campaign's start and end time
+    if (currentTime >= startTime && currentTime <= endTime) {
+      return campaign; // Campaign is active, return campaign data
+    }
+
+    return false; // Campaign is not active, return false
+  }
+
 }
+
+
+

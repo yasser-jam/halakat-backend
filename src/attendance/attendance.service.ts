@@ -72,7 +72,7 @@ export class AttendanceService {
       })
     }
   }
-
+r
   async update(id: number, updateAttendanceDto: UpdateAttendanceDto) {
     const attendance = await this.prisma.attendance.findUnique({
       where: { id: Number(id) },
@@ -87,4 +87,18 @@ export class AttendanceService {
       data: updateAttendanceDto,
     });
   }
+
+  // get the records depending on campaignId and groupID and the date of today
+  async getByGroup(campaignId: number, groupId: number) {
+    const res = await this.prisma.attendance.findMany({
+      where: {
+        campaignId: Number(campaignId),
+        groupId: Number(groupId),
+        takenDate: new Date()
+      }
+    })
+
+    return res
+  }
 }
+

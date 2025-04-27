@@ -113,9 +113,9 @@ model Campaign {
   completeCountApproach String    @default("UNLIMIT_ASSIGN")
   days                  String?   
   timingApproach        String    @default("hours")
-  startTime             DateTime? 
+  startTime             String? 
   status                Boolean   @default(false)
-  endTime               DateTime? 
+  endTime               String? 
   createdAt             DateTime  @default(now()) @db.Timestamp(6)
   updatedAt             DateTime  @updatedAt @db.Timestamp(6)
   groups                GroupCampaigns[] 

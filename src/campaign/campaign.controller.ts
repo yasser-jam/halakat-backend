@@ -51,7 +51,7 @@ export class CampaignsController {
       },
     },
   })
-  @Post(':campaignId')
+  @Post()
   async create(@Body() createCampaignDto: CreateCampaignDto) {
     return this.campaignService.create(createCampaignDto);
   }
@@ -89,5 +89,14 @@ export class CampaignsController {
   @Delete(':id')
   async delete(@Param() params: ValidateCampaginIdDto) {
     return this.campaignService.delete(params);
+  }
+
+  @ApiOperation({ summary: 'Get the current campaign' })
+  @ApiResponse({
+    status: 200,
+  })
+  @Get('/current/:id')
+  async current(@Param() params: ValidateCampaginIdDto) {
+    return this.campaignService.current(params);
   }
 }

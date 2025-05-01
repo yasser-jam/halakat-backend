@@ -8,166 +8,219 @@ datasource db {
 }
 
 model student {
-  id                                  Int            @id @default(autoincrement())
-  current_mosque_name                 String?       
-  educational_class                   Int?          
-  first_name                          String?       
-  last_name                           String?       
-  birth_date                          DateTime?     
-  student_mobile                      String?       
-  school                              String?       
-  in_another_mosque                   Boolean        @default(false)
-  other_mosque_names                  String?       
-  student_health_status               String?       
-  special_talent                      String?       
-  father_name                         String?       
-  father_status                       STATUS         @default(ALIVE)
-  father_job                          String?       
-  father_income_level                 String?       
-  father_education_level              String?       
-  father_health_status                String?       
-  father_phone_number                 String?       
-  father_work_number                  String?       
-  mother_name                         String?       
-  mother_status                       STATUS         @default(ALIVE)
-  mother_job                          String?       
-  mother_income_level                 String?       
-  mother_education_level              String?       
-  mother_health_status                String?       
-  mother_phone_number                 String?       
-  mother_home_number                  String?       
-  parent_marital_status               MARITAL        @default(MARRIED)
-  student_mobile_number               String?       
-  student_home_number                 String?       
-  original_residence_address_area     String?       
-  original_residence_address_street   String?       
-  original_residence_address_building String?       
-  original_residence_address_floor    String?       
-  current_residence_address_area      String?       
-  current_residence_address_street    String?       
-  current_residence_address_building  String?       
-  current_residence_address_floor     String?       
-  preserved_parts                     String?       
-  parts_tested_by_the_endowments      String?       
-  image_url                           String?       
-  groups                              StudentGroup[] 
-  created_at                          DateTime       @default(now()) @db.Timestamp(6)
-  updated_at                          DateTime?      @updatedAt @db.Timestamp(6)
-  Attendance                          Attendance[]   
+  id                                  Int             @id @default(autoincrement())
+  current_mosque_name                 String?
+  educational_class                   Int?
+  first_name                          String?
+  last_name                           String?
+  birth_date                          DateTime?
+  student_mobile                      String?
+  school                              String?
+  in_another_mosque                   Boolean         @default(false)
+  other_mosque_names                  String?
+  student_health_status               String?
+  special_talent                      String?
+  father_name                         String?
+  father_status                       STATUS          @default(ALIVE)
+  father_job                          String?
+  father_income_level                 String?
+  father_education_level              String?
+  father_health_status                String?
+  father_phone_number                 String?
+  father_work_number                  String?
+  mother_name                         String?
+  mother_status                       STATUS          @default(ALIVE)
+  mother_job                          String?
+  mother_income_level                 String?
+  mother_education_level              String?
+  mother_health_status                String?
+  mother_phone_number                 String?
+  mother_home_number                  String?
+  parent_marital_status               MARITAL         @default(MARRIED)
+  student_mobile_number               String?
+  student_home_number                 String?
+  original_residence_address_area     String?
+  original_residence_address_street   String?
+  original_residence_address_building String?
+  original_residence_address_floor    String?
+  current_residence_address_area      String?
+  current_residence_address_street    String?
+  current_residence_address_building  String?
+  current_residence_address_floor     String?
+  preserved_parts                     String?
+  parts_tested_by_the_endowments      String?
+  image_url                           String?
+  groups                              StudentGroup[]
+  created_at                          DateTime        @default(now()) @db.Timestamp(6)
+  updated_at                          DateTime?       @updatedAt @db.Timestamp(6)
+  Attendance                          Attendance[]
+  SavingSession                       SavingSession[]
 }
 
 model teacher {
-  id                                 Int            @id @default(autoincrement())
-  educational_level                  String?       
-  university_name                    String?       
-  college_name                       String?       
-  first_name                         String?       
-  last_name                          String?       
-  birth_date                         DateTime?     
-  mobile_phone_number                String         @unique
-  in_another_mosque                  Boolean?      
-  other_mosque_names                 String?       
-  special_talent                     String?       
-  father_name                        String?       
-  current_residence_address_area     String?       
-  current_residence_address_street   String?       
-  current_residence_address_building String?       
-  preserved_parts                    Json?         
-  parts_tested_by_the_endowments     Json?         
-  image_url                          String?       
-  is_mojaz                           Boolean?      
-  is_working                         Boolean?      
-  job_role                           String?       
-  workplace_name                     String?       
-  groups                             TeacherGroup[] 
-  password                           String        
-  role                               Role           @default(TEACHER)
-  created_at                         DateTime       @default(now()) @db.Timestamp(6)
-  updated_at                         DateTime?      @updatedAt @db.Timestamp(6)
+  id                                 Int             @id @default(autoincrement())
+  educational_level                  String?
+  university_name                    String?
+  college_name                       String?
+  first_name                         String?
+  last_name                          String?
+  birth_date                         DateTime?
+  mobile_phone_number                String          @unique
+  in_another_mosque                  Boolean?
+  other_mosque_names                 String?
+  special_talent                     String?
+  father_name                        String?
+  current_residence_address_area     String?
+  current_residence_address_street   String?
+  current_residence_address_building String?
+  preserved_parts                    Json?
+  parts_tested_by_the_endowments     Json?
+  image_url                          String?
+  is_mojaz                           Boolean?
+  is_working                         Boolean?
+  job_role                           String?
+  workplace_name                     String?
+  groups                             TeacherGroup[]
+  password                           String
+  role                               Role            @default(TEACHER)
+  created_at                         DateTime        @default(now()) @db.Timestamp(6)
+  updated_at                         DateTime?       @updatedAt @db.Timestamp(6)
+  SavingSession                      SavingSession[]
 }
 
 model Group {
-  id               Int      @id @default(autoincrement())
-  title            String   
-  class            Int?     
-  currentTeacherId Int?     
-  createdAt        DateTime @default(now()) @db.Timestamp(6)
-  updatedAt        DateTime @updatedAt @db.Timestamp(6)
-  students         StudentGroup[] 
-  teachers         TeacherGroup[] 
-  campaigns        GroupCampaigns[] 
-  Attendance       Attendance[]  
+  id               Int              @id @default(autoincrement())
+  title            String
+  class            Int?
+  currentTeacherId Int?
+  createdAt        DateTime         @default(now()) @db.Timestamp(6)
+  updatedAt        DateTime         @updatedAt @db.Timestamp(6)
+  students         StudentGroup[]
+  teachers         TeacherGroup[]
+  campaigns        GroupCampaigns[]
+  Attendance       Attendance[]
 }
 
 model Campaign {
-  id                    Int       @id @default(autoincrement())
-  name                  String    
-  startDate             DateTime  @default(now()) @db.Timestamp(6)
-  endDate               DateTime? 
-  assignEndDate         DateTime? 
-  assignStartDate       DateTime? @default(now()) @db.Timestamp(6)
-  isCampaignContinous   Boolean   @default(false)
-  limitedStudentsCount  Boolean?  
-  studentsCount         Int?      
-  assignByLink          Boolean?  
-  completeCountApproach String    @default("UNLIMIT_ASSIGN")
-  days                  String?   
-  timingApproach        String    @default("hours")
-  startTime             String? 
-  status                Boolean   @default(false)
-  endTime               String? 
-  createdAt             DateTime  @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime  @updatedAt @db.Timestamp(6)
-  groups                GroupCampaigns[] 
-  StudentGroup          StudentGroup[] 
-  Attendance            Attendance[] 
+  id                    Int              @id @default(autoincrement())
+  name                  String
+  startDate             DateTime         @default(now()) @db.Timestamp(6)
+  endDate               DateTime?
+  assignEndDate         DateTime?
+  assignStartDate       DateTime?        @default(now()) @db.Timestamp(6)
+  isCampaignContinous   Boolean          @default(false)
+  limitedStudentsCount  Boolean?
+  studentsCount         Int?
+  assignByLink          Boolean?
+  completeCountApproach String           @default("UNLIMIT_ASSIGN")
+  days                  String?
+  timingApproach        String           @default("hours")
+  startTime             String?
+  status                Boolean          @default(false)
+  endTime               String?
+  createdAt             DateTime         @default(now()) @db.Timestamp(6)
+  updatedAt             DateTime         @updatedAt @db.Timestamp(6)
+  groups                GroupCampaigns[]
+  StudentGroup          StudentGroup[]
+  Attendance            Attendance[]
+  SavingSession         SavingSession[]
+  Mistake               Mistake[]
 }
 
 model GroupCampaigns {
-  groupId    Int   
-  campaignId Int   
+  groupId    Int
+  campaignId Int
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt @db.Timestamp(6)
   group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
   @@id([groupId, campaignId])
 }
 
 model StudentGroup {
-  studentId  Int   
-  groupId    Int   
-  campaignId Int   
+  studentId  Int
+  groupId    Int
+  campaignId Int
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt @db.Timestamp(6)
   student    student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+
   @@id([studentId, groupId, campaignId])
 }
 
 model TeacherGroup {
-  teacherId  Int   
-  groupId    Int   
+  teacherId  Int
+  groupId    Int
   created_at DateTime @default(now()) @db.Timestamp(6)
   updated_at DateTime @updatedAt @db.Timestamp(6)
-  teacher    teacher @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  group      Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  teacher    teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
   @@id([teacherId, groupId])
 }
 
 model Attendance {
   id         Int      @id @default(autoincrement())
-  studentId  Int   
-  groupId    Int   
-  campaignId Int   
+  studentId  Int
+  groupId    Int
+  campaignId Int
   takenDate  DateTime @default(now()) @db.Timestamp(6)
-  delayTime  Int      
-  status     String   
+  delayTime  Int
+  status     String
   createdAt  DateTime @default(now()) @db.Timestamp(6)
   updatedAt  DateTime @updatedAt @db.Timestamp(6)
   student    student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+}
+
+model SavingSession {
+  id         Int      @id @default(autoincrement())
+  teacherId  Int
+  studentId  Int
+  campaignId Int
+  start      Int
+  end        Int
+  rating     Int
+  duration   Int
+  created_at DateTime @default(now()) @db.Timestamp(6)
+
+  teacher          teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student          student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  campaign         Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  MistakeInSession MistakeInSession[]
+
+  @@index([teacherId])
+  @@index([studentId])
+  @@index([campaignId])
+}
+
+model Mistake {
+  id              Int    @id @default(autoincrement())
+  campaignId      Int
+  title           String
+  removed_points  Int
+
+  campaign         Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  MistakeInSession MistakeInSession[]
+
+  @@index([campaignId])
+}
+
+model MistakeInSession {
+  id              Int @id @default(autoincrement())
+  savingSessionId Int
+  mistakeId       Int
+  page            Int
+
+  savingSession SavingSession @relation(fields: [savingSessionId], references: [id], onDelete: Cascade)
+  mistake       Mistake       @relation(fields: [mistakeId], references: [id], onDelete: Cascade)
+
+  @@index([savingSessionId])
+  @@index([mistakeId])
 }
 
 enum STATUS {

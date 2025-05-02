@@ -178,19 +178,19 @@ model Attendance {
 }
 
 model SavingSession {
-  id         Int      @id @default(autoincrement())
-  teacherId  Int
-  studentId  Int
-  campaignId Int
-  start      Int
-  end        Int
-  rating     Int
-  duration   Int
-  created_at DateTime @default(now()) @db.Timestamp(6)
+  id          Int        @id @default(autoincrement())
+  teacherId   Int
+  studentId   Int
+  campaignId  Int
+  start       Int
+  end         Int
+  rating      Int
+  duration    Int
+  created_at  DateTime    @default(now()) @db.Timestamp(6)
 
-  teacher          teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  student          student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  campaign         Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  teacher     teacher     @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  student     student     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  campaign    Campaign    @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   MistakeInSession MistakeInSession[]
 
   @@index([teacherId])
@@ -199,29 +199,27 @@ model SavingSession {
 }
 
 model Mistake {
-  id              Int    @id @default(autoincrement())
-  campaignId      Int
-  title           String
-  removed_points  Int
+  id             Int            @id @default(autoincrement())
+  campaignId     Int
+  title          String
+  removed_points Int
 
-  campaign         Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  campaign       Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
   MistakeInSession MistakeInSession[]
 
   @@index([campaignId])
 }
 
 model MistakeInSession {
-  id              Int @id @default(autoincrement())
+  id              Int             @id @default(autoincrement())
   savingSessionId Int
   mistakeId       Int
   page            Int
 
-  savingSession SavingSession @relation(fields: [savingSessionId], references: [id], onDelete: Cascade)
-  mistake       Mistake       @relation(fields: [mistakeId], references: [id], onDelete: Cascade)
-
-  @@index([savingSessionId])
-  @@index([mistakeId])
+  savingSession   SavingSession  @relation(fields: [savingSessionId], references: [id], onDelete: Cascade)
+  mistake         Mistake        @relation(fields: [mistakeId], references: [id], onDelete: Cascade)
 }
+
 
 enum STATUS {
   ALIVE

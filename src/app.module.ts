@@ -16,6 +16,7 @@ import { AuthController } from './auth/auth.controller';
 import { AttendanceController } from './attendance/attendance.controller';
 import { AttendanceService } from './attendance/attendance.service';
 import { MistakeModule } from './mistake/mistake.module';
+import { SavingSessionModule } from './saving-session/saving-session.module';
 
 @Module({
   controllers: [
@@ -37,6 +38,6 @@ import { MistakeModule } from './mistake/mistake.module';
     CampaignService,
     AttendanceService,
   ],
-  imports: [AuthModule, MistakeModule],
+  imports: [AuthModule, MistakeModule, SavingSessionModule],
 })
 export class AppModule {}

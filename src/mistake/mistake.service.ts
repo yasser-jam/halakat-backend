@@ -70,4 +70,52 @@ export class MistakeService {
       where: { campaignId: Number(campaignId) },
     });
   }
+
+  async assertCampaignMistakes(
+    campaignId: number,
+    mistakes: Array<{ id?: number; title: string; removed_points: number }>,
+  ) {
+    // 1. Get current mistakes for this campaign
+    const existing = await this.prisma.mistake.findMany({
+      where: { campaignId },
+    });
+
+    const incomingIds = new Set(mistakes.filter((m) => m.id).map((m) => m.id));
+    const existingIds = new Set(existing.map((m) => m.id));
+
+    // 2. Update or create
+    for (const item of mistakes) {
+      if (item.id && existingIds.has(item.id)) {
+        const current = existing.find((m) => m.id === item.id);
+        if (
+          current?.title !== item.title ||
+          current?.removed_points !== item.removed_points
+        ) {
+          await this.prisma.mistake.update({
+            where: { id: item.id },
+            data: {
+              title: item.title,
+              removed_points: item.removed_points,
+            },
+          });
+        }
+      } else {
+        await this.prisma.mistake.create({
+          data: {
+            campaignId,
+            title: item.title,
+            removed_points: item.removed_points,
+          },
+        });
+      }
+    }
+
+    // 3. Delete mistakes not in incoming list
+    const toDelete = existing.filter((m) => !incomingIds.has(m.id));
+    for (const m of toDelete) {
+      await this.prisma.mistake.delete({ where: { id: m.id } });
+    }
+
+    return { message: 'Campaign mistakes synced successfully.' };
+  }
 }

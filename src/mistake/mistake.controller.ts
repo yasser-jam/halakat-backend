@@ -10,6 +10,7 @@ import {
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { MistakeService } from './mistake.service';
 import {
+  AssertCampaignMistakesDto,
   CreateMistakeDto,
   UpdateMistakeDto,
   ValidateMistakeIdDto,
@@ -68,5 +69,17 @@ export class MistakeController {
   @ApiParam({ name: 'campaignId', type: Number })
   async getMistakesByCampaign(@Param('campaignId') campaignId: number) {
     return this.mistakeService.findByCampaign(campaignId);
+  }
+
+  @ApiTags('Mistakes')
+  @Post('assert')
+  @ApiOperation({ summary: 'Assert campaign mistakes' })
+  @ApiResponse({ status: 200, description: 'Mistakes synced successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid input' })
+  async assertCampaignMistakes(@Body() body: AssertCampaignMistakesDto) {
+    return this.mistakeService.assertCampaignMistakes(
+      body.campaignId,
+      body.mistakes as any,
+    );
   }
 }

@@ -122,6 +122,10 @@ export class FilterSavingSessionDto {
   mistakeId?: number;
 
   @IsOptional()
+  @IsInt()
+  campaignId?: number;
+
+  @IsOptional()
   @IsDateString()
   dateFrom?: string;
 

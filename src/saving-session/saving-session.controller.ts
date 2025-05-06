@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Get, Param, Query } from '@nestjs/common';
+import { Controller, Post, Body, Get, Param, Query, Delete } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -46,6 +46,7 @@ export class SavingSessionController {
   @ApiQuery({ name: 'studentId', required: false, type: Number })
   @ApiQuery({ name: 'teacherId', required: false, type: Number })
   @ApiQuery({ name: 'mistakeId', required: false, type: Number })
+  @ApiQuery({ name: 'campaignId', required: false, type: Number })
   @ApiQuery({
     name: 'dateFrom',
     required: false,
@@ -56,7 +57,7 @@ export class SavingSessionController {
     name: 'dateTo',
     required: false,
     type: String,
-    example: '2024-12-31',
+    example: '2025-12-31',
   })
   filter(@Query() query: FilterSavingSessionDto) {
     return this.savingSessionService.filter(query);
@@ -78,4 +79,21 @@ export class SavingSessionController {
   async findOne(@Param('id') id: number) {
     return this.savingSessionService.getById(id);
   }
+
+    @ApiOperation({ summary: 'Delete Saving Session' })
+  @ApiResponse({
+    status: 200,
+    description: 'Deleted Successfully',
+  })
+  @ApiParam({
+    name: 'id',
+    required: true,
+    type: Number,
+    description: 'The ID of the saving session',
+  })
+  @Delete(':id')
+  async remove(@Param('id') id: number) {
+    return this.savingSessionService.remove(Number(id));
+  }
+
 }

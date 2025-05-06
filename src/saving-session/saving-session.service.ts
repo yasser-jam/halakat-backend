@@ -63,11 +63,13 @@ export class SavingSessionService {
   }
 
   async filter(dto: FilterSavingSessionDto) {
-    const { studentId, teacherId, mistakeId, dateFrom, dateTo } = dto;
+    const { studentId, teacherId, mistakeId, campaignId, dateFrom, dateTo } =
+      dto;
 
     const where: Prisma.SavingSessionWhereInput = {
       ...(studentId ? { studentId: Number(studentId) } : {}),
       ...(teacherId ? { teacherId: Number(teacherId) } : {}),
+      ...(campaignId ? { campaignId: Number(campaignId) } : {}),
       ...(dateFrom || dateTo
         ? {
             created_at: {
@@ -115,5 +117,12 @@ export class SavingSessionService {
         },
       },
     });
+  }
+
+
+  async remove(id: number) {
+    return this.prisma.savingSession.delete({
+      where: { id }
+    })
   }
 }

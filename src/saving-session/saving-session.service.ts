@@ -50,7 +50,7 @@ export class SavingSessionService {
 
   async getById(id: number) {
     return this.prisma.savingSession.findUnique({
-      where: { id },
+      where: { id: Number(id) },
       include: {
         MistakeInSession: {
           include: { mistake: true },

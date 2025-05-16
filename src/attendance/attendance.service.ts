@@ -13,6 +13,9 @@ export class AttendanceService {
         groupId: Number(groupId),
         campaignId: Number(campaignId),
       },
+      include: {
+        student: true
+      }
     });
   }
 
@@ -95,6 +98,9 @@ r
         campaignId: Number(campaignId),
         groupId: Number(groupId),
         takenDate: new Date()
+      },
+      include: {
+        student: true
       }
     })
 

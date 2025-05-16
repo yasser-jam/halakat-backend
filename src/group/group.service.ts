@@ -53,13 +53,13 @@ export class GroupService {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const dayMap = {
-      sun: 0,
-      mon: 1,
-      tue: 2,
-      wed: 3,
-      thu: 4,
-      fri: 5,
-      sat: 6,
+      sunday: 0,
+      monday: 1,
+      tuesday: 2,
+      wedensday: 3,
+      thursday: 4,
+      friday: 5,
+      saturday: 6,
     };
 
     const selectedDays = days?.map((day) => dayMap[day]);
@@ -110,9 +110,17 @@ export class GroupService {
     const days = campaign.days.split(',');
 
 
+    
     const attendDays = this.getMatchingDaysBetweenDates(String(startDate), String(endDate), days as any)
+    console.log(startDate);
+    console.log(endDate);
+    console.log(days);
 
     for (const day of attendDays) {
+      
+      console.log('see the days');
+      console.log(day);
+      
       await this.prisma.attendance.create({
         data: {
           studentId: Number(params.studentId),
@@ -124,8 +132,6 @@ export class GroupService {
         }
       })
     }
-    console.log('test for test')
-    console.log(attendDays)
 
 
     return this.prisma.studentGroup.create({

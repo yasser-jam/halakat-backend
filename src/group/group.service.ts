@@ -48,8 +48,11 @@ export class GroupService {
     }));
   }
 
-
-  getMatchingDaysBetweenDates = (startDate: string, endDate: string, days: string[]) => {
+  getMatchingDaysBetweenDates = (
+    startDate: string,
+    endDate: string,
+    days: string[],
+  ) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const dayMap = {
@@ -109,30 +112,30 @@ export class GroupService {
     const endDate = campaign.endDate;
     const days = campaign.days.split(',');
 
-
-    
-    const attendDays = this.getMatchingDaysBetweenDates(String(startDate), String(endDate), days as any)
+    const attendDays = this.getMatchingDaysBetweenDates(
+      String(startDate),
+      String(endDate),
+      days as any,
+    );
     console.log(startDate);
     console.log(endDate);
     console.log(days);
 
     for (const day of attendDays) {
-      
       console.log('see the days');
       console.log(day);
-      
+
       await this.prisma.attendance.create({
         data: {
           studentId: Number(params.studentId),
           groupId: Number(params.groupId),
           campaignId: Number(params.campaignId),
           takenDate: new Date(day).toISOString(),
-          delayTime: -1,    
-          status: 'NOT_TAKEN'
-        }
-      })
+          delayTime: -1,
+          status: 'NOT_TAKEN',
+        },
+      });
     }
-
 
     return this.prisma.studentGroup.create({
       data: {
@@ -289,5 +292,59 @@ export class GroupService {
     return this.prisma.group.delete({
       where: { id: Number(params.id) },
     });
+  }
+
+  async getGroupById(groupId: number) {
+    const group = await this.prisma.group.findUnique({
+      where: {
+        id: Number(groupId),
+      },
+      include: {
+        teachers: {
+          include: {
+            teacher: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                image_url: true,
+              },
+            },
+          },
+        },
+        students: {
+          include: {
+            student: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                image_url: true,
+                educational_class: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${groupId} not found`);
+    }
+
+    // Map the response to a cleaner format
+    return {
+      id: group.id,
+      title: group.title,
+      class: group.class,
+      currentTeacher: group.teachers[0]?.teacher || null,
+      students: group.students.map((sg) => ({
+        id: sg.student.id,
+        firstName: sg.student.first_name,
+        lastName: sg.student.last_name,
+        profileImage: sg.student.image_url,
+        class: sg.student.educational_class,
+      })),
+    };
   }
 }

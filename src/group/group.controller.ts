@@ -115,4 +115,14 @@ export class GroupsController {
   async delete(@Param() params: ValidateGroupIdDto) {
     return this.groupService.delete(params);
   }
+
+  @ApiOperation({ summary: 'Get group details by ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns group details including teacher and students',
+  })
+  @Get(':id')
+  async getGroupById(@Param('id') id: number) {
+    return this.groupService.getGroupById(id);
+  }
 }

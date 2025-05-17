@@ -106,5 +106,54 @@ r
 
     return res
   }
+
+  async getGroupAttendanceStats(campaignId: number, startDate: Date, endDate: Date) {
+    const attendances = await this.prisma.attendance.findMany({
+      where: {
+        campaignId: Number(campaignId),
+        takenDate: {
+          gte: startDate,
+          lte: endDate
+        }
+      },
+      select: {
+        campaignId: true,
+        student: true,
+        group: true,
+        groupId: true,
+        status: true,
+        studentId: true,
+      }
+    });
+    
+    // Group the attendances by group
+    const groupStats = new Map();
+
+    for (const attendance of attendances) {
+      const groupId = attendance.groupId;
+      if (!groupStats.has(groupId)) {
+        groupStats.set(groupId, {
+          groupId,
+          groupName: attendance.group.title,
+          attended: 0,
+          missed: 0,
+          delayed: 0
+        });
+      }
+
+      const stats = groupStats.get(groupId);
+      
+      if (attendance.status === 'ATTEND') {
+        stats.attended++;
+      } else if (attendance.status === 'MISSED') {
+        stats.missed++;
+      } else if (attendance.status === 'DELAY') {
+        stats.delayed++;
+      }
+    }
+
+    return Array.from(groupStats.values());
+  }
 }
+
 

@@ -1,5 +1,5 @@
-import { Controller, Get, Body, Param, Put, Post } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
+import { Controller, Get, Body, Param, Put, Post, Query } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
 import { UpdateAttendanceDto } from './attendance.dto';
 
@@ -63,5 +63,27 @@ export class AttendanceController {
     @Param('groupId') groupId: number,
   ) {
     return this.attendanceService.getByGroup(campaignId, groupId);
+  }
+
+  @ApiOperation({
+    summary: 'Get attendance statistics for all groups in a campaign',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns attendance statistics for each group',
+  })
+  @ApiQuery({ name: 'startDate', required: true, type: Date })
+  @ApiQuery({ name: 'endDate', required: true, type: Date })
+  @Get('stats/:campaignId')
+  async getGroupStats(
+    @Param('campaignId') campaignId: number,
+    @Query('startDate') startDate: string,
+    @Query('endDate') endDate: string,
+  ) {
+    return this.attendanceService.getGroupAttendanceStats(
+      campaignId,
+      new Date(startDate),
+      new Date(endDate),
+    );
   }
 }

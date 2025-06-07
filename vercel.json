@@ -9,6 +9,6 @@
         "dest": "src/main.ts",
         "methods": ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"]
     }],
-    "buildCommand": "npm run build",
+    "buildCommand": "npm run custom-build",
     "installCommand": "npm install --force"
 }

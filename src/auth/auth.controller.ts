@@ -67,7 +67,7 @@ export class AuthController {
     // get teacher info
     const teacher = this.teacherService.findInfo({
       id: user.id,
-      campaign_id: 1,
+      campaign_id: 2,
     });
     return teacher;
   }

@@ -40,6 +40,7 @@ async function bootstrap() {
     `🚀 Application is running on:  http://localhost:${3002}`,
     'NestApplication',
   );
+  Logger.log(`🚀🚀🚀`);
   Logger.log(
     `😎 Swagger UI on: http://localhost:${3002}/${docsPath}`,
     'NestApplication',

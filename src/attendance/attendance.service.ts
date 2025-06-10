@@ -155,6 +155,17 @@ r
     return Array.from(groupStats.values());
   }
 
+  // List attendance records by studentId, campaignId, and groupId
+  async getByStudentAndGroupAndCampaign(studentId: number, campaignId: number, groupId: number) {
+    return this.prisma.attendance.findMany({
+      where: {
+        studentId: Number(studentId),
+        campaignId: Number(campaignId),
+        groupId: Number(groupId),
+      }
+    });
+  }
+
 }
 
 

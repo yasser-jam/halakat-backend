@@ -86,4 +86,24 @@ export class AttendanceController {
       new Date(endDate),
     );
   }
+
+  @ApiOperation({
+    summary: 'List Attendance Records for student, group, and campaign',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'List attendance by student, group, and campaign',
+  })
+  @Get('attendance/student/:campaignId/:groupId/:studentId')
+  async listByStudentGroupCampaign(
+    @Param('campaignId') campaignId: number,
+    @Param('groupId') groupId: number,
+    @Param('studentId') studentId: number,
+  ) {
+    return this.attendanceService.getByStudentAndGroupAndCampaign(
+      studentId,
+      campaignId,
+      groupId,
+    );
+  }
 }

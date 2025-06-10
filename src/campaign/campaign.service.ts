@@ -95,6 +95,27 @@ export class CampaignService {
     return false; // Campaign is not active, return false
   }
 
+  async findByTeacher(teacherId: number) {
+    // Find all groupIds for this teacher
+    const teacherGroups = await this.prisma.teacherGroup.findMany({
+      where: { teacherId: Number(teacherId) },
+      select: { groupId: true },
+    });
+    const groupIds = teacherGroups.map(tg => tg.groupId);
+    if (groupIds.length === 0) return [];
+    // Find all campaignIds for these groups
+    const groupCampaigns = await this.prisma.groupCampaigns.findMany({
+      where: { groupId: { in: groupIds } },
+      select: { campaignId: true },
+    });
+    const campaignIds = groupCampaigns.map(gc => gc.campaignId);
+    if (campaignIds.length === 0) return [];
+    // Return all campaigns for these campaignIds
+    return this.prisma.campaign.findMany({
+      where: { id: { in: campaignIds } },
+    });
+  }
+
 }
 
 

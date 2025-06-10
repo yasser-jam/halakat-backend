@@ -99,4 +99,15 @@ export class CampaignsController {
   async current(@Param() params: ValidateCampaginIdDto) {
     return this.campaignService.current(params);
   }
+
+  @ApiOperation({ summary: 'List all campaigns by teacher' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return all campaigns for the given teacher',
+    type: [CreateCampaignDto],
+  })
+  @Get('/byteacher/:teacherId')
+  async findByTeacher(@Param('teacherId') teacherId: number) {
+    return this.campaignService.findByTeacher(Number(teacherId));
+  }
 }

@@ -110,4 +110,15 @@ export class CampaignsController {
   async findByTeacher(@Param('teacherId') teacherId: number) {
     return this.campaignService.findByTeacher(Number(teacherId));
   }
+
+  @ApiOperation({ summary: 'List all campaigns by student' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return all campaigns for the given student',
+    type: [CreateCampaignDto],
+  })
+  @Get('/bystudent/:studentId')
+  async findByStudent(@Param('studentId') studentId: number) {
+    return this.campaignService.findByStudent(Number(studentId));
+  }
 }

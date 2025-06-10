@@ -116,6 +116,20 @@ export class CampaignService {
     });
   }
 
+  async findByStudent(studentId: number) {
+    // Find all campaignIds for this student
+    const studentGroups = await this.prisma.studentGroup.findMany({
+      where: { studentId: Number(studentId) },
+      select: { campaignId: true },
+    });
+    const campaignIds = studentGroups.map(sg => sg.campaignId);
+    if (campaignIds.length === 0) return [];
+    // Return all campaigns for these campaignIds
+    return this.prisma.campaign.findMany({
+      where: { id: { in: campaignIds } },
+    });
+  }
+
 }
 
 

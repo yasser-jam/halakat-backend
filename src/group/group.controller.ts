@@ -125,4 +125,33 @@ export class GroupsController {
   async getGroupById(@Param('id') id: number) {
     return this.groupService.getGroupById(id);
   }
+
+  @ApiOperation({ summary: 'List all groups by teacher' })
+  @ApiResponse({
+    status: 200,
+    description: 'Return all groups for the given teacher',
+    type: [GroupListDto],
+  })
+  @Get('/byteacher/:teacherId')
+  async findByTeacher(@Param('teacherId') teacherId: number) {
+    return this.groupService.findByTeacher(Number(teacherId));
+  }
+
+  @ApiOperation({ summary: 'List all groups by teacher and campaign' })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Return all groups for the given teacher in the given campaign',
+    type: [GroupListDto],
+  })
+  @Get('/byteacher/:teacherId/campaign/:campaignId')
+  async findByTeacherAndCampaign(
+    @Param('teacherId') teacherId: number,
+    @Param('campaignId') campaignId: number,
+  ) {
+    return this.groupService.findByTeacherAndCampaign(
+      Number(teacherId),
+      Number(campaignId),
+    );
+  }
 }

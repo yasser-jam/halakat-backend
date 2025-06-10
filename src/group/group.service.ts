@@ -347,4 +347,63 @@ export class GroupService {
       })),
     };
   }
+
+  async findByTeacher(teacherId: number) {
+    // Find all groupIds for this teacher
+    const teacherGroups = await this.prisma.teacherGroup.findMany({
+      where: { teacherId: Number(teacherId) },
+      select: { groupId: true },
+    });
+    const groupIds = teacherGroups.map(tg => tg.groupId);
+    if (groupIds.length === 0) return [];
+    // Return all groups for these groupIds, including students
+    const groups = await this.prisma.group.findMany({
+      where: { id: { in: groupIds } },
+      include: {
+        students: {
+          include: {
+            student: true,
+          },
+        },
+      },
+    });
+    // Map students to a flat array of student info for each group
+    return groups.map(group => ({
+      ...group,
+      students: group.students.map(sg => sg.student),
+    }));
+  }
+
+  async findByTeacherAndCampaign(teacherId: number, campaignId: number) {
+    // Find all groupIds for this teacher
+    const teacherGroups = await this.prisma.teacherGroup.findMany({
+      where: { teacherId: Number(teacherId) },
+      select: { groupId: true },
+    });
+    const groupIds = teacherGroups.map(tg => tg.groupId);
+    if (groupIds.length === 0) return [];
+    // Find all groupIds for this campaign
+    const groupCampaigns = await this.prisma.groupCampaigns.findMany({
+      where: { campaignId: Number(campaignId), groupId: { in: groupIds } },
+      select: { groupId: true },
+    });
+    const filteredGroupIds = groupCampaigns.map(gc => gc.groupId);
+    if (filteredGroupIds.length === 0) return [];
+    // Return all groups for these groupIds, including students
+    const groups = await this.prisma.group.findMany({
+      where: { id: { in: filteredGroupIds } },
+      include: {
+        students: {
+          include: {
+            student: true,
+          },
+        },
+      },
+    });
+    // Map students to a flat array of student info for each group
+    return groups.map(group => ({
+      ...group,
+      students: group.students.map(sg => sg.student),
+    }));
+  }
 }

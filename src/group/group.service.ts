@@ -406,4 +406,19 @@ export class GroupService {
       students: group.students.map(sg => sg.student),
     }));
   }
+
+  async findByStudentAndCampaign(studentId: number, campaignId: number) {
+    // Find all groupIds for this student in the given campaign
+    const studentGroups = await this.prisma.studentGroup.findMany({
+      where: { studentId: Number(studentId), campaignId: Number(campaignId) },
+      select: { groupId: true },
+    });
+    const groupIds = studentGroups.map(sg => sg.groupId);
+    if (groupIds.length === 0) return [];
+    // Return all groups for these groupIds, including students
+    const groups = await this.prisma.group.findMany({
+      where: { id: { in: groupIds } }
+    });
+    return groups
+  }
 }

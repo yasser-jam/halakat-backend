@@ -154,4 +154,24 @@ export class GroupsController {
       Number(campaignId),
     );
   }
+
+  @ApiOperation({ summary: 'List all groups by student and campaign' })
+  @ApiParam({ name: 'studentId', type: Number })
+  @ApiParam({ name: 'campaignId', type: Number })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Return all groups for the given student in the given campaign',
+    type: [GroupListDto],
+  })
+  @Get('/bystudent/:studentId/campaign/:campaignId')
+  async findByStudentAndCampaign(
+    @Param('studentId') studentId: number,
+    @Param('campaignId') campaignId: number,
+  ) {
+    return this.groupService.findByStudentAndCampaign(
+      Number(studentId),
+      Number(campaignId),
+    );
+  }
 }

@@ -14,10 +14,20 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    const user = await this.prisma.teacher.findUnique({
-      where: { id: payload.sub },
-    });
-    if (!user) throw new UnauthorizedException();
-    return user;
+    const { sub, userType } = payload;
+
+    if (userType === 'TEACHER') {
+      const user = await this.prisma.teacher.findUnique({ where: { id: sub } });
+      if (!user) throw new UnauthorizedException();
+      return { ...user, userType };
+    }
+
+    if (userType === 'STUDENT') {
+      const user = await this.prisma.student.findUnique({ where: { id: sub } });
+      if (!user) throw new UnauthorizedException();
+      return { ...user, userType };
+    }
+
+    throw new UnauthorizedException('Invalid user type');
   }
 }

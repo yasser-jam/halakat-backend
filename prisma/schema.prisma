@@ -15,7 +15,7 @@ model student {
   first_name                          String?
   last_name                           String?
   birth_date                          DateTime?
-  student_mobile                      String?
+  student_mobile                      String         @unique // Made unique
   school                              String?
   in_another_mosque                   Boolean         @default(false)
   other_mosque_names                  String?
@@ -51,12 +51,14 @@ model student {
   preserved_parts                     String?
   parts_tested_by_the_endowments      String?
   image_url                           String?
+  password                            String?         // Added for auth
   groups                              StudentGroup[]
   created_at                          DateTime        @default(now()) @db.Timestamp(6)
   updated_at                          DateTime?       @updatedAt @db.Timestamp(6)
   Attendance                          Attendance[]
   SavingSession                       SavingSession[]
 }
+
 
 model teacher {
   id                                 Int             @id @default(autoincrement())

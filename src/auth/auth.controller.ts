@@ -34,6 +34,16 @@ export class AuthController {
     return this.authService.login(user);
   }
 
+  @Post('student-login')
+  async studentLogin(@Body() body: LoginDto) {
+    const user = await this.authService.validateStudent(
+      body.mobile_phone_number,
+      body.password,
+    );
+    if (!user) throw new UnauthorizedException('Invalid credentials');
+    return this.authService.studentLogin(user);
+  }
+
   @Post('admin/login')
   async adminLogin(@Body() body: LoginDto) {
     const user = await this.authService.validateUser(

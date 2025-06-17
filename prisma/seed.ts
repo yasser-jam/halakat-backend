@@ -50,7 +50,7 @@ async function main() {
       prisma.student.create({
         data: {
           first_name: `Student${i + 1}`,
-          student_mobile: `059000000${i + 1}`,
+          student_mobile: `091111111${i + 1}`,
           groups: {
             create: {
               groupId: group.id,

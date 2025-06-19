@@ -1,5 +1,11 @@
 import { Body, Controller, Get, Param, Post } from '@nestjs/common';
-import { ApiBearerAuth, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 import { EvaluationService } from './evaluation.service';
 import { CreateEvaluationDto } from './evaluation.dto';
 
@@ -12,6 +18,17 @@ export class EvaluationController {
   @Post()
   create(@Body() dto: CreateEvaluationDto) {
     return this.service.create(dto);
+  }
+
+  @Post('assert')
+  @ApiOperation({ summary: 'Assert campaign evaluations' })
+  @ApiResponse({ status: 200, description: 'Evaluations synced successfully.' })
+  @ApiBody({ type: CreateEvaluationDto, isArray: true })
+  async assert(
+    @Param('campaignId') campaignId: number,
+    @Body() body: { campaignId: number; evaluations: CreateEvaluationDto[] },
+  ) {
+    return this.service.assert(body.campaignId, body.evaluations);
   }
 
   @Get()

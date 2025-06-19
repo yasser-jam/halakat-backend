@@ -4,7 +4,7 @@ generator client {
 }
 
 datasource db {
-  provider = "mysql"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -15,7 +15,7 @@ model student {
   first_name                          String?
   last_name                           String?
   birth_date                          DateTime?
-  student_mobile                      String         @unique // Made unique
+  student_mobile                      String          @unique
   school                              String?
   in_another_mosque                   Boolean         @default(false)
   other_mosque_names                  String?
@@ -51,14 +51,13 @@ model student {
   preserved_parts                     String?
   parts_tested_by_the_endowments      String?
   image_url                           String?
-  password                            String?         // Added for auth
+  password                            String?
   groups                              StudentGroup[]
-  created_at                          DateTime        @default(now()) @db.Timestamp(6)
-  updated_at                          DateTime?       @updatedAt @db.Timestamp(6)
+  created_at                          DateTime        @default(now())
+  updated_at                          DateTime?       @updatedAt
   Attendance                          Attendance[]
   SavingSession                       SavingSession[]
 }
-
 
 model teacher {
   id                                 Int             @id @default(autoincrement())
@@ -86,8 +85,8 @@ model teacher {
   groups                             TeacherGroup[]
   password                           String
   role                               Role            @default(TEACHER)
-  created_at                         DateTime        @default(now()) @db.Timestamp(6)
-  updated_at                         DateTime?       @updatedAt @db.Timestamp(6)
+  created_at                         DateTime        @default(now())
+  updated_at                         DateTime?       @updatedAt
   SavingSession                      SavingSession[]
 }
 
@@ -96,8 +95,8 @@ model Group {
   title            String
   class            Int?
   currentTeacherId Int?
-  createdAt        DateTime         @default(now()) @db.Timestamp(6)
-  updatedAt        DateTime         @updatedAt @db.Timestamp(6)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
   students         StudentGroup[]
   teachers         TeacherGroup[]
   campaigns        GroupCampaigns[]
@@ -107,10 +106,10 @@ model Group {
 model Campaign {
   id                    Int              @id @default(autoincrement())
   name                  String
-  startDate             DateTime         @default(now()) @db.Timestamp(6)
+  startDate             DateTime         @default(now())
   endDate               DateTime?
   assignEndDate         DateTime?
-  assignStartDate       DateTime?        @default(now()) @db.Timestamp(6)
+  assignStartDate       DateTime?        @default(now())
   isCampaignContinous   Boolean          @default(false)
   limitedStudentsCount  Boolean?
   studentsCount         Int?
@@ -121,20 +120,21 @@ model Campaign {
   startTime             String?
   status                Boolean          @default(false)
   endTime               String?
-  createdAt             DateTime         @default(now()) @db.Timestamp(6)
-  updatedAt             DateTime         @updatedAt @db.Timestamp(6)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
   groups                GroupCampaigns[]
   StudentGroup          StudentGroup[]
   Attendance            Attendance[]
   SavingSession         SavingSession[]
   Mistake               Mistake[]
+  Evaluation            Evaluation[]
 }
 
 model GroupCampaigns {
   groupId    Int
   campaignId Int
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt @db.Timestamp(6)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
   group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 
@@ -145,8 +145,8 @@ model StudentGroup {
   studentId  Int
   groupId    Int
   campaignId Int
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt @db.Timestamp(6)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
   student    student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
@@ -157,8 +157,8 @@ model StudentGroup {
 model TeacherGroup {
   teacherId  Int
   groupId    Int
-  created_at DateTime @default(now()) @db.Timestamp(6)
-  updated_at DateTime @updatedAt @db.Timestamp(6)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
   teacher    teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
 
@@ -170,30 +170,42 @@ model Attendance {
   studentId  Int
   groupId    Int
   campaignId Int
-  takenDate  DateTime @default(now()) @db.Timestamp(6)
+  takenDate  DateTime @default(now())
   delayTime  Int
   status     String
-  createdAt  DateTime @default(now()) @db.Timestamp(6)
-  updatedAt  DateTime @updatedAt @db.Timestamp(6)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
   student    student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
   group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
   campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
 }
 
+model Evaluation {
+  id            Int             @id @default(autoincrement())
+  title         String
+  points        Int
+  reducedAmount Int
+  campaignId    Int
+  campaign      Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  sessions      SavingSession[] // reverse relation
+}
+
 model SavingSession {
-  id         Int      @id @default(autoincrement())
-  teacherId  Int
-  studentId  Int
-  campaignId Int
-  start      Int
-  end        Int
-  rating     Int
-  duration   Int
-  created_at DateTime @default(now()) @db.Timestamp(6)
+  id           Int      @id @default(autoincrement())
+  teacherId    Int
+  studentId    Int
+  campaignId   Int
+  evaluationId Int? // new optional relation
+  start        Int
+  end          Int
+  rating       Int
+  duration     Int
+  created_at   DateTime @default(now())
 
   teacher          teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
   student          student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
   campaign         Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  evaluation       Evaluation?        @relation(fields: [evaluationId], references: [id], onDelete: SetNull)
   MistakeInSession MistakeInSession[]
 
   @@index([teacherId])

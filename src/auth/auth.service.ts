@@ -23,6 +23,7 @@ export class AuthService {
   }
 
   async validateStudent(phone_number: string, pass: string) {
+    console.log(phone_number);
     const student = await this.prisma.student.findUnique({
       where: { student_mobile: phone_number },
     });

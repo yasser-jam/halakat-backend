@@ -17,6 +17,8 @@ import { AttendanceController } from './attendance/attendance.controller';
 import { AttendanceService } from './attendance/attendance.service';
 import { MistakeModule } from './mistake/mistake.module';
 import { SavingSessionModule } from './saving-session/saving-session.module';
+import { EvaluationController } from './evaluation/evaluation.controller';
+import { EvaluationService } from './evaluation/evaluation.service';
 
 @Module({
   controllers: [
@@ -28,6 +30,7 @@ import { SavingSessionModule } from './saving-session/saving-session.module';
     UploadController,
     AuthController,
     AttendanceController,
+    EvaluationController,
   ],
   providers: [
     AppService,
@@ -37,6 +40,7 @@ import { SavingSessionModule } from './saving-session/saving-session.module';
     GroupService,
     CampaignService,
     AttendanceService,
+    EvaluationService,
   ],
   imports: [AuthModule, MistakeModule, SavingSessionModule],
 })

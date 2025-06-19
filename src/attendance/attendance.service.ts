@@ -162,6 +162,9 @@ r
         studentId: Number(studentId),
         campaignId: Number(campaignId),
         groupId: Number(groupId),
+        status: {
+          not: 'NOT_TAKEN',
+        },
       }
     });
   }

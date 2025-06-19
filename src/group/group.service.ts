@@ -117,25 +117,17 @@ export class GroupService {
       String(endDate),
       days as any,
     );
-    console.log(startDate);
-    console.log(endDate);
-    console.log(days);
 
-    for (const day of attendDays) {
-      console.log('see the days');
-      console.log(day);
-
-      await this.prisma.attendance.create({
-        data: {
-          studentId: Number(params.studentId),
-          groupId: Number(params.groupId),
-          campaignId: Number(params.campaignId),
-          takenDate: new Date(day).toISOString(),
-          delayTime: -1,
-          status: 'NOT_TAKEN',
-        },
-      });
-    }
+    await this.prisma.attendance.createMany({
+      data: attendDays.map(day => ({
+        studentId: Number(params.studentId),
+        groupId: Number(params.groupId),
+        campaignId: Number(params.campaignId),
+        takenDate: new Date(day).toISOString(),
+        delayTime: -1,
+        status: 'NOT_TAKEN',
+      })),
+    });
 
     return this.prisma.studentGroup.create({
       data: {

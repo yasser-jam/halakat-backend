@@ -1,7 +1,14 @@
 import { Controller, Get, Body, Param, Put, Post, Query } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiBearerAuth,
+  ApiBody,
+} from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
-import { UpdateAttendanceDto } from './attendance.dto';
+import { BulkUpdateAttendanceDto, UpdateAttendanceDto } from './attendance.dto';
 
 @ApiTags('attendance')
 @Controller('attendance/:groupId/:campaignId')
@@ -105,5 +112,13 @@ export class AttendanceController {
       campaignId,
       groupId,
     );
+  }
+
+  @ApiTags('Attendance')
+  @ApiBearerAuth('access-token')
+  @ApiBody({ type: BulkUpdateAttendanceDto, isArray: true })
+  @Post('batch-update')
+  async updateAttendanceBatch(@Body() updates: BulkUpdateAttendanceDto[]) {
+    return this.attendanceService.batchUpdate(updates);
   }
 }

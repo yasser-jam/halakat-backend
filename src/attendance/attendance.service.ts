@@ -1,7 +1,7 @@
 /* eslint-disable prettier/prettier */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { UpdateAttendanceDto } from './attendance.dto';
+import { BulkUpdateAttendanceDto, UpdateAttendanceDto } from './attendance.dto';
 
 @Injectable()
 export class AttendanceService {
@@ -14,15 +14,19 @@ export class AttendanceService {
         campaignId: Number(campaignId),
       },
       include: {
-        student: true
-      }
+        student: true,
+      },
     });
   }
 
   // create all attendance records for student for some campaign in one group
   //
 
-  getMatchingDaysBetweenDates = (startDate: string, endDate: string, days: string[]) => {
+  getMatchingDaysBetweenDates = (
+    startDate: string,
+    endDate: string,
+    days: string[],
+  ) => {
     const start = new Date(startDate);
     const end = new Date(endDate);
     const dayMap = {
@@ -59,8 +63,11 @@ export class AttendanceService {
     const endDate = campaign.endDate;
     const days = campaign.days.split(',');
 
-
-    const attendDays = this.getMatchingDaysBetweenDates(String(startDate), String(endDate), days as any)
+    const attendDays = this.getMatchingDaysBetweenDates(
+      String(startDate),
+      String(endDate),
+      days as any,
+    );
 
     for (const day of attendDays) {
       await this.prisma.attendance.create({
@@ -70,12 +77,12 @@ export class AttendanceService {
           campaignId: Number(campaignId),
           takenDate: new Date(day).toISOString(),
           delayTime: -1,
-          status: 'NOT_TAKEN'
-        }
-      })
+          status: 'NOT_TAKEN',
+        },
+      });
     }
   }
-r
+  r;
   async update(id: number, updateAttendanceDto: UpdateAttendanceDto) {
     const attendance = await this.prisma.attendance.findUnique({
       where: { id: Number(id) },
@@ -92,29 +99,42 @@ r
   }
 
   // get the records depending on campaignId and groupID and the date of today
-  async getByGroup(campaignId: number, groupId: number) {
+  async getByGroup(
+    campaignId: number,
+    groupId: number,
+    date: string = new Date().toISOString().split('T')[0], // default: today in YYYY-MM-DD
+  ) {
+    const startOfDay = new Date(`${date}T00:00:00.000Z`);
+    const endOfDay = new Date(`${date}T23:59:59.999Z`);
     const res = await this.prisma.attendance.findMany({
       where: {
         campaignId: Number(campaignId),
         groupId: Number(groupId),
-        takenDate: new Date()
+        takenDate: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
       },
       include: {
-        student: true
-      }
-    })
+        student: true,
+      },
+    });
 
-    return res
+    return res;
   }
 
-  async getGroupAttendanceStats(campaignId: number, startDate: Date, endDate: Date) {
+  async getGroupAttendanceStats(
+    campaignId: number,
+    startDate: Date,
+    endDate: Date,
+  ) {
     const attendances = await this.prisma.attendance.findMany({
       where: {
         campaignId: Number(campaignId),
         takenDate: {
           gte: startDate,
-          lte: endDate
-        }
+          lte: endDate,
+        },
       },
       select: {
         campaignId: true,
@@ -123,9 +143,9 @@ r
         groupId: true,
         status: true,
         studentId: true,
-      }
+      },
     });
-    
+
     // Group the attendances by group
     const groupStats = new Map();
 
@@ -137,12 +157,12 @@ r
           groupName: attendance.group.title,
           attended: 0,
           missed: 0,
-          delayed: 0
+          delayed: 0,
         });
       }
 
       const stats = groupStats.get(groupId);
-      
+
       if (attendance.status === 'ATTEND') {
         stats.attended++;
       } else if (attendance.status === 'MISSED') {
@@ -156,7 +176,11 @@ r
   }
 
   // List attendance records by studentId, campaignId, and groupId
-  async getByStudentAndGroupAndCampaign(studentId: number, campaignId: number, groupId: number) {
+  async getByStudentAndGroupAndCampaign(
+    studentId: number,
+    campaignId: number,
+    groupId: number,
+  ) {
     return this.prisma.attendance.findMany({
       where: {
         studentId: Number(studentId),
@@ -165,10 +189,51 @@ r
         status: {
           not: 'NOT_TAKEN',
         },
-      }
+      },
     });
   }
 
+  async batchUpdate(data: BulkUpdateAttendanceDto[]) {
+    const results = [];
+
+    for (const record of data) {
+      const attendance = await this.prisma.attendance.findFirst({
+        where: {
+          studentId: record.student_id,
+          campaignId: record.campaign_id,
+          takenDate: {
+            gte: new Date(record.date + 'T00:00:00.000Z'),
+            lt: new Date(record.date + 'T23:59:59.999Z'),
+          },
+        },
+      });
+
+      if (!attendance) {
+        results.push({
+          student_id: record.student_id,
+          campaign_id: record.campaign_id,
+          date: record.date,
+          status: 'NOT_FOUND',
+        });
+        continue;
+      }
+
+      await this.prisma.attendance.update({
+        where: { id: attendance.id },
+        data: {
+          status: record.status,
+          delayTime: record.delay,
+        },
+      });
+
+      results.push({
+        student_id: record.student_id,
+        campaign_id: record.campaign_id,
+        date: record.date,
+        data: record.status
+      });
+    }
+
+    return results;
+  }
 }
-
-

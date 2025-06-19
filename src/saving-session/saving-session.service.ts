@@ -89,7 +89,7 @@ export class SavingSessionService {
         : {}),
     };
 
-    return this.prisma.savingSession.findMany({
+    const res = await this.prisma.savingSession.findMany({
       where,
       include: {
         MistakeInSession: {
@@ -115,14 +115,29 @@ export class SavingSessionService {
             name: true,
           },
         },
+        evaluation: {
+          select: {
+            title: true,
+            points: true,
+          },
+        },
       },
     });
-  }
 
+    return res.map((el) => ({
+      ...el,
+      MistakeInSession: undefined,
+      mistakes: el.MistakeInSession?.map((item) => ({
+        id: item.id,
+        page: item.page,
+        title: item.mistake?.title,
+      })),
+    }));
+  }
 
   async remove(id: number) {
     return this.prisma.savingSession.delete({
-      where: { id }
-    })
+      where: { id },
+    });
   }
 }

@@ -11,6 +11,7 @@ import {
   ApiTags,
   ApiOperation,
   ApiResponse,
+  ApiBody,
 } from '@nestjs/swagger';
 import { RoleService } from './role.service';
 import { CreateRoleDto } from './role.dto';
@@ -38,5 +39,32 @@ export class RoleController {
   @ApiOperation({ summary: 'Get role by ID' })
   getById(@Param('id', ParseIntPipe) id: number) {
     return this.roleService.getRoleById(id);
+  }
+
+  @Post('bulk-update-permissions')
+  @ApiBody({
+    isArray: true,
+    schema: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          role_id: { type: 'number' },
+          permissions: {
+            type: 'array',
+            items: {
+              type: 'string',
+            },
+          },
+        },
+        required: ['role_id', 'permissions'],
+      },
+    },
+  })
+  async bulkUpdatePermissions(
+    @Body()
+    updates: Array<{ role_id: number; permissions: string[] }>,
+  ) {
+    return this.roleService.bulkUpdatePermissions(updates);
   }
 }

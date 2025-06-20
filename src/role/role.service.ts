@@ -25,4 +25,22 @@ export class RoleService {
   async getRoleById(id: number) {
     return this.prisma.appRole.findUnique({ where: { id } });
   }
+
+  async bulkUpdatePermissions(
+    updates: Array<{ role_id: number; permissions: string[] }>,
+  ) {
+    for (const update of updates) {
+      await this.prisma.appRole.update({
+        where: {
+          id: update.role_id,
+        },
+        data: {
+          id: update.role_id,
+          permissions: update.permissions,
+        },
+      });
+    }
+
+    return { message: 'Roles updated successfully' };
+  }
 }

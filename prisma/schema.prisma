@@ -88,6 +88,7 @@ model teacher {
   created_at                         DateTime        @default(now())
   updated_at                         DateTime?       @updatedAt
   SavingSession                      SavingSession[]
+  teacherRoles                       TeacherRole[]
 }
 
 model Group {
@@ -101,6 +102,7 @@ model Group {
   teachers         TeacherGroup[]
   campaigns        GroupCampaigns[]
   Attendance       Attendance[]
+  teacherRoles     TeacherRole[]
 }
 
 model Campaign {
@@ -128,6 +130,7 @@ model Campaign {
   SavingSession         SavingSession[]
   Mistake               Mistake[]
   Evaluation            Evaluation[]
+  teacherRoles          TeacherRole[]
 }
 
 model GroupCampaigns {
@@ -278,4 +281,23 @@ model AppRole {
   permissions Json
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  teacherRoles TeacherRole[]
+}
+
+model TeacherRole {
+  id         Int      @id @default(autoincrement())
+  teacherId  Int
+  groupId    Int
+  campaignId Int
+  roleId     Int
+
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  teacher    teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  group      Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  role       AppRole   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@unique([teacherId, groupId, campaignId, roleId])
 }

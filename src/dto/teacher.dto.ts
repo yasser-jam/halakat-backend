@@ -5,9 +5,17 @@ import {
   IsOptional,
   IsDate,
   IsJSON,
+  ValidateNested,
+  IsArray,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
+
+class TeacherRole {
+  @IsInt() roleId: number;
+  @IsInt() groupId: number;
+  @IsInt() campaignId: number;
+}
 
 export class RegisterDto {
   @ApiProperty()
@@ -111,14 +119,14 @@ export class CreateTeacherDto {
   @ApiProperty({ type: 'object' })
   @IsOptional()
   @IsJSON()
-  preserved_parts: JSON;
+  preserved_parts: any;
 
   // todo: make required
 
   @ApiProperty({ type: 'object' })
   @IsOptional()
   @IsJSON()
-  parts_tested_by_the_endowments: JSON;
+  parts_tested_by_the_endowments: any;
 
   @ApiProperty({ required: false })
   @IsOptional()
@@ -142,6 +150,11 @@ export class CreateTeacherDto {
   @IsOptional()
   @IsString()
   workplace_name?: string;
+
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TeacherRole)
+  teacherRoles: TeacherRole[];
 }
 
 export class UpdateTeacherDto extends CreateTeacherDto {}

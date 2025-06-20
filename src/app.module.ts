@@ -19,10 +19,13 @@ import { MistakeModule } from './mistake/mistake.module';
 import { SavingSessionModule } from './saving-session/saving-session.module';
 import { EvaluationController } from './evaluation/evaluation.controller';
 import { EvaluationService } from './evaluation/evaluation.service';
+import { RoleService } from './role/role.service';
+import { RoleController } from './role/role.controller';
 
 @Module({
   controllers: [
     AppController,
+    RoleController,
     StudentsController,
     TeachersController,
     GroupsController,
@@ -35,6 +38,7 @@ import { EvaluationService } from './evaluation/evaluation.service';
   providers: [
     AppService,
     PrismaService,
+    RoleService,
     StudentService,
     TeacherService,
     GroupService,

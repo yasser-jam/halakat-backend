@@ -256,3 +256,26 @@ enum Role {
   AUDIBLE
   AUDIBLE_ASSISTANT
 }
+
+
+
+enum Permission {
+  STUDENT_MANAGEMENT
+  TEACHER_MANAGEMENT
+  ROLES_MANAGEMENT
+  SAVING_SESSION_MANAGEMENT
+  ATTENDANCE_MANAGEMENT
+  CIRRUCULUM_MANAGEMENT
+  SETTINGS_MANAGEMENT
+  POINTS_MANAGEMENT
+  AWARDS_MANAGEMENT
+}
+
+model AppRole {
+  id          Int       @id @default(autoincrement())
+  name        String    @unique
+  description String?
+  permissions Json
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}

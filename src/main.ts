@@ -11,7 +11,11 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: ['http://localhost:3000', 'https://ali-aldikker.vercel.app'],
+    origin: [
+      'http://localhost:3000',
+      'https://ali-aldikker.vercel.app',
+      'https://aldekker-dev.vercel.app',
+    ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Accept, Authorization',
     credentials: true,

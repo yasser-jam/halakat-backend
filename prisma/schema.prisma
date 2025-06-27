@@ -33,10 +33,9 @@ model Mosque {
   id              Int      @id @default(autoincrement())
   organization_id Int
   name            String
+  city    String?
   address_area    String?
-  address_street  String?
   address_details String?
-  imam_name       String?
   contact_phone   String?
   contact_email   String?
   is_active       Boolean  @default(true)

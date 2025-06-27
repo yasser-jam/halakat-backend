@@ -25,6 +25,8 @@ import { PrismaService } from './prisma.service';
 // import { LogService } from './log/log.service';
 import { OrganizationController } from './organization/organization.controller';
 import { OrganizationService } from './organization/organization.service';
+import { MosqueController } from './mosque/mosque.controller';
+import { MosqueService } from './mosque/mosque.service';
 
 @Module({
   controllers: [
@@ -40,6 +42,7 @@ import { OrganizationService } from './organization/organization.service';
     // EvaluationController,
     // LogController,
     OrganizationController,
+    MosqueController,
   ],
   providers: [
     AppService,
@@ -53,6 +56,7 @@ import { OrganizationService } from './organization/organization.service';
     // EvaluationService,
     // LogService,
     OrganizationService,
+    MosqueService,
   ],
   imports: [],
 })

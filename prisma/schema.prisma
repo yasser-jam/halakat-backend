@@ -57,6 +57,7 @@ model student {
   updated_at                          DateTime?       @updatedAt
   Attendance                          Attendance[]
   SavingSession                       SavingSession[]
+  Log                                 Log[]
 }
 
 model teacher {
@@ -89,6 +90,7 @@ model teacher {
   updated_at                         DateTime?       @updatedAt
   SavingSession                      SavingSession[]
   teacherRoles                       TeacherRole[]
+  Log                                Log[]
 }
 
 model Group {
@@ -260,8 +262,6 @@ enum Role {
   AUDIBLE_ASSISTANT
 }
 
-
-
 enum Permission {
   STUDENT_MANAGEMENT
   TEACHER_MANAGEMENT
@@ -275,29 +275,54 @@ enum Permission {
 }
 
 model AppRole {
-  id          Int       @id @default(autoincrement())
-  name        String    @unique
-  description String?
-  permissions Json
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id           Int           @id @default(autoincrement())
+  name         String        @unique
+  description  String?
+  permissions  Json
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   teacherRoles TeacherRole[]
 }
 
 model TeacherRole {
-  id         Int      @id @default(autoincrement())
+  id         Int @id @default(autoincrement())
   teacherId  Int
   groupId    Int
   campaignId Int
   roleId     Int
 
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  teacher    teacher   @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  group      Group     @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  campaign   Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  role       AppRole   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  teacher  teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  role     AppRole  @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@unique([teacherId, groupId, campaignId, roleId])
+}
+
+model Log {
+  id        Int      @id @default(autoincrement())
+  event     LogEvent
+  timestamp DateTime @default(now())
+  teacherId Int?
+  studentId Int?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+
+  teacher teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
+  student student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
+}
+
+enum LogEvent {
+  TEACHER_LOGIN
+  STUDENT_LOGIN
+  SAVING_SESSION_CREATED
+  ATTENDANCE_MARKED
+  MISTAKE_ASSERTED
+  EVALUATION_ASSERTED
+  ROLE_ASSIGNED
+  CAMPAIGN_CREATED
 }

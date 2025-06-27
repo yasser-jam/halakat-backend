@@ -21,6 +21,8 @@ import { EvaluationController } from './evaluation/evaluation.controller';
 import { EvaluationService } from './evaluation/evaluation.service';
 import { RoleService } from './role/role.service';
 import { RoleController } from './role/role.controller';
+import { LogController } from './log/log.controller';
+import { LogService } from './log/log.service';
 
 @Module({
   controllers: [
@@ -34,6 +36,7 @@ import { RoleController } from './role/role.controller';
     AuthController,
     AttendanceController,
     EvaluationController,
+    LogController,
   ],
   providers: [
     AppService,
@@ -45,6 +48,7 @@ import { RoleController } from './role/role.controller';
     CampaignService,
     AttendanceService,
     EvaluationService,
+    LogService,
   ],
   imports: [AuthModule, MistakeModule, SavingSessionModule],
 })

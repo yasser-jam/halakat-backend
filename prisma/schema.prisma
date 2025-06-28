@@ -210,6 +210,7 @@ model Campaign {
   end_time                String?
   created_at              DateTime  @default(now())
   updated_at              DateTime  @updatedAt
+  metadata                Json?
 
   // Relations
   mosque              Mosque            @relation(fields: [mosque_id], references: [id], onDelete: Cascade)

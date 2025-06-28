@@ -27,6 +27,8 @@ import { OrganizationController } from './organization/organization.controller';
 import { OrganizationService } from './organization/organization.service';
 import { MosqueController } from './mosque/mosque.controller';
 import { MosqueService } from './mosque/mosque.service';
+import { CampaignService } from './campaign/campaign.service';
+import { CampaignsController } from './campaign/campaign.controller';
 
 @Module({
   controllers: [
@@ -35,7 +37,7 @@ import { MosqueService } from './mosque/mosque.service';
     // StudentsController,
     // TeachersController,
     // GroupsController,
-    // CampaignsController,
+    CampaignsController,
     // UploadController,
     // AuthController,
     // AttendanceController,
@@ -51,7 +53,7 @@ import { MosqueService } from './mosque/mosque.service';
     // StudentService,
     // TeacherService,
     // GroupService,
-    // CampaignService,
+    CampaignService,
     // AttendanceService,
     // EvaluationService,
     // LogService,

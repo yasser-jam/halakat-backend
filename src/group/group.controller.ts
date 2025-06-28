@@ -1,177 +1,184 @@
-// import {
-//   Controller,
-//   Post,
-//   Body,
-//   Param,
-//   Get,
-//   Query,
-//   Delete,
-//   Put,
-// } from '@nestjs/common';
-// import {
-//   ApiTags,
-//   ApiOperation,
-//   ApiResponse,
-//   ApiQuery,
-//   ApiParam,
-// } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  Param,
+  Get,
+  Query,
+  Delete,
+  Put,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiQuery,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
+import { GroupService } from './group.service';
+import { CreateGroupDto } from './group.dto';
 
-// import { GroupService } from './group.service';
+@ApiTags('groups')
+@Controller('groups')
+export class GroupsController {
+  constructor(private readonly groupService: GroupService) {}
 
-// import {
-//   CreateGroupDto,
-//   GroupAssignDto,
-//   GroupListDto,
-//   UpdateGroupDto,
-//   ValidateGroupIdDto,
-// } from './../dto/group.dto';
+  @Get('')
+  @ApiQuery({ name: 'campaignId' })
+  @ApiOperation({ summary: 'Get all groups' })
+  @ApiResponse({ status: 200, description: 'Return all groups' })
+  async findAll(@Query('campaignId') campaignId?: string) {
+    const campaignIdNumber = campaignId ? Number(campaignId) : undefined;
+    return this.groupService.findAll(campaignIdNumber);
+  }
 
-// @ApiTags('groups')
-// @Controller('groups')
-// export class GroupsController {
-//   constructor(private readonly groupService: GroupService) {}
+  // Assign student
+  @Get('/assign/:groupId/:studentId/:campaignId')
+  @ApiOperation({ summary: 'Assign student into group' })
+  @ApiParam({ name: 'groupId', type: Number })
+  @ApiParam({ name: 'studentId', type: Number })
+  @ApiParam({ name: 'campaignId', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'The student has been assigned successfully.',
+  })
+  async assign(
+    @Param('groupId') groupId: number,
+    @Param('studentId') studentId: number,
+    @Param('campaignId') campaignId: number,
+  ) {
+    return this.groupService.assign({ groupId, studentId, campaignId });
+  }
 
-//   @ApiQuery({ name: 'campaignId' })
-//   @ApiOperation({ summary: 'Get all groups' })
-//   @ApiResponse({
-//     status: 200,
-//     description: 'Return all groups',
-//     type: [GroupListDto],
-//   })
-//   @Get('')
-//   async findAll(@Query('campaignId') campaignId?: string) {
-//     const campaignIdNumber = campaignId ? Number(campaignId) : undefined;
-//     return this.groupService.findAll(campaignIdNumber);
-//   }
+  // UnAssign student
+  @Get('/unassign/:groupId/:studentId/:campaignId')
+  @ApiOperation({ summary: 'Un-assign student from group' })
+  @ApiParam({ name: 'groupId', type: Number })
+  @ApiParam({ name: 'studentId', type: Number })
+  @ApiParam({ name: 'campaignId', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'The student has been un-assigned successfully.',
+  })
+  async unassign(
+    @Param('groupId') groupId: number,
+    @Param('studentId') studentId: number,
+    @Param('campaignId') campaignId: number,
+  ) {
+    return this.groupService.unassign({ groupId, studentId, campaignId });
+  }
 
-//   // Assign student
-//   @ApiOperation({ summary: 'Assign student into group' })
-//   @ApiResponse({
-//     status: 200,
-//     description: 'The student has been assigned successfuly.',
-//   })
-//   @Get('/assign/:groupId/:studentId/:campaignId')
-//   async assign(@Param() params: GroupAssignDto) {
-//     return this.groupService.assign(params);
-//   }
+  @Post(':campaignId')
+  @ApiOperation({ summary: 'Create a new group' })
+  @ApiParam({ name: 'campaignId', type: Number })
+  @ApiResponse({
+    status: 201,
+    description: 'The group has been successfully created.',
+  })
+  @ApiBody({ type: CreateGroupDto })
+  async create(
+    @Body() createGroupDto: CreateGroupDto,
+    @Param('campaignId') campaignId: number,
+  ) {
+    return this.groupService.create(createGroupDto, campaignId);
+  }
 
-//   // UnAssign student
-//   @ApiOperation({ summary: 'Un-assign student from group' })
-//   @ApiResponse({
-//     status: 200,
-//     description: 'The student has been un-assigned successfuly.',
-//   })
-//   @Get('/unassign/:groupId/:studentId/:campaignId')
-//   async unassign(@Param() params: GroupAssignDto) {
-//     return this.groupService.unassign(params);
-//   }
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a group by ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Return the group with the given ID',
+  })
+  async findOne(@Param('id') id: number) {
+    return this.groupService.findOne(Number(id));
+  }
 
-//   @ApiOperation({ summary: 'Create a new group' })
-//   @ApiParam({ name: 'campaignId' })
-//   @ApiResponse({
-//     status: 201,
-//     description: 'The group has been successfully created.',
-//     type: CreateGroupDto,
-//   })
-//   @Post(':campaignId')
-//   async create(
-//     @Body() createGroupDto: CreateGroupDto,
-//     @Param() params: { campaignId: number },
-//   ) {
-//     return this.groupService.create(createGroupDto, params.campaignId);
-//   }
+  @Put(':id')
+  @ApiOperation({ summary: 'Update a group by ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'The group has been successfully updated.',
+  })
+  @ApiBody({ type: CreateGroupDto })
+  async update(
+    @Param('id') id: number,
+    @Body() updateGroupDto: CreateGroupDto,
+  ) {
+    return this.groupService.update(Number(id), updateGroupDto);
+  }
 
-//   // @ApiOperation({ summary: 'Get a group by ID' })
-//   // @ApiResponse({
-//   //   status: 200,
-//   //   description: 'Return the group with the given ID',
-//   //   type: CreateGroupDto,
-//   // })
-//   // @Get(':id')
-//   // async findOne(@Param() params: ValidateGroupIdDto) {
-//   //   return this.groupService.findOne(params);
-//   // }
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a group by ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'The group has been successfully deleted.',
+  })
+  async delete(@Param('id') id: number) {
+    return this.groupService.delete(Number(id));
+  }
 
-//   @ApiOperation({ summary: 'Update a group by ID' })
-//   @ApiResponse({
-//     status: 200,
-//     description: 'The group has been successfully updated.',
-//     type: UpdateGroupDto,
-//   })
-//   @Put(':id')
-//   async update(
-//     @Param() params: ValidateGroupIdDto,
-//     @Body() updateGroupDto: UpdateGroupDto,
-//   ) {
-//     return this.groupService.update(params, updateGroupDto);
-//   }
+  // Additional endpoints from original implementation
+  @Get('details/:id')
+  @ApiOperation({ summary: 'Get group details by ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns group details including teacher and students',
+  })
+  async getGroupById(@Param('id') id: number) {
+    return this.groupService.getGroupById(Number(id));
+  }
 
-//   @ApiOperation({ summary: 'Delete a group by ID' })
-//   @ApiResponse({
-//     status: 200,
-//     description: 'The group has been successfully deleted.',
-//   })
-//   @Delete(':id')
-//   async delete(@Param() params: ValidateGroupIdDto) {
-//     return this.groupService.delete(params);
-//   }
+  @Get('/byteacher/:teacherId')
+  @ApiOperation({ summary: 'List all groups by teacher' })
+  @ApiParam({ name: 'teacherId', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Return all groups for the given teacher',
+  })
+  async findByTeacher(@Param('teacherId') teacherId: number) {
+    return this.groupService.findByTeacher(Number(teacherId));
+  }
 
-//   @ApiOperation({ summary: 'Get group details by ID' })
-//   @ApiResponse({
-//     status: 200,
-//     description: 'Returns group details including teacher and students',
-//   })
-//   @Get(':id')
-//   async getGroupById(@Param('id') id: number) {
-//     return this.groupService.getGroupById(id);
-//   }
+  @Get('/byteacher/:teacherId/campaign/:campaignId')
+  @ApiOperation({ summary: 'List all groups by teacher and campaign' })
+  @ApiParam({ name: 'teacherId', type: Number })
+  @ApiParam({ name: 'campaignId', type: Number })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Return all groups for the given teacher in the given campaign',
+  })
+  async findByTeacherAndCampaign(
+    @Param('teacherId') teacherId: number,
+    @Param('campaignId') campaignId: number,
+  ) {
+    return this.groupService.findByTeacherAndCampaign(
+      Number(teacherId),
+      Number(campaignId),
+    );
+  }
 
-//   @ApiOperation({ summary: 'List all groups by teacher' })
-//   @ApiResponse({
-//     status: 200,
-//     description: 'Return all groups for the given teacher',
-//     type: [GroupListDto],
-//   })
-//   @Get('/byteacher/:teacherId')
-//   async findByTeacher(@Param('teacherId') teacherId: number) {
-//     return this.groupService.findByTeacher(Number(teacherId));
-//   }
-
-//   @ApiOperation({ summary: 'List all groups by teacher and campaign' })
-//   @ApiResponse({
-//     status: 200,
-//     description:
-//       'Return all groups for the given teacher in the given campaign',
-//     type: [GroupListDto],
-//   })
-//   @Get('/byteacher/:teacherId/campaign/:campaignId')
-//   async findByTeacherAndCampaign(
-//     @Param('teacherId') teacherId: number,
-//     @Param('campaignId') campaignId: number,
-//   ) {
-//     return this.groupService.findByTeacherAndCampaign(
-//       Number(teacherId),
-//       Number(campaignId),
-//     );
-//   }
-
-//   @ApiOperation({ summary: 'List all groups by student and campaign' })
-//   @ApiParam({ name: 'studentId', type: Number })
-//   @ApiParam({ name: 'campaignId', type: Number })
-//   @ApiResponse({
-//     status: 200,
-//     description:
-//       'Return all groups for the given student in the given campaign',
-//     type: [GroupListDto],
-//   })
-//   @Get('/bystudent/:studentId/campaign/:campaignId')
-//   async findByStudentAndCampaign(
-//     @Param('studentId') studentId: number,
-//     @Param('campaignId') campaignId: number,
-//   ) {
-//     return this.groupService.findByStudentAndCampaign(
-//       Number(studentId),
-//       Number(campaignId),
-//     );
-//   }
-// }
+  @Get('/bystudent/:studentId/campaign/:campaignId')
+  @ApiOperation({ summary: 'List all groups by student and campaign' })
+  @ApiParam({ name: 'studentId', type: Number })
+  @ApiParam({ name: 'campaignId', type: Number })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Return all groups for the given student in the given campaign',
+  })
+  async findByStudentAndCampaign(
+    @Param('studentId') studentId: number,
+    @Param('campaignId') campaignId: number,
+  ) {
+    return this.groupService.findByStudentAndCampaign(
+      Number(studentId),
+      Number(campaignId),
+    );
+  }
+}

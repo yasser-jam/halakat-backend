@@ -1,92 +1,94 @@
-// import {
-//   Controller,
-//   Get,
-//   Post,
-//   Body,
-//   Param,
-//   Put,
-//   Delete,
-//   Query,
-// } from '@nestjs/common';
-// import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
-// import { TeacherService } from './teacher.service';
-// import {
-//   CreateTeacherDto,
-//   UpdateTeacherDto,
-//   ValidateTeacherIdDto,
-//   TeacherListDto,
-// } from './../dto/teacher.dto';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Param,
+  Put,
+  Delete,
+  Query,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiParam,
+  ApiBody,
+} from '@nestjs/swagger';
+import { TeacherService } from './teacher.service';
+import { CreateTeacherDto } from './teacher.dto';
 
-// @ApiTags('teachers')
-// @Controller('teachers')
-// export class TeachersController {
-//   constructor(private readonly teacherService: TeacherService) {}
+@ApiTags('teachers')
+@Controller('teachers')
+export class TeachersController {
+  constructor(private readonly teacherService: TeacherService) {}
 
-//   @ApiOperation({ summary: 'Get all teachers' })
-//   @ApiResponse({
-//     status: 200,
-//     description: 'Return all teachers',
-//     type: [TeacherListDto],
-//   })
-//   @Get()
-//   async findAll(@Query('campaignId') campaignId?: number) {
-//     return this.teacherService.findAll(campaignId);
-//   }
+  @Get()
+  @ApiOperation({ summary: 'Get all teachers' })
+  @ApiResponse({ status: 200, description: 'Return all teachers' })
+  async findAll(@Query('campaignId') campaignId?: number) {
+    return this.teacherService.findAll(campaignId);
+  }
 
-//   @ApiOperation({ summary: 'Create a new teacher' })
-//   @ApiResponse({
-//     status: 201,
-//     description: 'The teacher has been successfully created.',
-//     type: CreateTeacherDto,
-//   })
-//   @Post()
-//   async create(@Body() createTeacherDto: CreateTeacherDto) {
-//     return this.teacherService.create(createTeacherDto);
-//   }
+  @Post()
+  @ApiOperation({ summary: 'Create a new teacher' })
+  @ApiResponse({
+    status: 201,
+    description: 'The teacher has been successfully created.',
+  })
+  @ApiBody({ type: CreateTeacherDto })
+  async create(@Body() createTeacherDto: CreateTeacherDto) {
+    return this.teacherService.create(createTeacherDto);
+  }
 
-//   @ApiOperation({ summary: 'Get a teacher by ID' })
-//   @ApiResponse({
-//     status: 200,
-//     description: 'Return the teacher with the given ID',
-//     type: CreateTeacherDto,
-//   })
-//   @Get(':id')
-//   async findOne(@Param() params: ValidateTeacherIdDto) {
-//     return this.teacherService.findOne(params);
-//   }
+  @Get(':id')
+  @ApiOperation({ summary: 'Get a teacher by ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Return the teacher with the given ID',
+  })
+  async findOne(@Param('id') id: number) {
+    return this.teacherService.findOne(Number(id));
+  }
 
-//   @ApiOperation({ summary: 'Get a full teacher info by ID (for mobile)' })
-//   @ApiResponse({
-//     status: 200,
-//     description: 'Return the teacher info with the given ID',
-//     type: CreateTeacherDto,
-//   })
-//   @Get('mobile/:id')
-//   async findInfo(@Param() params: ValidateTeacherIdDto) {
-//     return this.teacherService.findInfo(params);
-//   }
+  @Get('mobile/:id')
+  @ApiOperation({ summary: 'Get a full teacher info by ID (for mobile)' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'Return the teacher info with the given ID',
+  })
+  async findInfo(
+    @Param('id') id: number,
+    @Query('campaign_id') campaign_id: number,
+  ) {
+    return this.teacherService.findInfo(Number(id), Number(campaign_id));
+  }
 
-//   @ApiOperation({ summary: 'Update a teacher by ID' })
-//   @ApiResponse({
-//     status: 200,
-//     description: 'The teacher has been successfully updated.',
-//     type: UpdateTeacherDto,
-//   })
-//   @Put(':id')
-//   async update(
-//     @Param() params: ValidateTeacherIdDto,
-//     @Body() updateTeacherDto: UpdateTeacherDto,
-//   ) {
-//     return this.teacherService.update(params, updateTeacherDto);
-//   }
+  @Put(':id')
+  @ApiOperation({ summary: 'Update a teacher by ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'The teacher has been successfully updated.',
+  })
+  @ApiBody({ type: CreateTeacherDto })
+  async update(
+    @Param('id') id: number,
+    @Body() updateTeacherDto: CreateTeacherDto,
+  ) {
+    return this.teacherService.update(Number(id), updateTeacherDto);
+  }
 
-//   @ApiOperation({ summary: 'Delete a teacher by ID' })
-//   @ApiResponse({
-//     status: 200,
-//     description: 'The teacher has been successfully deleted.',
-//   })
-//   @Delete(':id')
-//   async delete(@Param() params: ValidateTeacherIdDto) {
-//     return this.teacherService.delete(params);
-//   }
-// }
+  @Delete(':id')
+  @ApiOperation({ summary: 'Delete a teacher by ID' })
+  @ApiParam({ name: 'id', type: Number })
+  @ApiResponse({
+    status: 200,
+    description: 'The teacher has been successfully deleted.',
+  })
+  async delete(@Param('id') id: number) {
+    return this.teacherService.delete(Number(id));
+  }
+}

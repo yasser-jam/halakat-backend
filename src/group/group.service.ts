@@ -1,416 +1,400 @@
-// /* eslint-disable prettier/prettier */
-// import { Injectable, NotFoundException } from '@nestjs/common';
-// import {
-//   CreateGroupDto,
-//   GroupAssignDto,
-//   ValidateGroupIdDto,
-// } from '../dto/group.dto';
-// import { PrismaService } from './../prisma.service';
+import { Injectable, NotFoundException } from '@nestjs/common';
+import { PrismaService } from '../prisma.service';
+import { CreateGroupDto } from './group.dto';
 
-// @Injectable()
-// export class GroupService {
-//   constructor(private prisma: PrismaService) {}
+@Injectable()
+export class GroupService {
+  constructor(private prisma: PrismaService) {}
 
-//   async findAll(campaignId?: number) {
-//     const groups = await this.prisma.group.findMany({
-//       select: {
-//         id: true,
-//         title: true,
-//         class: true,
-//         teachers: {
-//           include: {
-//             teacher: true,
-//           },
-//         },
-//         currentTeacherId: true,
-//         students: {
-//           include: {
-//             student: true,
-//           },
-//         },
-//       },
-//       where: campaignId
-//         ? {
-//             campaigns: {
-//               some: {
-//                 campaignId,
-//               },
-//             },
-//           }
-//         : {},
-//     });
+  async findAll(campaignId?: number) {
+    const groups = await this.prisma.group.findMany({
+      select: {
+        id: true,
+        title: true,
+        class: true,
+        teachers: {
+          include: {
+            teacher: true,
+          },
+        },
+        current_teacher_id: true,
+        students: {
+          include: {
+            student: true,
+          },
+        },
+      },
+      where: campaignId
+        ? {
+            campaigns: {
+              some: {
+                campaign_id: campaignId,
+              },
+            },
+          }
+        : {},
+    });
 
-//     return groups.map((group) => ({
-//       ...group,
-//       currentTeacher: group.teachers[0]?.teacher,
-//       teachers: undefined,
-//       students: group.students.map((stud) => stud.student),
-//     }));
-//   }
+    const result = groups.map((group) => ({
+      ...group,
+      currentTeacher: group.teachers[0]?.teacher,
+      teachers: undefined,
+      students: group.students.map((stud) => stud.student),
+    }));
 
-//   getMatchingDaysBetweenDates = (
-//     startDate: string,
-//     endDate: string,
-//     days: string[],
-//   ) => {
-//     const start = new Date(startDate);
-//     const end = new Date(endDate);
-//     const dayMap = {
-//       sunday: 0,
-//       monday: 1,
-//       tuesday: 2,
-//       wedensday: 3,
-//       thursday: 4,
-//       friday: 5,
-//       saturday: 6,
-//     };
+    return { message: 'All groups', data: result };
+  }
 
-//     const selectedDays = days?.map((day) => dayMap[day]);
-//     const result = [];
+  async create(createDto: CreateGroupDto, campaignId: number) {
+    const { title, current_teacher_id } = createDto;
 
-//     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-//       if (selectedDays.includes(d.getDay())) {
-//         result.push(new Date(d).toISOString().split('T')[0]); // Returns date in YYYY-MM-DD format
-//       }
-//     }
+    // Create the group first with the specified title
+    const group = await this.prisma.group.create({
+      data: {
+        title,
+        mosque_id: createDto.mosque_id,
+        class: createDto.class,
+        current_teacher_id: current_teacher_id || 1,
+      },
+    });
 
-//     return result;
-//   };
+    // Connect the group to the campaign
+    await this.prisma.groupCampaigns.create({
+      data: {
+        group_id: group.id,
+        campaign_id: campaignId,
+      },
+    });
 
-//   async assign(params: GroupAssignDto) {
-//     const group = await this.prisma.group.findUnique({
-//       where: { id: Number(params.groupId) },
-//     });
+    // Connect the group to the specified current teacher via TeacherGroup pivot table
+    if (current_teacher_id) {
+      await this.prisma.teacherGroup.create({
+        data: {
+          teacher_id: current_teacher_id,
+          group_id: group.id,
+          campaign_id: campaignId,
+        },
+      });
+    }
 
-//     if (!group) {
-//       throw new NotFoundException(`Group with ID ${params.groupId} not found`);
-//     }
+    return { message: 'Group created', data: group };
+  }
 
-//     const student = await this.prisma.student.findUnique({
-//       where: { id: Number(params.studentId) },
-//     });
+  async findOne(id: number) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: Number(id) },
+    });
 
-//     if (!student) {
-//       throw new NotFoundException(
-//         `Group with ID ${params.studentId} not found`,
-//       );
-//     }
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${id} not found`);
+    }
 
-//     const campaign = await this.prisma.campaign.findUnique({
-//       where: { id: Number(params.campaignId) },
-//     });
+    return { message: `Group ${id} found`, data: group };
+  }
 
-//     if (!campaign) {
-//       throw new NotFoundException(
-//         `Group with ID ${params.campaignId} not found`,
-//       );
-//     }
+  async update(id: number, updateGroupDto: CreateGroupDto) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: Number(id) },
+    });
 
-//     // create all attendance records for the student
-//     // divide days from start date of that campaign to the end date
-//     const startDate = campaign.startDate;
-//     const endDate = campaign.endDate;
-//     const days = campaign.days.split(',');
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${id} not found`);
+    }
 
-//     const attendDays = this.getMatchingDaysBetweenDates(
-//       String(startDate),
-//       String(endDate),
-//       days as any,
-//     );
+    const updated = await this.prisma.group.update({
+      where: { id: Number(id) },
+      data: updateGroupDto,
+    });
 
-//     await this.prisma.attendance.createMany({
-//       data: attendDays.map(day => ({
-//         studentId: Number(params.studentId),
-//         groupId: Number(params.groupId),
-//         campaignId: Number(params.campaignId),
-//         takenDate: new Date(day).toISOString(),
-//         delayTime: -1,
-//         status: 'NOT_TAKEN',
-//       })),
-//     });
+    return { message: `Group ${id} updated`, data: updated };
+  }
 
-//     return this.prisma.studentGroup.create({
-//       data: {
-//         studentId: student.id,
-//         campaignId: campaign.id,
-//         groupId: group.id,
-//       },
-//     });
-//   }
+  async delete(id: number) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: Number(id) },
+    });
 
-//   async unassign(params: GroupAssignDto) {
-//     const group = await this.prisma.group.findUnique({
-//       where: { id: Number(params.groupId) },
-//     });
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${id} not found`);
+    }
 
-//     if (!group) {
-//       throw new NotFoundException(`Group with ID ${params.groupId} not found`);
-//     }
+    await this.prisma.group.delete({
+      where: { id: Number(id) },
+    });
 
-//     const student = await this.prisma.student.findUnique({
-//       where: { id: Number(params.studentId) },
-//     });
+    return { message: `Group ${id} deleted` };
+  }
 
-//     if (!student) {
-//       throw new NotFoundException(
-//         `Group with ID ${params.studentId} not found`,
-//       );
-//     }
+  getMatchingDaysBetweenDates = (
+    startDate: string,
+    endDate: string,
+    days: string[],
+  ) => {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const dayMap = {
+      sunday: 0,
+      monday: 1,
+      tuesday: 2,
+      wedensday: 3,
+      thursday: 4,
+      friday: 5,
+      saturday: 6,
+    };
 
-//     const campaign = await this.prisma.campaign.findUnique({
-//       where: { id: Number(params.campaignId) },
-//     });
+    const selectedDays = days?.map((day) => dayMap[day]);
+    const result = [];
 
-//     if (!campaign) {
-//       throw new NotFoundException(
-//         `Group with ID ${params.campaignId} not found`,
-//       );
-//     }
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      if (selectedDays.includes(d.getDay())) {
+        result.push(new Date(d).toISOString().split('T')[0]); // Returns date in YYYY-MM-DD format
+      }
+    }
 
-//     return this.prisma.studentGroup.delete({
-//       where: {
-//         studentId_groupId_campaignId: {
-//           campaignId: campaign.id,
-//           groupId: group.id,
-//           studentId: student.id,
-//         },
-//       },
-//     });
-//   }
+    return result;
+  };
 
-//   async create(createDto: CreateGroupDto, campaignId: number) {
-//     const { title, currentTeacherId } = createDto;
+  async assign(params: {
+    groupId: number;
+    studentId: number;
+    campaignId: number;
+  }) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: Number(params.groupId) },
+    });
 
-//     // Create the group first with the specified title and connect to the campaignId
-//     const group = await this.prisma.group.create({
-//       data: {
-//         title,
-//         createdAt: new Date(),
-//         updatedAt: new Date(),
-//         currentTeacherId: 1,
-//       },
-//     });
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${params.groupId} not found`);
+    }
 
-//     // Connect the group to the specified current teacher via TeacherGroup pivot table
-//     if (currentTeacherId) {
-//       await this.prisma.teacherGroup.create({
-//         data: {
-//           teacherId: currentTeacherId,
-//           groupId: group.id,
-//           created_at: new Date(),
-//           updated_at: new Date(),
-//         },
-//       });
-//     }
+    const student = await this.prisma.student.findUnique({
+      where: { id: Number(params.studentId) },
+    });
 
-//     // Connect the campaign
-//     if (group.id) {
-//       await this.prisma.groupCampaigns.createMany({
-//         data: [
-//           {
-//             campaignId: Number(campaignId),
-//             groupId: Number(group.id),
-//             created_at: new Date(),
-//             updated_at: new Date(),
-//           },
-//         ],
-//       });
-//     }
+    if (!student) {
+      throw new NotFoundException(
+        `Student with ID ${params.studentId} not found`,
+      );
+    }
 
-//     return group;
-//   }
+    const campaign = await this.prisma.campaign.findUnique({
+      where: { id: Number(params.campaignId) },
+    });
 
-//   async findOne(params: ValidateGroupIdDto) {
-//     const group = await this.prisma.group.findUnique({
-//       where: { id: Number(params.id) },
-//     });
+    if (!campaign) {
+      throw new NotFoundException(
+        `Campaign with ID ${params.campaignId} not found`,
+      );
+    }
 
-//     if (!group) {
-//       throw new NotFoundException(`Group with ID ${params.id} not found`);
-//     }
+    // create all attendance records for the student
+    // divide days from start date of that campaign to the end date
+    const startDate = campaign.start_date;
+    const endDate = campaign.end_date;
+    const days = campaign.days?.split(',') || [];
 
-//     return {
-//       ...group,
-//     };
-//   }
+    const attendDays = this.getMatchingDaysBetweenDates(
+      String(startDate),
+      String(endDate),
+      days as any,
+    );
 
-//   async update(params: ValidateGroupIdDto, updateDto: CreateGroupDto) {
-//     const group = await this.prisma.group.findUnique({
-//       where: { id: Number(params.id) },
-//     });
+    await this.prisma.attendance.createMany({
+      data: attendDays.map((day) => ({
+        student_id: Number(params.studentId),
+        group_id: Number(params.groupId),
+        campaign_id: Number(params.campaignId),
+        taken_date: new Date(day).toISOString(),
+        delay_time: -1,
+        status: 'NOT_TAKEN',
+      })),
+    });
 
-//     if (!group) {
-//       throw new NotFoundException(
-//         `Group with ID ${Number(params.id)} not found`,
-//       );
-//     }
+    const studentGroup = await this.prisma.studentGroup.create({
+      data: {
+        student_id: student.id,
+        campaign_id: campaign.id,
+        group_id: group.id,
+      },
+    });
 
-//     const { title, class: classNumber, currentTeacherId } = updateDto;
+    return { message: 'Student assigned to group', data: studentGroup };
+  }
 
-//     // Create the group first
-//     const updatedGroup = await this.prisma.group.update({
-//       where: {
-//         id: group.id,
-//       },
-//       data: {
-//         title,
-//         class: classNumber,
-//         currentTeacherId,
-//       },
-//     });
+  async unassign(params: {
+    groupId: number;
+    studentId: number;
+    campaignId: number;
+  }) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: Number(params.groupId) },
+    });
 
-//     // create new relation between teacher and group (when change the teacher)
-//     if (currentTeacherId != group.currentTeacherId) {
-//       await this.prisma.teacherGroup.createMany({
-//         data: {
-//           groupId: group.id,
-//           teacherId: currentTeacherId,
-//         },
-//       });
-//     }
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${params.groupId} not found`);
+    }
 
-//     return updatedGroup;
-//   }
+    const student = await this.prisma.student.findUnique({
+      where: { id: Number(params.studentId) },
+    });
 
-//   async delete(params: ValidateGroupIdDto) {
-//     const group = await this.prisma.group.findUnique({
-//       where: { id: Number(params.id) },
-//     });
+    if (!student) {
+      throw new NotFoundException(
+        `Student with ID ${params.studentId} not found`,
+      );
+    }
 
-//     if (!group) {
-//       throw new NotFoundException(`Group with ID ${params.id} not found`);
-//     }
+    const campaign = await this.prisma.campaign.findUnique({
+      where: { id: Number(params.campaignId) },
+    });
 
-//     return this.prisma.group.delete({
-//       where: { id: Number(params.id) },
-//     });
-//   }
+    if (!campaign) {
+      throw new NotFoundException(
+        `Campaign with ID ${params.campaignId} not found`,
+      );
+    }
 
-//   async getGroupById(groupId: number) {
-//     const group = await this.prisma.group.findUnique({
-//       where: {
-//         id: Number(groupId),
-//       },
-//       include: {
-//         teachers: {
-//           include: {
-//             teacher: {
-//               select: {
-//                 id: true,
-//                 first_name: true,
-//                 last_name: true,
-//                 image_url: true,
-//               },
-//             },
-//           },
-//         },
-//         students: {
-//           include: {
-//             student: {
-//               select: {
-//                 id: true,
-//                 first_name: true,
-//                 last_name: true,
-//                 image_url: true,
-//                 educational_class: true,
-//               },
-//             },
-//           },
-//         },
-//       },
-//     });
+    await this.prisma.studentGroup.delete({
+      where: {
+        student_id_group_id_campaign_id: {
+          campaign_id: campaign.id,
+          group_id: group.id,
+          student_id: student.id,
+        },
+      },
+    });
 
-//     if (!group) {
-//       throw new NotFoundException(`Group with ID ${groupId} not found`);
-//     }
+    return { message: 'Student unassigned from group' };
+  }
 
-//     // Map the response to a cleaner format
-//     return {
-//       id: group.id,
-//       title: group.title,
-//       class: group.class,
-//       currentTeacher: group.teachers[0]?.teacher || null,
-//       students: group.students.map((sg) => ({
-//         id: sg.student.id,
-//         firstName: sg.student.first_name,
-//         lastName: sg.student.last_name,
-//         profileImage: sg.student.image_url,
-//         class: sg.student.educational_class,
-//       })),
-//     };
-//   }
+  // Additional functions from original implementation
+  async getGroupById(id: number) {
+    const group = await this.prisma.group.findUnique({
+      where: { id: Number(id) },
+      include: {
+        teachers: {
+          include: {
+            teacher: true,
+          },
+        },
+        students: {
+          include: {
+            student: true,
+          },
+        },
+      },
+    });
 
-//   async findByTeacher(teacherId: number) {
-//     // Find all groupIds for this teacher
-//     const teacherGroups = await this.prisma.teacherGroup.findMany({
-//       where: { teacherId: Number(teacherId) },
-//       select: { groupId: true },
-//     });
-//     const groupIds = teacherGroups.map(tg => tg.groupId);
-//     if (groupIds.length === 0) return [];
-//     // Return all groups for these groupIds, including students
-//     const groups = await this.prisma.group.findMany({
-//       where: { id: { in: groupIds } },
-//       include: {
-//         students: {
-//           include: {
-//             student: true,
-//           },
-//         },
-//       },
-//     });
-//     // Map students to a flat array of student info for each group
-//     return groups.map(group => ({
-//       ...group,
-//       students: group.students.map(sg => sg.student),
-//     }));
-//   }
+    if (!group) {
+      throw new NotFoundException(`Group with ID ${id} not found`);
+    }
 
-//   async findByTeacherAndCampaign(teacherId: number, campaignId: number) {
-//     // Find all groupIds for this teacher
-//     const teacherGroups = await this.prisma.teacherGroup.findMany({
-//       where: { teacherId: Number(teacherId) },
-//       select: { groupId: true },
-//     });
-//     const groupIds = teacherGroups.map(tg => tg.groupId);
-//     if (groupIds.length === 0) return [];
-//     // Find all groupIds for this campaign
-//     const groupCampaigns = await this.prisma.groupCampaigns.findMany({
-//       where: { campaignId: Number(campaignId), groupId: { in: groupIds } },
-//       select: { groupId: true },
-//     });
-//     const filteredGroupIds = groupCampaigns.map(gc => gc.groupId);
-//     if (filteredGroupIds.length === 0) return [];
-//     // Return all groups for these groupIds, including students
-//     const groups = await this.prisma.group.findMany({
-//       where: { id: { in: filteredGroupIds } },
-//       include: {
-//         students: {
-//           include: {
-//             student: true,
-//           },
-//         },
-//       },
-//     });
-//     // Map students to a flat array of student info for each group
-//     return groups.map(group => ({
-//       ...group,
-//       students: group.students.map(sg => sg.student),
-//     }));
-//   }
+    const result = {
+      ...group,
+      currentTeacher: group.teachers[0]?.teacher,
+      teachers: undefined,
+      students: group.students.map((stud) => stud.student),
+    };
 
-//   async findByStudentAndCampaign(studentId: number, campaignId: number) {
-//     // Find all groupIds for this student in the given campaign
-//     const studentGroups = await this.prisma.studentGroup.findMany({
-//       where: { studentId: Number(studentId), campaignId: Number(campaignId) },
-//       select: { groupId: true },
-//     });
-//     const groupIds = studentGroups.map(sg => sg.groupId);
-//     if (groupIds.length === 0) return [];
-//     // Return all groups for these groupIds, including students
-//     const groups = await this.prisma.group.findMany({
-//       where: { id: { in: groupIds } }
-//     });
-//     return groups
-//   }
-// }
+    return { message: `Group ${id} details found`, data: result };
+  }
+
+  async findByTeacher(teacherId: number) {
+    const teacherGroups = await this.prisma.teacherGroup.findMany({
+      where: { teacher_id: Number(teacherId) },
+      include: {
+        group: {
+          include: {
+            teachers: {
+              include: {
+                teacher: true,
+              },
+            },
+            students: {
+              include: {
+                student: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const result = teacherGroups.map((tg) => ({
+      ...tg.group,
+      currentTeacher: tg.group.teachers[0]?.teacher,
+      teachers: undefined,
+      students: tg.group.students.map((stud) => stud.student),
+    }));
+
+    return { message: 'Groups by teacher', data: result };
+  }
+
+  async findByTeacherAndCampaign(teacherId: number, campaignId: number) {
+    const teacherGroups = await this.prisma.teacherGroup.findMany({
+      where: {
+        teacher_id: Number(teacherId),
+        campaign_id: Number(campaignId),
+      },
+      include: {
+        group: {
+          include: {
+            teachers: {
+              include: {
+                teacher: true,
+              },
+            },
+            students: {
+              include: {
+                student: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const result = teacherGroups.map((tg) => ({
+      ...tg.group,
+      currentTeacher: tg.group.teachers[0]?.teacher,
+      teachers: undefined,
+      students: tg.group.students.map((stud) => stud.student),
+    }));
+
+    return { message: 'Groups by teacher and campaign', data: result };
+  }
+
+  async findByStudentAndCampaign(studentId: number, campaignId: number) {
+    const studentGroups = await this.prisma.studentGroup.findMany({
+      where: {
+        student_id: Number(studentId),
+        campaign_id: Number(campaignId),
+      },
+      include: {
+        group: {
+          include: {
+            teachers: {
+              include: {
+                teacher: true,
+              },
+            },
+            students: {
+              include: {
+                student: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    const result = studentGroups.map((sg) => ({
+      ...sg.group,
+      currentTeacher: sg.group.teachers[0]?.teacher,
+      teachers: undefined,
+      students: sg.group.students.map((stud) => stud.student),
+    }));
+
+    return { message: 'Groups by student and campaign', data: result };
+  }
+}

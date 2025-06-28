@@ -29,14 +29,20 @@ import { MosqueController } from './mosque/mosque.controller';
 import { MosqueService } from './mosque/mosque.service';
 import { CampaignService } from './campaign/campaign.service';
 import { CampaignsController } from './campaign/campaign.controller';
+import { GroupService } from './group/group.service';
+import { TeacherService } from './teacher/teacher.service';
+import { StudentService } from './student/student.service';
+import { StudentsController } from './student/student.controller';
+import { TeachersController } from './teacher/teacher.controller';
+import { GroupsController } from './group/group.controller';
 
 @Module({
   controllers: [
     AppController,
     // RoleController,
-    // StudentsController,
-    // TeachersController,
-    // GroupsController,
+    StudentsController,
+    TeachersController,
+    GroupsController,
     CampaignsController,
     // UploadController,
     // AuthController,
@@ -50,9 +56,9 @@ import { CampaignsController } from './campaign/campaign.controller';
     AppService,
     PrismaService,
     // RoleService,
-    // StudentService,
-    // TeacherService,
-    // GroupService,
+    StudentService,
+    TeacherService,
+    GroupService,
     CampaignService,
     // AttendanceService,
     // EvaluationService,

@@ -13,10 +13,29 @@ export class SavingSessionService {
 
   async createSavingSession(dto: CreateSavingSessionDto) {
     const { mistakes, ...savingSessionData } = dto;
+    // 1. Calculate total reduced points from mistake list
+    let totalReduced = 0;
+    for (const m of mistakes) {
+      const mistake = await this.prisma.mistake.findUnique({
+        where: { id: m.mistakeId },
+      });
+      if (mistake) totalReduced += mistake.removed_points;
+    }
+
+    // 2. Fetch all evaluations for this campaign
+    const evaluations = await this.prisma.evaluation.findMany({
+      where: { campaignId: dto.campaignId },
+      orderBy: { reducedAmount: 'desc' }, // get the highest matching evaluation first
+    });
+
+    const matchedEvaluation = evaluations.find(
+      (ev) => totalReduced >= ev.reducedAmount,
+    );
 
     return this.prisma.savingSession.create({
       data: {
         ...savingSessionData,
+        evaluationId: matchedEvaluation.id,
         MistakeInSession: {
           create: mistakes.map((m) => ({
             page: m.pageNumber,
@@ -28,6 +47,7 @@ export class SavingSessionService {
         MistakeInSession: {
           include: { mistake: true },
         },
+        evaluation: true,
         student: true,
         teacher: true,
         campaign: true,

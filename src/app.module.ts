@@ -43,6 +43,8 @@ import { SavingSessionController } from './saving-session/saving-session.control
 import { SavingSessionService } from './saving-session/saving-session.service';
 import { RoleController } from './role/role.controller';
 import { RoleService } from './role/role.service';
+import { AttendanceController } from './attendance/attendance.controller';
+import { AttendanceService } from './attendance/attendance.service';
 
 @Module({
   controllers: [
@@ -54,7 +56,7 @@ import { RoleService } from './role/role.service';
     CampaignsController,
     // UploadController,
     // AuthController,
-    // AttendanceController,
+    AttendanceController,
     EvaluationController,
     // LogController,
     OrganizationController,
@@ -70,7 +72,7 @@ import { RoleService } from './role/role.service';
     TeacherService,
     GroupService,
     CampaignService,
-    // AttendanceService,
+    AttendanceService,
     EvaluationService,
     // LogService,
     OrganizationService,

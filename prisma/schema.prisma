@@ -63,6 +63,7 @@ model OrganizationUser {
   is_active       Boolean  @default(true)
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
+  password        String?
 
   organization Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
 
@@ -386,7 +387,7 @@ model MistakeInSession {
 
 model AppRole {
   id          Int      @id @default(autoincrement())
-  name        String   
+  name        String
   description String?
   permissions Json
   created_at  DateTime @default(now())

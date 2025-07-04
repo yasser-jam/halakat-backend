@@ -83,3 +83,96 @@
 //     });
 //   }
 // }
+
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { PrismaService } from '../prisma.service';
+import { JwtService } from '@nestjs/jwt';
+import * as bcrypt from 'bcryptjs';
+
+@Injectable()
+export class AuthService {
+  constructor(
+    private prisma: PrismaService,
+    private jwtService: JwtService,
+  ) {}
+
+  async loginAdmin({ mobile_phone_number, password }) {
+    const user = await this.prisma.teacher.findUnique({
+      where: { mobile_phone_number },
+    });
+    if (!user || !(await bcrypt.compare(password, user.password))) {
+      throw new UnauthorizedException();
+    }
+
+    const payload = {
+      sub: user.id,
+      userType: 'ADMIN',
+      role: user.role,
+    };
+
+    return { access_token: this.jwtService.sign(payload) };
+  }
+
+  async loginTeacher({ mobile_phone_number, password }) {
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { mobile_phone_number },
+    });
+    if (!teacher || !(await bcrypt.compare(password, teacher.password))) {
+      throw new UnauthorizedException();
+    }
+
+    // Get latest teacher role (you can modify based on your logic)
+    const latestRole = await this.prisma.teacherRole.findFirst({
+      where: { teacher_id: teacher.id },
+      orderBy: { created_at: 'desc' },
+      include: {
+        campaign: {
+          include: { mosque: { include: { organization: true } } },
+        },
+        group: true,
+        role: true,
+      },
+    });
+
+    const payload = {
+      sub: teacher.id,
+      userType: 'TEACHER',
+      role: teacher.role,
+      campaign_id: latestRole?.campaign_id,
+      mosque_id: latestRole?.campaign?.mosque_id,
+      organization_id: latestRole?.campaign?.mosque?.organization_id,
+    };
+
+    return { access_token: this.jwtService.sign(payload) };
+  }
+
+  async loginStudent({ student_mobile, password }) {
+    const student = await this.prisma.student.findUnique({
+      where: { student_mobile },
+    });
+    if (!student || !(await bcrypt.compare(password, student.password))) {
+      throw new UnauthorizedException();
+    }
+
+    // Get latest campaign
+    const latest = await this.prisma.studentCampaign.findFirst({
+      where: { student_id: student.id },
+      orderBy: { created_at: 'desc' },
+      include: {
+        campaign: {
+          include: { mosque: { include: { organization: true } } },
+        },
+      },
+    });
+
+    const payload = {
+      sub: student.id,
+      userType: 'STUDENT',
+      campaign_id: latest?.campaign_id,
+      mosque_id: latest?.campaign?.mosque_id,
+      organization_id: latest?.campaign?.mosque?.organization_id,
+    };
+
+    return { access_token: this.jwtService.sign(payload) };
+  }
+}

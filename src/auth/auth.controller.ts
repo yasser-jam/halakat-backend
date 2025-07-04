@@ -82,3 +82,36 @@
 //     return teacher;
 //   }
 // }
+
+import { Controller, Post, Body } from '@nestjs/common';
+import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { AuthService } from './auth.service';
+import {
+  LoginAdminDto,
+  LoginTeacherDto,
+  LoginStudentDto,
+} from './../dto/auth.dto';
+
+@ApiTags('Auth')
+@Controller('auth')
+export class AuthController {
+  constructor(private authService: AuthService) {}
+
+  @Post('login/admin')
+  @ApiOperation({ summary: 'Login as Admin' })
+  loginAdmin(@Body() dto: LoginAdminDto) {
+    return this.authService.loginAdmin(dto);
+  }
+
+  @Post('login/teacher')
+  @ApiOperation({ summary: 'Login as Teacher' })
+  loginTeacher(@Body() dto: LoginTeacherDto) {
+    return this.authService.loginTeacher(dto);
+  }
+
+  @Post('login/student')
+  @ApiOperation({ summary: 'Login as Student' })
+  loginStudent(@Body() dto: LoginStudentDto) {
+    return this.authService.loginStudent(dto);
+  }
+}

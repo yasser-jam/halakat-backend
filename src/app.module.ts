@@ -39,6 +39,8 @@ import { MistakeController } from './mistake/mistake.controller';
 import { MistakeService } from './mistake/mistake.service';
 import { EvaluationService } from './evaluation/evaluation.service';
 import { EvaluationController } from './evaluation/evaluation.controller';
+import { SavingSessionController } from './saving-session/saving-session.controller';
+import { SavingSessionService } from './saving-session/saving-session.service';
 
 @Module({
   controllers: [
@@ -56,6 +58,7 @@ import { EvaluationController } from './evaluation/evaluation.controller';
     OrganizationController,
     MosqueController,
     MistakeController,
+    SavingSessionController,
   ],
   providers: [
     AppService,
@@ -71,6 +74,7 @@ import { EvaluationController } from './evaluation/evaluation.controller';
     OrganizationService,
     MistakeService,
     MosqueService,
+    SavingSessionService,
   ],
   imports: [],
 })

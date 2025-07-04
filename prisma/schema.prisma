@@ -224,6 +224,7 @@ model Campaign {
   evaluations         Evaluation[]
   teacher_roles       TeacherRole[]
   TeacherGroup        TeacherGroup[]
+  AppRole             AppRole[]
 
   @@index([mosque_id])
   @@index([status])
@@ -322,11 +323,11 @@ model Attendance {
 }
 
 model Evaluation {
-  id             Int    @id @default(autoincrement())
-  title          String
-  points         Int
+  id            Int    @id @default(autoincrement())
+  title         String
+  points        Int
   minimum_marks Int
-  campaign_id    Int
+  campaign_id   Int
 
   campaign Campaign        @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
   sessions SavingSession[]
@@ -359,10 +360,10 @@ model SavingSession {
 }
 
 model Mistake {
-  id             Int    @id @default(autoincrement())
-  campaign_id    Int
-  title          String
-  reduced_marks  Int
+  id            Int    @id @default(autoincrement())
+  campaign_id   Int
+  title         String
+  reduced_marks Int
 
   campaign            Campaign           @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
   mistakes_in_session MistakeInSession[]
@@ -390,7 +391,9 @@ model AppRole {
   permissions Json
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
+  campaign_id Int
 
+  campaign      Campaign      @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
   teacher_roles TeacherRole[]
 }
 

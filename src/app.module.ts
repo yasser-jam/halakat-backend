@@ -41,11 +41,13 @@ import { EvaluationService } from './evaluation/evaluation.service';
 import { EvaluationController } from './evaluation/evaluation.controller';
 import { SavingSessionController } from './saving-session/saving-session.controller';
 import { SavingSessionService } from './saving-session/saving-session.service';
+import { RoleController } from './role/role.controller';
+import { RoleService } from './role/role.service';
 
 @Module({
   controllers: [
     AppController,
-    // RoleController,
+    RoleController,
     StudentsController,
     TeachersController,
     GroupsController,
@@ -63,7 +65,7 @@ import { SavingSessionService } from './saving-session/saving-session.service';
   providers: [
     AppService,
     PrismaService,
-    // RoleService,
+    RoleService,
     StudentService,
     TeacherService,
     GroupService,

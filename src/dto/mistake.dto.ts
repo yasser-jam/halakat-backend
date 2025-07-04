@@ -21,7 +21,7 @@ export class CreateMistakeDto {
 
   @ApiProperty({ example: 5, description: 'Points to remove for this mistake' })
   @IsNumber()
-  removed_points: number;
+  minimum_marks: number;
 }
 
 export class UpdateMistakeDto {
@@ -44,7 +44,7 @@ export class UpdateMistakeDto {
   })
   @IsOptional()
   @IsNumber()
-  removed_points?: number;
+  minimum_marks?: number;
 }
 
 export class ValidateMistakeIdDto {

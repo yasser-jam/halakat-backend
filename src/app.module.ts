@@ -35,6 +35,8 @@ import { StudentService } from './student/student.service';
 import { StudentsController } from './student/student.controller';
 import { TeachersController } from './teacher/teacher.controller';
 import { GroupsController } from './group/group.controller';
+import { MistakeController } from './mistake/mistake.controller';
+import { MistakeService } from './mistake/mistake.service';
 
 @Module({
   controllers: [
@@ -51,6 +53,7 @@ import { GroupsController } from './group/group.controller';
     // LogController,
     OrganizationController,
     MosqueController,
+    MistakeController,
   ],
   providers: [
     AppService,
@@ -64,6 +67,7 @@ import { GroupsController } from './group/group.controller';
     // EvaluationService,
     // LogService,
     OrganizationService,
+    MistakeService,
     MosqueService,
   ],
   imports: [],

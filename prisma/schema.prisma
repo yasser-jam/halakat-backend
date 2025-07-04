@@ -362,7 +362,7 @@ model Mistake {
   id             Int    @id @default(autoincrement())
   campaign_id    Int
   title          String
-  minimum_marks  Int
+  reduced_marks  Int
 
   campaign            Campaign           @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
   mistakes_in_session MistakeInSession[]

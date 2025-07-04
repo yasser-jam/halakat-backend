@@ -15,7 +15,7 @@ export class MistakeService {
       data: {
         campaign_id: dto.campaign_id,
         title: dto.title,
-        minimum_marks: dto.minimum_marks,
+        reduced_marks: dto.reduced_marks,
       },
     });
   }
@@ -73,7 +73,7 @@ export class MistakeService {
 
   async assertCampaignMistakes(
     campaignId: number,
-    mistakes: Array<{ id?: number; title: string; minimum_marks: number }>,
+    mistakes: Array<{ id?: number; title: string; reduced_marks: number }>,
   ) {
     // 1. Get current mistakes for this campaign
     const existing = await this.prisma.mistake.findMany({
@@ -89,13 +89,13 @@ export class MistakeService {
         const current = existing.find((m) => m.id === item.id);
         if (
           current?.title !== item.title ||
-          current?.minimum_marks !== item.minimum_marks
+          current?.reduced_marks !== item.reduced_marks
         ) {
           await this.prisma.mistake.update({
             where: { id: item.id },
             data: {
               title: item.title,
-              minimum_marks: item.minimum_marks,
+              reduced_marks: item.reduced_marks,
             },
           });
         }
@@ -104,7 +104,7 @@ export class MistakeService {
           data: {
             campaign_id: campaignId,
             title: item.title,
-            minimum_marks: item.minimum_marks,
+            reduced_marks: item.reduced_marks,
           },
         });
       }

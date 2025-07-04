@@ -386,7 +386,7 @@ model MistakeInSession {
 
 model AppRole {
   id          Int      @id @default(autoincrement())
-  name        String   @unique
+  name        String   
   description String?
   permissions Json
   created_at  DateTime @default(now())

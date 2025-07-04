@@ -325,7 +325,7 @@ model Evaluation {
   id             Int    @id @default(autoincrement())
   title          String
   points         Int
-  reduced_amount Int
+  minimum_marks Int
   campaign_id    Int
 
   campaign Campaign        @relation(fields: [campaign_id], references: [id], onDelete: Cascade)

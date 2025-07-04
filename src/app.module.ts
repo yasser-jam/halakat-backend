@@ -37,6 +37,8 @@ import { TeachersController } from './teacher/teacher.controller';
 import { GroupsController } from './group/group.controller';
 import { MistakeController } from './mistake/mistake.controller';
 import { MistakeService } from './mistake/mistake.service';
+import { EvaluationService } from './evaluation/evaluation.service';
+import { EvaluationController } from './evaluation/evaluation.controller';
 
 @Module({
   controllers: [
@@ -49,7 +51,7 @@ import { MistakeService } from './mistake/mistake.service';
     // UploadController,
     // AuthController,
     // AttendanceController,
-    // EvaluationController,
+    EvaluationController,
     // LogController,
     OrganizationController,
     MosqueController,
@@ -64,7 +66,7 @@ import { MistakeService } from './mistake/mistake.service';
     GroupService,
     CampaignService,
     // AttendanceService,
-    // EvaluationService,
+    EvaluationService,
     // LogService,
     OrganizationService,
     MistakeService,

@@ -135,4 +135,46 @@ export class StudentService {
 
     return { message: 'Unassigned students', data: unassignedStudents };
   }
+
+  // List students for a specific campaign
+  async listStudentsForCampaign(campaignId: number) {
+    const students = await this.prisma.student.findMany({
+      where: {
+        campaign_enrollments: {
+          some: {
+            campaign_id: Number(campaignId),
+            is_active: true,
+          },
+        },
+      },
+      include: {
+        campaign_enrollments: {
+          where: {
+            campaign_id: Number(campaignId),
+            is_active: true,
+          },
+          select: {
+            enrolled_date: true,
+            is_active: true,
+          },
+        },
+        groups: {
+          where: {
+            campaign_id: Number(campaignId),
+          },
+          include: {
+            group: {
+              select: {
+                id: true,
+                title: true,
+                class: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return students;
+  }
 }

@@ -6,6 +6,8 @@ import {
   Param,
   Put,
   Delete,
+  Headers,
+  BadRequestException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -39,6 +41,20 @@ export class StudentsController {
   @ApiBody({ type: CreateStudentDto })
   async create(@Body() createStudentDto: CreateStudentDto) {
     return this.studentService.create(createStudentDto);
+  }
+
+  // List students for campaign
+  @Get('campaign')
+  @ApiOperation({ summary: 'List students for campaign' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of students for the campaign',
+  })
+  async listStudentsForCampaign(@Headers('campaign-id') campaignId: string) {
+    if (!campaignId) {
+      throw new BadRequestException('Campaign ID is required in headers');
+    }
+    return this.studentService.listStudentsForCampaign(Number(campaignId));
   }
 
   @Get(':id')

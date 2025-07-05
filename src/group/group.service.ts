@@ -361,7 +361,7 @@ export class GroupService {
       students: tg.group.students.map((stud) => stud.student),
     }));
 
-    return { message: 'Groups by teacher and campaign', data: result };
+    return result;
   }
 
   async findByStudentAndCampaign(studentId: number, campaignId: number) {

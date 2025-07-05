@@ -7,6 +7,9 @@ import {
   Query,
   Delete,
   Put,
+  UseGuards,
+  Request,
+  Headers,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -15,9 +18,12 @@ import {
   ApiQuery,
   ApiParam,
   ApiBody,
+  ApiBearerAuth,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { GroupService } from './group.service';
 import { CreateGroupDto } from './group.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @ApiTags('groups')
 @Controller('groups')
@@ -84,6 +90,35 @@ export class GroupsController {
     return this.groupService.create(createGroupDto, campaignId);
   }
 
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Get('/my-groups')
+  @ApiOperation({
+    summary:
+      'List all groups for the authenticated teacher in the specified campaign',
+  })
+  @ApiHeader({
+    name: 'campaign-id',
+    description: 'Campaign ID',
+    required: true,
+  })
+  @ApiResponse({
+    status: 200,
+    description:
+      'Return all groups for the authenticated teacher in the given campaign',
+  })
+  async findByTeacherAndCampaign(
+    @Request() req,
+    @Headers('campaign-id') campaignId: string,
+  ) {
+    console.log('hello test');
+    const teacherId = req.user.id;
+    return this.groupService.findByTeacherAndCampaign(
+      Number(teacherId),
+      Number(campaignId),
+    );
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a group by ID' })
   @ApiParam({ name: 'id', type: Number })
@@ -142,25 +177,6 @@ export class GroupsController {
   })
   async findByTeacher(@Param('teacherId') teacherId: number) {
     return this.groupService.findByTeacher(Number(teacherId));
-  }
-
-  @Get('/byteacher/:teacherId/campaign/:campaignId')
-  @ApiOperation({ summary: 'List all groups by teacher and campaign' })
-  @ApiParam({ name: 'teacherId', type: Number })
-  @ApiParam({ name: 'campaignId', type: Number })
-  @ApiResponse({
-    status: 200,
-    description:
-      'Return all groups for the given teacher in the given campaign',
-  })
-  async findByTeacherAndCampaign(
-    @Param('teacherId') teacherId: number,
-    @Param('campaignId') campaignId: number,
-  ) {
-    return this.groupService.findByTeacherAndCampaign(
-      Number(teacherId),
-      Number(campaignId),
-    );
   }
 
   @Get('/bystudent/:studentId/campaign/:campaignId')

@@ -6,6 +6,8 @@ import {
   Param,
   Put,
   Delete,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -13,9 +15,11 @@ import {
   ApiResponse,
   ApiBody,
   ApiParam,
+  ApiBearerAuth,
 } from '@nestjs/swagger';
 import { CampaignService } from './campaign.service';
 import { CreateCampaignDto } from './campaign.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @ApiTags('campaigns')
 @Controller('campaigns')
@@ -38,6 +42,21 @@ export class CampaignsController {
   @ApiBody({ type: CreateCampaignDto })
   async create(@Body() createCampaignDto: CreateCampaignDto) {
     return this.campaignService.create(createCampaignDto);
+  }
+
+  // Additional endpoints (current, findByTeacher, findByStudent) can be updated similarly if needed
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Get('my-campaigns')
+  @ApiOperation({
+    summary: 'Get campaigns assigned to the authenticated teacher',
+  })
+  @ApiResponse({ status: 200, description: 'Return campaigns for the teacher' })
+  async findCampaignsByTeacher(@Request() req) {
+    console.log(req.user);
+    const teacherId = req.user.id;
+    return this.campaignService.findByTeacherId(teacherId);
   }
 
   @Get(':id')
@@ -76,6 +95,4 @@ export class CampaignsController {
   async delete(@Param('id') id: number) {
     return this.campaignService.delete(Number(id));
   }
-
-  // Additional endpoints (current, findByTeacher, findByStudent) can be updated similarly if needed
 }

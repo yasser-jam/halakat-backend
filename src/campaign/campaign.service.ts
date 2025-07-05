@@ -91,6 +91,25 @@ export class CampaignService {
     });
   }
 
+  async findByTeacherId(teacherId: number) {
+    const campaigns = await this.prisma.campaign.findMany({
+      where: {
+        teacher_assignments: {
+          some: {
+            teacher_id: teacherId,
+          },
+        },
+      },
+      select: {
+        days: true,
+        name: true,
+        mosque: true,
+      },
+    });
+
+    return campaigns;
+  }
+
   async findByStudent(studentId: number) {
     // Find all campaignIds for this student
     const studentGroups = await this.prisma.studentGroup.findMany({

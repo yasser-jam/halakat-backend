@@ -45,6 +45,9 @@ import { RoleController } from './role/role.controller';
 import { RoleService } from './role/role.service';
 import { AttendanceController } from './attendance/attendance.controller';
 import { AttendanceService } from './attendance/attendance.service';
+import { AuthModule } from './auth/auth.module';
+// import { AuthController } from './auth/auth.controller';
+// import { AuthService } from './auth/auth.service';
 
 @Module({
   controllers: [
@@ -55,7 +58,6 @@ import { AttendanceService } from './attendance/attendance.service';
     GroupsController,
     CampaignsController,
     // UploadController,
-    // AuthController,
     AttendanceController,
     EvaluationController,
     // LogController,
@@ -80,6 +82,6 @@ import { AttendanceService } from './attendance/attendance.service';
     MosqueService,
     SavingSessionService,
   ],
-  imports: [],
+  imports: [AuthModule],
 })
 export class AppModule {}

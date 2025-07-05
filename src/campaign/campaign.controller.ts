@@ -54,7 +54,6 @@ export class CampaignsController {
   })
   @ApiResponse({ status: 200, description: 'Return campaigns for the teacher' })
   async findCampaignsByTeacher(@Request() req) {
-    console.log(req.user);
     const teacherId = req.user.id;
     return this.campaignService.findByTeacherId(teacherId);
   }

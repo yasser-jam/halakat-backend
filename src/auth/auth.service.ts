@@ -96,7 +96,7 @@ export class AuthService {
     private jwtService: JwtService,
   ) {}
 
-  async loginAdmin({ mobile_phone_number, password }) {
+  async loginAdmin({ mobile_phone_number }) {
     const user = await this.prisma.teacher.findUnique({
       where: { mobile_phone_number },
     });
@@ -113,9 +113,20 @@ export class AuthService {
     return { access_token: this.jwtService.sign(payload) };
   }
 
-  async loginTeacher({ mobile_phone_number, password }) {
+  async loginTeacher({ mobile_phone_number }) {
     const teacher = await this.prisma.teacher.findUnique({
       where: { mobile_phone_number },
+      // include: {
+      //   teacher_roles: {
+      //     include: {
+      //       role: {
+      //         select: {
+      //           permissions: true,
+      //         },
+      //       },
+      //     },
+      //   },
+      // },
     });
     if (!teacher) {
       throw new UnauthorizedException();
@@ -126,7 +137,9 @@ export class AuthService {
       userType: 'TEACHER',
     };
 
-    return { access_token: this.jwtService.sign(payload) };
+    return {
+      access_token: this.jwtService.sign(payload),
+    };
   }
 
   async loginStudent({ student_mobile, password }) {
@@ -143,5 +156,73 @@ export class AuthService {
     };
 
     return { access_token: this.jwtService.sign(payload) };
+  }
+
+  async getTeacherProfile(userId: number) {
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { id: userId },
+      include: {
+        teacher_roles: {
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+    if (!teacher) return { roles: [], permissions: [], teacher: null };
+    const roles = teacher.teacher_roles.map((tr) => tr.role.name);
+    const permissions = Array.from(
+      new Set(
+        teacher.teacher_roles.flatMap((tr) =>
+          Array.isArray(tr.role.permissions)
+            ? tr.role.permissions
+            : typeof tr.role.permissions === 'string'
+              ? JSON.parse(tr.role.permissions)
+              : [],
+        ),
+      ),
+    );
+    // Remove sensitive fields from teacher info
+    const teacherInfo = { ...teacher };
+    delete teacherInfo.password;
+    return { roles, permissions, teacher: teacherInfo };
+  }
+
+  async getTeacherPlainInfo(userId: number) {
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { id: userId },
+    });
+    if (!teacher) return null;
+    const teacherInfo = { ...teacher };
+    delete teacherInfo.password;
+    return teacherInfo;
+  }
+
+  async getTeacherPermissionsForCampaign(userId: number, campaignId: number) {
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { id: userId },
+      include: {
+        teacher_roles: {
+          where: { campaign_id: campaignId },
+          include: {
+            role: true,
+          },
+        },
+      },
+    });
+    if (!teacher) return { roles: [], permissions: [] };
+    const roles = teacher.teacher_roles.map((tr) => tr.role.name);
+    const permissions = Array.from(
+      new Set(
+        teacher.teacher_roles.flatMap((tr) =>
+          Array.isArray(tr.role.permissions)
+            ? tr.role.permissions
+            : typeof tr.role.permissions === 'string'
+              ? JSON.parse(tr.role.permissions)
+              : [],
+        ),
+      ),
+    );
+    return { roles, permissions };
   }
 }

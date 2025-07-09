@@ -1,101 +1,26 @@
-// import {
-//   Controller,
-//   Post,
-//   Body,
-//   Request,
-//   UseGuards,
-//   UnauthorizedException,
-// } from '@nestjs/common';
-// import { AuthService } from './auth.service';
-// import { JwtAuthGuard } from './jwt-auth.guard';
-// import { LoginDto, RegisterDto } from 'src/dto/teacher.dto';
-// import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
-// import { TeacherService } from './../teacher/teacher.service';
-
-// @Controller('auth')
-// export class AuthController {
-//   constructor(
-//     private authService: AuthService,
-//     private teacherService: TeacherService,
-//   ) {}
-
-//   @Post('register')
-//   async register(@Body() body: RegisterDto) {
-//     return this.authService.register(body);
-//   }
-
-//   @Post('login')
-//   async login(@Body() body: LoginDto) {
-//     const user = await this.authService.validateUser(
-//       body.mobile_phone_number,
-//       body.password,
-//     );
-//     if (!user) throw new UnauthorizedException('Invalid credentials');
-//     return this.authService.login(user);
-//   }
-
-//   @Post('student-login')
-//   async studentLogin(@Body() body: LoginDto) {
-//     const user = await this.authService.validateStudent(
-//       body.mobile_phone_number,
-//       body.password,
-//     );
-//     if (!user) throw new UnauthorizedException('Invalid credentials');
-//     return this.authService.studentLogin(user);
-//   }
-
-//   @Post('admin/login')
-//   async adminLogin(@Body() body: LoginDto) {
-//     const user = await this.authService.validateUser(
-//       body.mobile_phone_number,
-//       body.password,
-//     );
-//     // if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role))
-//     //   throw new UnauthorizedException('Invalid credentials');
-//     return this.authService.login(user);
-//   }
-
-//   @ApiBearerAuth('access-token')
-//   @UseGuards(JwtAuthGuard)
-//   @Post('profile')
-//   getProfile(@Request() req) {
-//     return req.user;
-//   }
-
-//   @ApiBearerAuth('access-token')
-//   @UseGuards(JwtAuthGuard)
-//   @Post('mobile/profile')
-//   @ApiParam({
-//     name: 'campaign id',
-//     type: 'number',
-//   })
-//   getMobileProfile(@Request() req) {
-//     const user = req.user;
-
-//     if (!user) throw new UnauthorizedException('Not Found');
-
-//     // get teacher info
-//     const teacher = this.teacherService.findInfo({
-//       id: user.id,
-//       campaign_id: 2,
-//     });
-//     return teacher;
-//   }
-// }
-
-import { Controller, Post, Body } from '@nestjs/common';
-import { ApiTags, ApiOperation } from '@nestjs/swagger';
+import { Controller, Post, Body, Request, UseGuards } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
   LoginAdminDto,
   LoginTeacherDto,
   LoginStudentDto,
 } from './../dto/auth.dto';
+import { JwtAuthGuard } from './jwt-auth.guard';
+// import { PrismaService } from '../prisma.service'; // Remove this line
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  constructor(private authService: AuthService) {}
+  constructor(
+    private authService: AuthService,
+    // private prisma: PrismaService, // Remove this line
+  ) {}
 
   @Post('login/admin')
   @ApiOperation({ summary: 'Login as Admin' })
@@ -113,5 +38,42 @@ export class AuthController {
   @ApiOperation({ summary: 'Login as Student' })
   loginStudent(@Body() dto: LoginStudentDto) {
     return this.authService.loginStudent(dto);
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Post('profile')
+  @ApiOperation({ summary: 'Get user profile (plain teacher info only)' })
+  async getProfile(@Request() req) {
+    const user = req.user;
+    if (!user || user.userType !== 'TEACHER') {
+      return { teacher: null };
+    }
+    // Fetch only the teacher info, no roles/permissions
+    const teacher = await this.authService.getTeacherPlainInfo(user.id);
+    return { teacher };
+  }
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Post('my-permissions')
+  @ApiOperation({
+    summary: 'Get teacher roles and permissions for a specific campaign',
+  })
+  @ApiHeader({
+    name: 'campaign_id',
+    description: 'Campaign ID to filter permissions',
+    required: true,
+  })
+  async getMyPermissions(@Request() req) {
+    const user = req.user;
+    const campaignId = req.headers['campaign_id'] || req.headers['campaign-id'];
+    if (!user || user.userType !== 'TEACHER' || !campaignId) {
+      return { roles: [], permissions: [] };
+    }
+    return this.authService.getTeacherPermissionsForCampaign(
+      user.id,
+      Number(campaignId),
+    );
   }
 }

@@ -94,36 +94,6 @@ export class StudentsController {
     return this.studentService.delete(Number(id));
   }
 
-  // Assign
-  @Put('assign/:id')
-  @ApiOperation({ summary: 'Assign Student to Group' })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 200,
-    description: 'The student has been successfully assigned.',
-  })
-  async assign(
-    @Param('id') id: number,
-    @Body() assignDto: { groupId: number; campaignId: number },
-  ) {
-    return this.studentService.assign(Number(id), assignDto);
-  }
-
-  // UnAssign
-  @Put('unassign/:id')
-  @ApiOperation({ summary: 'Un-Assign Student from Group' })
-  @ApiParam({ name: 'id', type: Number })
-  @ApiResponse({
-    status: 200,
-    description: 'The student has been successfully un-assigned.',
-  })
-  async unassign(
-    @Param('id') id: number,
-    @Body() body: { campaignId: number },
-  ) {
-    return this.studentService.unassign(Number(id), body.campaignId);
-  }
-
   // List un assigned
   @Get('unassigned/:campaignId')
   @ApiOperation({ summary: 'List un-assigned students in campaign' })

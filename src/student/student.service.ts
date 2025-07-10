@@ -64,61 +64,6 @@ export class StudentService {
     return { message: `Student ${id} deleted` };
   }
 
-  // assign student to group
-  async assign(id: number, assignDto: { groupId: number; campaignId: number }) {
-    const group = await this.prisma.group.findUnique({
-      where: { id: Number(assignDto.groupId) },
-    });
-
-    if (!group) {
-      throw new NotFoundException(
-        `Group with ID ${assignDto.groupId} not found`,
-      );
-    }
-
-    // Check if the student exists
-    const student = await this.prisma.student.findUnique({
-      where: { id: Number(id) },
-    });
-
-    if (!student) {
-      throw new NotFoundException(`Student with ID ${id} not found`);
-    }
-
-    // Create student group assignment
-    const studentGroup = await this.prisma.studentGroup.create({
-      data: {
-        student_id: Number(id),
-        group_id: Number(assignDto.groupId),
-        campaign_id: Number(assignDto.campaignId),
-      },
-    });
-
-    return { message: 'Student assigned to group', data: studentGroup };
-  }
-
-  // unassign student from group
-  async unassign(id: number, campaignId: number) {
-    // Check if the student exists
-    const student = await this.prisma.student.findUnique({
-      where: { id: Number(id) },
-    });
-
-    if (!student) {
-      throw new NotFoundException(`Student with ID ${id} not found`);
-    }
-
-    // Remove student group assignment
-    await this.prisma.studentGroup.deleteMany({
-      where: {
-        student_id: Number(id),
-        campaign_id: Number(campaignId),
-      },
-    });
-
-    return { message: 'Student unassigned from group' };
-  }
-
   // List unassigned students for a campaign
   async listUnassigned(campaignId: number) {
     const assignedStudents = await this.prisma.studentGroup.findMany({

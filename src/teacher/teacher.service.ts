@@ -106,11 +106,15 @@ export class TeacherService {
   }
 
   async findInfo(id: number, campaign_id: number) {
+    // Fetch teacher with roles and groups for the campaign
+    console.log(campaign_id);
     const teacher = await this.prisma.teacher.findUnique({
       where: { id: Number(id) },
       include: {
-        groups: {
+        teacher_roles: {
+          where: { campaign_id },
           include: {
+            role: true,
             group: {
               include: {
                 students: {
@@ -121,22 +125,6 @@ export class TeacherService {
               },
             },
           },
-          where: {
-            group: {
-              campaigns: {
-                some: {
-                  campaign_id: campaign_id,
-                },
-              },
-            },
-          },
-        },
-        teacher_roles: {
-          include: {
-            role: true,
-            campaign: true,
-            group: true,
-          },
         },
       },
     });
@@ -145,21 +133,53 @@ export class TeacherService {
       throw new NotFoundException(`Teacher with ID ${id} not found`);
     }
 
-    teacher.groups = teacher.groups.map((g: any) => {
-      g.group.students = g.group.students.map((stud) => stud.student);
-      return g.group;
-    });
+    // Get the first (should be only) teacher_role for this campaign
+    const teacherRole = teacher.teacher_roles[0];
+    let role = null;
+    let group = null;
 
-    const result = {
-      ...teacher,
-      roles: teacher.teacher_roles.map((tr) => ({
-        role: tr.role.name,
-        campaign: tr.campaign.name,
-        group: tr.group.title,
-      })),
+    if (teacherRole) {
+      // Role info
+      const permissions = Array.isArray(teacherRole.role.permissions)
+        ? teacherRole.role.permissions
+        : typeof teacherRole.role.permissions === 'string'
+          ? JSON.parse(teacherRole.role.permissions)
+          : [];
+      role = {
+        name: teacherRole.role.name,
+        permissions,
+      };
+
+      // Group info
+      if (teacherRole.group) {
+        group = {
+          id: teacherRole.group.id,
+          title: teacherRole.group.title,
+          class: teacherRole.group.class,
+          // Add other group fields as needed
+          students: teacherRole.group.students.map((stud: any) => {
+            return {
+              first_name: stud.student.first_name,
+              last_name: stud.student.last_name,
+              image: stud.student.image_url,
+              mobile_phone: stud.student.student_mobile,
+              class: stud.student.educational_class,
+            };
+          }),
+        };
+      }
+    }
+
+    // Prepare teacher data (remove sensitive fields)
+    const teacherData = { ...teacher };
+    delete teacherData.password;
+    delete teacherData.teacher_roles;
+
+    return {
+      ...teacherData,
+      role,
+      group,
     };
-
-    return { message: `Teacher ${id} info found`, data: result };
   }
 
   async update(id: number, updateTeacherDto: CreateTeacherDto) {

@@ -59,7 +59,7 @@ export class AttendanceController {
     description: 'Create attendance',
     type: UpdateAttendanceDto,
   })
-  @Post('attendance/:campaignId/:groupId/:studentId')
+  @Post('attendance/:groupId/:studentId')
   async createAll(
     @Param('campaignId') campaignId: number,
     @Param('groupId') groupId: number,
@@ -110,9 +110,9 @@ export class AttendanceController {
     status: 200,
     description: 'List attendance by student, group, and campaign',
   })
-  @Get('attendance/student/:campaignId/:groupId/:studentId')
+  @Get('student/:studentId')
   async listByStudentGroupCampaign(
-    @Param('campaignId') campaignId: number,
+    @Headers('campaignId') campaignId: number,
     @Param('groupId') groupId: number,
     @Param('studentId') studentId: number,
   ) {

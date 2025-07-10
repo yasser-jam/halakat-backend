@@ -14,7 +14,13 @@ export class AttendanceService {
         campaign_id: Number(campaignId),
       },
       include: {
-        student: true,
+        student: {
+          select: {
+            first_name: true,
+            last_name: true,
+            educational_class: true
+          }
+        },
       },
     });
   }

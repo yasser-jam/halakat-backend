@@ -1,4 +1,13 @@
-import { Controller, Get, Body, Param, Put, Post, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Body,
+  Param,
+  Put,
+  Post,
+  Query,
+  Headers,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -11,7 +20,7 @@ import { AttendanceService } from './attendance.service';
 import { BulkUpdateAttendanceDto, UpdateAttendanceDto } from './attendance.dto';
 
 @ApiTags('attendance')
-@Controller('attendance/:groupId/:campaignId')
+@Controller('attendance/:groupId')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
@@ -24,7 +33,7 @@ export class AttendanceController {
   })
   @Get()
   async findAll(
-    @Param('campaignId') campaignId: number,
+    @Headers('campaignId') campaignId: number,
     @Param('groupId') groupId: number,
   ) {
     return this.attendanceService.findAll(campaignId, groupId);

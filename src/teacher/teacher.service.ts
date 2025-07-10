@@ -27,6 +27,9 @@ export class TeacherService {
           },
         },
         teacher_roles: {
+          where: {
+            campaign_id: Number(campaignId),
+          },
           include: {
             role: true,
             campaign: true,
@@ -37,17 +40,20 @@ export class TeacherService {
     });
 
     res = res.map((item) => ({
-      ...item,
+      id: item.id,
+      birth_date: item.birth_date,
+      image_url: item.image_url,
+      first_name: item.first_name,
+      last_name: item.last_name,
       teacher_roles: undefined,
-      groups: item.groups.map((gr) => gr.group),
-      roles: item.teacher_roles.map((tr) => ({
-        role: tr.role.name,
-        campaign: tr.campaign.name,
-        group: tr.group.title,
-      })),
+      mobile_phone_number: item.mobile_phone_number,
+      is_mojaz: item.is_mojaz,
+      // Todo: handle this in better shape from DB
+      role: item.teacher_roles?.[0]?.role.name || '',
+      permissions: item.teacher_roles?.[0]?.role.permissions || [],
     }));
 
-    return { message: 'All teachers', data: res };
+    return res;
   }
 
   async create(createTeacherDto: CreateTeacherDto) {

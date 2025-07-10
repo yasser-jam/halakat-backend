@@ -17,7 +17,7 @@ async function bootstrap() {
       'https://aldekker-dev.vercel.app',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Authorization',
+    allowedHeaders: 'Content-Type, Accept, Authorization, Campaign_id',
     credentials: true,
     preflightContinue: false,
     optionsSuccessStatus: 204,

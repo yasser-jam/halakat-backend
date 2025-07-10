@@ -21,7 +21,7 @@ export class CampaignService {
     if (!campaign) {
       throw new NotFoundException(`Campaign with ID ${id} not found`);
     }
-    return { message: `Campaign ${id} found`, data: campaign };
+    return campaign;
   }
 
   async update(id: number, updateCampaignDto: CreateCampaignDto) {
@@ -80,6 +80,7 @@ export class CampaignService {
         },
       },
       select: {
+        id: true,
         days: true,
         name: true,
         mosque: true,

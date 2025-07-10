@@ -51,7 +51,7 @@ export class AuthController {
     }
     // Fetch only the teacher info, no roles/permissions
     const teacher = await this.authService.getTeacherPlainInfo(user.id);
-    return { teacher };
+    return teacher;
   }
 
   @ApiBearerAuth('access-token')

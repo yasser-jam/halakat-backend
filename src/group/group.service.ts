@@ -136,7 +136,7 @@ export class GroupService {
       sunday: 0,
       monday: 1,
       tuesday: 2,
-      wedensday: 3,
+      wednesday: 3,
       thursday: 4,
       friday: 5,
       saturday: 6,
@@ -218,7 +218,7 @@ export class GroupService {
       },
     });
 
-    return { message: 'Student assigned to group', data: studentGroup };
+    return studentGroup;
   }
 
   async unassign(params: {

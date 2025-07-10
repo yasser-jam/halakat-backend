@@ -10,6 +10,7 @@ import {
   UseGuards,
   Request,
   Headers,
+  Header,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -40,11 +41,15 @@ export class GroupsController {
   }
 
   // Assign student
-  @Get('/assign/:groupId/:studentId/:campaignId')
+  @Get('/assign/:groupId/:studentId')
   @ApiOperation({ summary: 'Assign student into group' })
   @ApiParam({ name: 'groupId', type: Number })
   @ApiParam({ name: 'studentId', type: Number })
-  @ApiParam({ name: 'campaignId', type: Number })
+  @ApiHeader({
+    name: 'campaignId',
+    description: 'Campaign ID to filter permissions',
+    required: true,
+  })
   @ApiResponse({
     status: 200,
     description: 'The student has been assigned successfully.',
@@ -52,8 +57,9 @@ export class GroupsController {
   async assign(
     @Param('groupId') groupId: number,
     @Param('studentId') studentId: number,
-    @Param('campaignId') campaignId: number,
+    @Headers('campaignId') campaignId: number,
   ) {
+    console.log('see cmap', campaignId);
     return this.groupService.assign({ groupId, studentId, campaignId });
   }
 
@@ -111,7 +117,6 @@ export class GroupsController {
     @Request() req,
     @Headers('campaign-id') campaignId: string,
   ) {
-    console.log('hello test');
     const teacherId = req.user.id;
     return this.groupService.findByTeacherAndCampaign(
       Number(teacherId),

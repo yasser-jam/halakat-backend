@@ -29,6 +29,9 @@ export class TeacherService {
           },
         },
       },
+      orderBy: {
+        first_name: 'asc',
+      },
     });
 
     res = res.map((item) => ({
@@ -195,7 +198,11 @@ export class TeacherService {
 
     const updated = await this.prisma.teacher.update({
       where: { id: Number(id) },
-      data,
+      data: {
+        ...data,
+        id: undefined,
+        roles: undefined,
+      },
     });
 
     // optional: delete existing roles first (if full replace strategy)

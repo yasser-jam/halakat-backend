@@ -51,6 +51,19 @@ export class TeachersController {
     return this.teacherService.create(createTeacherDto, Number(campaignId));
   }
 
+  @Get('unassigned')
+  @ApiOperation({
+    summary: 'List teachers in a campaign with no group assignments',
+  })
+  @ApiHeader({
+    name: 'campaign_id',
+    description: 'Campaign ID to filter teachers',
+    required: true,
+  })
+  async listUnassigned(@Headers('campaign_id') campaignId: string) {
+    return this.teacherService.listUnassigned(Number(campaignId));
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a teacher by ID' })
   @ApiParam({ name: 'id', type: Number })

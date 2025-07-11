@@ -240,4 +240,20 @@ export class TeacherService {
 
     return { message: `Teacher ${id} deleted` };
   }
+
+  // List unassigned teachers for a campaign (simplified)
+  async listUnassigned(campaignId: number) {
+    const unassignedTeachers = await this.prisma.teacher.findMany({
+      where: {
+        campaign_assignments: {
+          some: { campaign_id: Number(campaignId) },
+        },
+        role: 'TEACHER',
+        groups: {
+          none: { campaign_id: Number(campaignId) },
+        },
+      },
+    });
+    return unassignedTeachers;
+  }
 }

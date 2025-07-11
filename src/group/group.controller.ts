@@ -76,7 +76,7 @@ export class GroupsController {
     return this.groupService.unassign({ groupId, studentId, campaignId });
   }
 
-  @Post(':campaignId')
+  @Post('')
   @ApiOperation({ summary: 'Create a new group' })
   @ApiParam({ name: 'campaignId', type: Number })
   @ApiResponse({
@@ -86,7 +86,7 @@ export class GroupsController {
   @ApiBody({ type: CreateGroupDto })
   async create(
     @Body() createGroupDto: CreateGroupDto,
-    @Param('campaignId') campaignId: number,
+    @Headers('campaign_id') campaignId: string,
   ) {
     return this.groupService.create(createGroupDto, campaignId);
   }

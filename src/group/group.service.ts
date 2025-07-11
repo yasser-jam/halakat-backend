@@ -45,16 +45,15 @@ export class GroupService {
     return result;
   }
 
-  async create(createDto: CreateGroupDto, campaignId: number) {
-    const { title, current_teacher_id } = createDto;
+  async create(createDto: CreateGroupDto, campaignId: string) {
+    const { title, currentTeacherId } = createDto;
 
     // Create the group first with the specified title
     const group = await this.prisma.group.create({
       data: {
         title,
-        mosque_id: createDto.mosque_id,
         class: createDto.class,
-        current_teacher_id: current_teacher_id || 1,
+        current_teacher_id: currentTeacherId,
       },
     });
 
@@ -62,17 +61,17 @@ export class GroupService {
     await this.prisma.groupCampaigns.create({
       data: {
         group_id: group.id,
-        campaign_id: campaignId,
+        campaign_id: Number(campaignId),
       },
     });
 
     // Connect the group to the specified current teacher via TeacherGroup pivot table
-    if (current_teacher_id) {
+    if (currentTeacherId) {
       await this.prisma.teacherGroup.create({
         data: {
-          teacher_id: current_teacher_id,
+          teacher_id: currentTeacherId,
           group_id: group.id,
-          campaign_id: campaignId,
+          campaign_id: Number(campaignId),
         },
       });
     }

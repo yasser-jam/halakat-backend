@@ -11,5 +11,5 @@ export class CreateGroupDto {
   class?: number;
 
   @ApiProperty({ example: 1, required: false })
-  current_teacher_id?: number;
+  currentTeacherId?: number;
 }

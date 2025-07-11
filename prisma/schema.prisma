@@ -46,7 +46,6 @@ model Mosque {
   // Relations
   organization Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
   campaigns    Campaign[]
-  groups       Group[]
 
   @@index([organization_id])
   @@index([name])
@@ -173,7 +172,7 @@ model Teacher {
 // Groups belong to specific mosques but are used within campaigns
 model Group {
   id                 Int      @id @default(autoincrement())
-  mosque_id          Int
+  mosque_id          Int?
   title              String
   class              Int?
   current_teacher_id Int?
@@ -181,7 +180,6 @@ model Group {
   updated_at         DateTime @updatedAt
 
   // Relations
-  mosque        Mosque           @relation(fields: [mosque_id], references: [id], onDelete: Cascade)
   students      StudentGroup[]
   teachers      TeacherGroup[]
   campaigns     GroupCampaigns[]

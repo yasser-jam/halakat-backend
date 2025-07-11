@@ -7,9 +7,36 @@ import { UpdateStudentDto } from '../dto/student.dto';
 export class StudentService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
-    const students = await this.prisma.student.findMany();
-    return { message: 'All students', data: students };
+  async findAll(campaignId: string) {
+    const students = await this.prisma.student.findMany({
+      where: {
+        campaign_enrollments: {
+          some: {
+            campaign_id: Number(campaignId),
+          },
+        },
+      },
+      include: {
+        groups: {
+          where: {
+            campaign_id: Number(campaignId),
+          },
+          include: {
+            group: {
+              select: {
+                title: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    return students.map((el) => ({
+      ...el,
+      groups: undefined,
+      group_title: el.groups?.[0].group?.title,
+    }));
   }
 
   async create(createStudentDto: CreateStudentDto) {
@@ -28,7 +55,7 @@ export class StudentService {
       throw new NotFoundException(`Student with ID ${id} not found`);
     }
 
-    return { message: `Student ${id} found`, data: student };
+    return student;
   }
 
   async update(id: number, updateStudentDto: UpdateStudentDto) {

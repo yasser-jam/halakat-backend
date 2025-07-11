@@ -28,8 +28,8 @@ export class StudentsController {
   @Get()
   @ApiOperation({ summary: 'Get all students' })
   @ApiResponse({ status: 200, description: 'Return all students' })
-  async findAll() {
-    return this.studentService.findAll();
+  async findAll(@Headers('campaign_id') campaignId: string) {
+    return this.studentService.findAll(campaignId);
   }
 
   @Post()

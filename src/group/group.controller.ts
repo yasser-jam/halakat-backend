@@ -4,19 +4,16 @@ import {
   Body,
   Param,
   Get,
-  Query,
   Delete,
   Put,
   UseGuards,
   Request,
   Headers,
-  Header,
 } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiResponse,
-  ApiQuery,
   ApiParam,
   ApiBody,
   ApiBearerAuth,
@@ -32,10 +29,9 @@ export class GroupsController {
   constructor(private readonly groupService: GroupService) {}
 
   @Get('')
-  @ApiQuery({ name: 'campaignId' })
   @ApiOperation({ summary: 'Get all groups' })
   @ApiResponse({ status: 200, description: 'Return all groups' })
-  async findAll(@Query('campaignId') campaignId?: string) {
+  async findAll(@Headers('campaign_id') campaignId?: string) {
     const campaignIdNumber = campaignId ? Number(campaignId) : undefined;
     return this.groupService.findAll(campaignIdNumber);
   }

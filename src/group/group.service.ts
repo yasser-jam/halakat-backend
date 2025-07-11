@@ -42,7 +42,7 @@ export class GroupService {
       students: group.students.map((stud) => stud.student),
     }));
 
-    return { message: 'All groups', data: result };
+    return result;
   }
 
   async create(createDto: CreateGroupDto, campaignId: number) {

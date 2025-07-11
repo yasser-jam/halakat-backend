@@ -42,7 +42,7 @@ export class GroupsController {
   @ApiParam({ name: 'groupId', type: Number })
   @ApiParam({ name: 'studentId', type: Number })
   @ApiHeader({
-    name: 'campaignId',
+    name: 'campaign_id',
     description: 'Campaign ID to filter permissions',
     required: true,
   })
@@ -53,9 +53,8 @@ export class GroupsController {
   async assign(
     @Param('groupId') groupId: number,
     @Param('studentId') studentId: number,
-    @Headers('campaignId') campaignId: number,
+    @Headers('campaign_id') campaignId: number,
   ) {
-    console.log('see cmap', campaignId);
     return this.groupService.assign({ groupId, studentId, campaignId });
   }
 

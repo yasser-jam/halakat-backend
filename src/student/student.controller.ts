@@ -15,6 +15,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { StudentService } from './student.service';
 import { CreateStudentDto } from './student.dto';
@@ -63,6 +64,15 @@ export class StudentsController {
     return this.studentService.listStudentsForCampaign(Number(campaignId));
   }
 
+  // List un assigned
+  @Get('unassigned')
+  @ApiOperation({ summary: 'List un-assigned students in campaign' })
+  @ApiHeader({ name: 'campaign_id' })
+  @ApiResponse({ status: 200, description: 'List of unassigned students' })
+  async listUnassigned(@Headers('campaign_id') campaignId: number) {
+    return this.studentService.listUnassigned(Number(campaignId));
+  }
+
   @Get(':id')
   @ApiOperation({ summary: 'Get a student by ID' })
   @ApiParam({ name: 'id', type: Number })
@@ -98,14 +108,5 @@ export class StudentsController {
   })
   async delete(@Param('id') id: number) {
     return this.studentService.delete(Number(id));
-  }
-
-  // List un assigned
-  @Get('unassigned/:campaignId')
-  @ApiOperation({ summary: 'List un-assigned students in campaign' })
-  @ApiParam({ name: 'campaignId', type: Number })
-  @ApiResponse({ status: 200, description: 'List of unassigned students' })
-  async listUnassigned(@Param('campaignId') campaignId: number) {
-    return this.studentService.listUnassigned(Number(campaignId));
   }
 }

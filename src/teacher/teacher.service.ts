@@ -8,7 +8,6 @@ export class TeacherService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(campaignId?: number) {
-    console.log('campiagn id', campaignId);
     let res: any = await this.prisma.teacher.findMany({
       where: {
         role: 'TEACHER',
@@ -104,12 +103,11 @@ export class TeacherService {
       })),
     };
 
-    return { message: `Teacher ${id} found`, data: result };
+    return result;
   }
 
   async findInfo(id: number, campaign_id: number) {
     // Fetch teacher with roles and groups for the campaign
-    console.log(campaign_id);
     const teacher = await this.prisma.teacher.findUnique({
       where: { id: Number(id) },
       include: {

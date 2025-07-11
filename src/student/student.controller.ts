@@ -39,8 +39,14 @@ export class StudentsController {
     description: 'The student has been successfully created.',
   })
   @ApiBody({ type: CreateStudentDto })
-  async create(@Body() createStudentDto: CreateStudentDto) {
-    return this.studentService.create(createStudentDto);
+  async create(
+    @Body() createStudentDto: CreateStudentDto,
+    @Headers('campaign_id') campaignId: string,
+  ) {
+    if (!campaignId) {
+      throw new BadRequestException('Campaign ID is required in headers');
+    }
+    return this.studentService.create(createStudentDto, Number(campaignId));
   }
 
   // List students for campaign

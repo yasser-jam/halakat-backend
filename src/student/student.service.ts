@@ -35,15 +35,25 @@ export class StudentService {
     return students.map((el) => ({
       ...el,
       groups: undefined,
-      group_title: el.groups?.[0].group?.title,
+      group_title: el.groups?.[0]?.group?.title,
     }));
   }
 
-  async create(createStudentDto: CreateStudentDto) {
+  async create(createStudentDto: CreateStudentDto, campaignId: number) {
     const student = await this.prisma.student.create({
       data: createStudentDto,
     });
-    return { message: 'Student created', data: student };
+    // Assign student to campaign
+    await this.prisma.studentCampaign.create({
+      data: {
+        student_id: student.id,
+        campaign_id: campaignId,
+      },
+    });
+    return {
+      message: 'Student created and assigned to campaign',
+      data: student,
+    };
   }
 
   async findOne(id: number) {

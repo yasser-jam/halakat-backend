@@ -15,6 +15,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { TeacherService } from './teacher.service';
 import { CreateTeacherDto } from './teacher.dto';
@@ -38,6 +39,11 @@ export class TeachersController {
     description: 'The teacher has been successfully created.',
   })
   @ApiBody({ type: CreateTeacherDto })
+  @ApiHeader({
+    name: 'campaign_id',
+    description: 'Campaign ID to filter permissions',
+    required: true,
+  })
   async create(
     @Body() createTeacherDto: CreateTeacherDto,
     @Headers('campaign_id') campaignId: string,

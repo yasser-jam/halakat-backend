@@ -8,24 +8,17 @@ export class TeacherService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(campaignId?: number) {
+    console.log('campiagn id', campaignId);
     let res: any = await this.prisma.teacher.findMany({
       where: {
         role: 'TEACHER',
-      },
-      include: {
-        groups: {
-          include: {
-            group: {
-              include: {
-                campaigns: {
-                  where: {
-                    campaign_id: Number(campaignId),
-                  },
-                },
-              },
-            },
+        campaign_assignments: {
+          some: {
+            campaign_id: Number(campaignId),
           },
         },
+      },
+      include: {
         teacher_roles: {
           where: {
             campaign_id: Number(campaignId),

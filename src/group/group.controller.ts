@@ -59,11 +59,11 @@ export class GroupsController {
   }
 
   // UnAssign student
-  @Get('/unassign/:groupId/:studentId/:campaignId')
+  @Get('/unassign/:groupId/:studentId')
   @ApiOperation({ summary: 'Un-assign student from group' })
   @ApiParam({ name: 'groupId', type: Number })
   @ApiParam({ name: 'studentId', type: Number })
-  @ApiParam({ name: 'campaignId', type: Number })
+  @ApiHeader({ name: 'campaign_id' })
   @ApiResponse({
     status: 200,
     description: 'The student has been un-assigned successfully.',
@@ -71,7 +71,7 @@ export class GroupsController {
   async unassign(
     @Param('groupId') groupId: number,
     @Param('studentId') studentId: number,
-    @Param('campaignId') campaignId: number,
+    @Headers('campaign_id') campaignId: number,
   ) {
     return this.groupService.unassign({ groupId, studentId, campaignId });
   }

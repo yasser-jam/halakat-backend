@@ -56,26 +56,29 @@ export class TeacherService {
     return res;
   }
 
-  async create(createTeacherDto: CreateTeacherDto) {
-    const { roleAssignments = [], ...data } = createTeacherDto as any;
+  async create(createTeacherDto: CreateTeacherDto, campaignId: number) {
+    // Prepare data for Prisma, ensuring role is of enum type if present
+    const { role, ...rest } = createTeacherDto as any;
+    const data: any = {
+      ...rest,
+      password: await bcrypt.hash('password', 10),
+    };
+    if (role) {
+      data.role = role;
+    }
 
+    console.log('check campaiagn', campaignId);
     const newTeacher = await this.prisma.teacher.create({
-      data: {
-        ...data,
-        password: await bcrypt.hash('password', 10),
-      },
+      data,
     });
 
-    for (const assignment of roleAssignments) {
-      await this.prisma.teacherRole.create({
-        data: {
-          teacher_id: newTeacher.id,
-          role_id: assignment.roleId,
-          group_id: assignment.groupId,
-          campaign_id: assignment.campaignId,
-        },
-      });
-    }
+    // Assign teacher to campaign
+    await this.prisma.teacherCampaign.create({
+      data: {
+        teacher_id: newTeacher.id,
+        campaign_id: campaignId,
+      },
+    });
 
     return { message: 'Teacher created', data: newTeacher };
   }

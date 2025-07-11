@@ -7,6 +7,7 @@ import {
   Put,
   Delete,
   Query,
+  Headers,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -26,8 +27,8 @@ export class TeachersController {
   @Get()
   @ApiOperation({ summary: 'Get all teachers' })
   @ApiResponse({ status: 200, description: 'Return all teachers' })
-  async findAll(@Query('campaignId') campaignId?: number) {
-    return this.teacherService.findAll(campaignId);
+  async findAll(@Headers('campaign_id') campaignId: string) {
+    return this.teacherService.findAll(Number(campaignId));
   }
 
   @Post()
@@ -37,8 +38,11 @@ export class TeachersController {
     description: 'The teacher has been successfully created.',
   })
   @ApiBody({ type: CreateTeacherDto })
-  async create(@Body() createTeacherDto: CreateTeacherDto) {
-    return this.teacherService.create(createTeacherDto);
+  async create(
+    @Body() createTeacherDto: CreateTeacherDto,
+    @Headers('campaign_id') campaignId: string,
+  ) {
+    return this.teacherService.create(createTeacherDto, Number(campaignId));
   }
 
   @Get(':id')

@@ -19,6 +19,7 @@ import {
 } from '@nestjs/swagger';
 import { CampaignService } from './campaign.service';
 import { CreateCampaignDto } from './campaign.dto';
+import { UpdateCampaignDto } from '../dto/campaign.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @ApiTags('campaigns')
@@ -76,10 +77,10 @@ export class CampaignsController {
     status: 200,
     description: 'The campaign has been successfully updated.',
   })
-  @ApiBody({ type: CreateCampaignDto })
+  @ApiBody({ type: UpdateCampaignDto })
   async update(
     @Param('id') id: number,
-    @Body() updateCampaignDto: CreateCampaignDto,
+    @Body() updateCampaignDto: UpdateCampaignDto,
   ) {
     return this.campaignService.update(Number(id), updateCampaignDto);
   }

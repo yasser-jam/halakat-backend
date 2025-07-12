@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Get,
+  Headers,
   Param,
   ParseIntPipe,
   Post,
@@ -31,8 +32,8 @@ export class RoleController {
 
   @Get()
   @ApiOperation({ summary: 'Get all roles' })
-  getAll() {
-    return this.roleService.getAllRoles();
+  getAll(@Headers('campaign_id') campaign_id: string) {
+    return this.roleService.getAllRoles(campaign_id);
   }
 
   @Get(':id')

@@ -19,8 +19,12 @@ export class RoleService {
     return role;
   }
 
-  async getAllRoles() {
-    return this.prisma.appRole.findMany();
+  async getAllRoles(campaignId: string) {
+    return this.prisma.appRole.findMany({
+      where: {
+        campaign_id: Number(campaignId),
+      },
+    });
   }
 
   async getRoleById(id: number) {

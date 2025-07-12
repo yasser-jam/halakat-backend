@@ -10,8 +10,21 @@ export class EvaluationService {
     return this.prisma.evaluation.create({ data });
   }
 
-  findAll() {
-    return this.prisma.evaluation.findMany();
+  async findAll(campaignId: string) {
+    const evaluations = await this.prisma.evaluation.findMany({
+      where: {
+        campaign_id: Number(campaignId),
+      },
+      include: {
+        sessions: true,
+      },
+    });
+
+    return evaluations.map((el) => ({
+      ...el,
+      sessions: undefined,
+      is_related: !!el.sessions?.length,
+    }));
   }
 
   findByCampaign(campaignId: number) {

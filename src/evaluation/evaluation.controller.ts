@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, Get, Headers, Param, Post } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -32,8 +32,8 @@ export class EvaluationController {
   }
 
   @Get()
-  findAll() {
-    return this.service.findAll();
+  findAll(@Headers('campaign_id') camapaignId: string) {
+    return this.service.findAll(camapaignId);
   }
 
   @Get('campaign/:campaignId')

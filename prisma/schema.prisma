@@ -349,7 +349,7 @@ model SavingSession {
   teacher             Teacher            @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   student             Student            @relation(fields: [student_id], references: [id], onDelete: Cascade)
   campaign            Campaign           @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
-  evaluation          Evaluation?        @relation(fields: [evaluation_id], references: [id], onDelete: SetNull)
+  evaluation          Evaluation?        @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
   mistakes_in_session MistakeInSession[]
 
   @@index([teacher_id])
@@ -377,7 +377,7 @@ model MistakeInSession {
   page              Int
 
   saving_session SavingSession @relation(fields: [saving_session_id], references: [id], onDelete: Cascade)
-  mistake        Mistake       @relation(fields: [mistake_id], references: [id], onDelete: Cascade)
+  mistake        Mistake       @relation(fields: [mistake_id], references: [id], onDelete: Restrict)
 
   @@index([saving_session_id])
   @@index([mistake_id])

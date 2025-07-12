@@ -242,4 +242,136 @@ export class AttendanceService {
 
     return results;
   }
+
+  async getAllAttendanceByCampaign(campaignId: number) {
+    const attendances = await this.prisma.attendance.findMany({
+      where: {
+        campaign_id: Number(campaignId),
+      },
+      include: {
+        student: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            educational_class: true
+          }
+        },
+        group: {
+          select: {
+            id: true,
+            title: true,
+            teachers: {
+              include: {
+                teacher: {
+                  select: {
+                    first_name: true,
+                    last_name: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: [
+        { group_id: 'asc' },
+        { taken_date: 'asc' }
+      ]
+    });
+
+    // Group attendances by group
+    const groupedAttendances = {};
+    
+    for (const attendance of attendances) {
+      const groupKey = `group-${attendance.group_id}`;
+      
+      if (!groupedAttendances[groupKey]) {
+        groupedAttendances[groupKey] = [];
+      }
+      
+      // Map the attendance record to include teacher names
+      const mappedAttendance = {
+        ...attendance,
+        group: {
+          ...attendance.group,
+          teachers: attendance.group.teachers.map(teacherGroup => 
+            `${teacherGroup.teacher.first_name} ${teacherGroup.teacher.last_name}`
+          )
+        }
+      };
+      
+      groupedAttendances[groupKey].push(mappedAttendance);
+    }
+
+    // Convert to array of objects with group details
+    const result = Object.entries(groupedAttendances).map(([groupKey, attendances]) => {
+      // Get group details from the first attendance record (all records in a group have same group info)
+      const groupInfo = (attendances as any[])[0]?.group;
+      
+      return {
+        groupKey,
+        groupTitle: groupInfo?.title || '',
+        groupTeachers: groupInfo?.teachers || [],
+        attendances: (attendances as any[]).map((attendance: any) => ({
+          ...attendance,
+          group: {
+            id: attendance.group.id,
+            title: attendance.group.title
+          }
+        }))
+      };
+    });
+
+    return result;
+  }
+
+  async getAttendanceById(id: number) {
+    const attendance = await this.prisma.attendance.findUnique({
+      where: { id: Number(id) },
+      include: {
+        student: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            educational_class: true
+          }
+        },
+        group: {
+          select: {
+            id: true,
+            title: true,
+            teachers: {
+              include: {
+                teacher: {
+                  select: {
+                    first_name: true,
+                    last_name: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!attendance) {
+      throw new NotFoundException(`Attendance with ID ${id} not found`);
+    }
+
+    // Map teachers to names
+    const mappedAttendance = {
+      ...attendance,
+      group: {
+        ...attendance.group,
+        teachers: attendance.group.teachers.map(teacherGroup => 
+          `${teacherGroup.teacher.first_name} ${teacherGroup.teacher.last_name}`
+        )
+      }
+    };
+
+    return mappedAttendance;
+  }
 }

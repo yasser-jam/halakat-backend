@@ -305,18 +305,8 @@ async function main() {
         father_name: `${teacherData.first_name} ${teacherData.last_name}`,
         current_residence_address_area: i < 2 ? 'حي الملز' : 'حي العليا',
         current_residence_address_street: `شارع ${Math.floor(Math.random() * 50) + 1}`,
-        preserved_parts: JSON.stringify([
-          'الفاتحة',
-          'البقرة',
-          'آل عمران',
-          'النساء',
-          'المائدة',
-        ]),
-        parts_tested_by_the_endowments: JSON.stringify([
-          'الفاتحة',
-          'البقرة',
-          'آل عمران',
-        ]),
+        preserved_parts: JSON.stringify(['1', '2', '3', '4']),
+        parts_tested_by_the_endowments: JSON.stringify(['1', '2']),
         is_mojaz: true,
         is_working: true,
         job_role: 'معلم قرآن',
@@ -691,25 +681,25 @@ async function main() {
   await prisma.evaluation.createMany({
     data: [
       {
-        title: 'تقييم الحفظ الأسبوعي',
+        title: 'ممتاز',
         points: 100,
-        minimum_marks: 70,
+        minimum_marks: 90,
         campaign_id: campaign1.id,
       },
       {
-        title: 'تقييم التجويد الشهري',
-        points: 150,
+        title: 'جيد جداً',
+        points: 50,
         minimum_marks: 80,
         campaign_id: campaign1.id,
       },
       {
-        title: 'تقييم الحفظ الأسبوعي',
+        title: 'ممتاز',
         points: 100,
         minimum_marks: 70,
         campaign_id: campaign2.id,
       },
       {
-        title: 'تقييم التجويد الشهري',
+        title: 'ممتاز جداً',
         points: 150,
         minimum_marks: 80,
         campaign_id: campaign2.id,
@@ -735,7 +725,7 @@ async function main() {
         campaign_id: campaignId,
         taken_date: new Date(2024, 0, j + 1),
         delay_time: Math.floor(Math.random() * 30),
-        status: Math.random() > 0.1 ? 'حاضر' : 'غائب',
+        status: Math.random() > 0.1 ? 'ATTEND' : 'MISS',
       });
     }
   }

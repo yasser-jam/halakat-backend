@@ -15,6 +15,7 @@ async function bootstrap() {
       'http://localhost:3000',
       'https://ali-aldikker.vercel.app',
       'https://aldekker-dev.vercel.app',
+      'https://halakat-mosque-admin.vercel.app',
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     allowedHeaders: 'Content-Type, Accept, Authorization, Campaign_id',

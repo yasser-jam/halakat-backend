@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Headers,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiParam } from '@nestjs/swagger';
 import { MistakeService } from './mistake.service';
@@ -31,8 +32,8 @@ export class MistakeController {
   @ApiOperation({ summary: 'Get all mistakes' })
   @ApiResponse({ status: 200, description: 'List of all mistakes' })
   @Get()
-  async findAll() {
-    return this.mistakeService.findAll();
+  async findAll(@Headers('campaign_id') campaignId: string) {
+    return this.mistakeService.findAll(campaignId);
   }
 
   @ApiOperation({ summary: 'Get a mistake by ID' })

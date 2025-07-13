@@ -10,6 +10,7 @@ export class RoleService {
     const role = await this.prisma.appRole.create({
       data: {
         name: dto.name,
+        campaign_id: dto.campaign_id,
         description: dto.description,
         permissions: dto.permissions,
       },
@@ -18,8 +19,12 @@ export class RoleService {
     return role;
   }
 
-  async getAllRoles() {
-    return this.prisma.appRole.findMany();
+  async getAllRoles(campaignId: string) {
+    return this.prisma.appRole.findMany({
+      where: {
+        campaign_id: Number(campaignId),
+      },
+    });
   }
 
   async getRoleById(id: number) {

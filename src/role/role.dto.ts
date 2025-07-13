@@ -1,4 +1,4 @@
-import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsEnum, IsInt, IsOptional, IsString } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 import { Permission } from './permissions.enum';
 
@@ -25,4 +25,8 @@ export class CreateRoleDto {
   @IsArray()
   @IsEnum(Permission, { each: true })
   permissions: Permission[];
+
+  @ApiProperty({ example: 1 })
+  @IsInt()
+  campaign_id: number;
 }

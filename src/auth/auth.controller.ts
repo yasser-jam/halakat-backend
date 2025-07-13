@@ -1,84 +1,79 @@
+import { Controller, Post, Body, Request, UseGuards } from '@nestjs/common';
 import {
-  Controller,
-  Post,
-  Body,
-  Request,
-  UseGuards,
-  UnauthorizedException,
-} from '@nestjs/common';
+  ApiTags,
+  ApiOperation,
+  ApiBearerAuth,
+  ApiHeader,
+} from '@nestjs/swagger';
 import { AuthService } from './auth.service';
+import {
+  LoginAdminDto,
+  LoginTeacherDto,
+  LoginStudentDto,
+} from './../dto/auth.dto';
 import { JwtAuthGuard } from './jwt-auth.guard';
-import { LoginDto, RegisterDto } from 'src/dto/teacher.dto';
-import { ApiBearerAuth, ApiParam } from '@nestjs/swagger';
-import { TeacherService } from './../teacher/teacher.service';
+// import { PrismaService } from '../prisma.service'; // Remove this line
 
+@ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
   constructor(
     private authService: AuthService,
-    private teacherService: TeacherService,
+    // private prisma: PrismaService, // Remove this line
   ) {}
 
-  @Post('register')
-  async register(@Body() body: RegisterDto) {
-    return this.authService.register(body);
+  @Post('login/admin')
+  @ApiOperation({ summary: 'Login as Admin' })
+  loginAdmin(@Body() dto: LoginAdminDto) {
+    return this.authService.loginAdmin(dto);
   }
 
-  @Post('login')
-  async login(@Body() body: LoginDto) {
-    const user = await this.authService.validateUser(
-      body.mobile_phone_number,
-      body.password,
-    );
-    if (!user) throw new UnauthorizedException('Invalid credentials');
-    return this.authService.login(user);
+  @Post('login/teacher')
+  @ApiOperation({ summary: 'Login as Teacher' })
+  loginTeacher(@Body() dto: LoginTeacherDto) {
+    return this.authService.loginTeacher(dto);
   }
 
-  @Post('student-login')
-  async studentLogin(@Body() body: LoginDto) {
-    const user = await this.authService.validateStudent(
-      body.mobile_phone_number,
-      body.password,
-    );
-    if (!user) throw new UnauthorizedException('Invalid credentials');
-    return this.authService.studentLogin(user);
-  }
-
-  @Post('admin/login')
-  async adminLogin(@Body() body: LoginDto) {
-    const user = await this.authService.validateUser(
-      body.mobile_phone_number,
-      body.password,
-    );
-    // if (!user || !['ADMIN', 'SUPER_ADMIN'].includes(user.role))
-    //   throw new UnauthorizedException('Invalid credentials');
-    return this.authService.login(user);
+  @Post('login/student')
+  @ApiOperation({ summary: 'Login as Student' })
+  loginStudent(@Body() dto: LoginStudentDto) {
+    return this.authService.loginStudent(dto);
   }
 
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
   @Post('profile')
-  getProfile(@Request() req) {
-    return req.user;
+  @ApiOperation({ summary: 'Get user profile (plain teacher info only)' })
+  async getProfile(@Request() req) {
+    const user = req.user;
+    if (!user || user.userType !== 'TEACHER') {
+      return { teacher: null };
+    }
+    // Fetch only the teacher info, no roles/permissions
+    const teacher = await this.authService.getTeacherPlainInfo(user.id);
+    return teacher;
   }
 
   @ApiBearerAuth('access-token')
   @UseGuards(JwtAuthGuard)
-  @Post('mobile/profile')
-  @ApiParam({
-    name: 'campaign id',
-    type: 'number',
+  @Post('my-permissions')
+  @ApiOperation({
+    summary: 'Get teacher roles and permissions for a specific campaign',
   })
-  getMobileProfile(@Request() req) {
+  @ApiHeader({
+    name: 'campaign_id',
+    description: 'Campaign ID to filter permissions',
+    required: true,
+  })
+  async getMyPermissions(@Request() req) {
     const user = req.user;
-
-    if (!user) throw new UnauthorizedException('Not Found');
-
-    // get teacher info
-    const teacher = this.teacherService.findInfo({
-      id: user.id,
-      campaign_id: 2,
-    });
-    return teacher;
+    const campaignId = req.headers['campaign_id'] || req.headers['campaign-id'];
+    if (!user || user.userType !== 'TEACHER' || !campaignId) {
+      return { roles: [], permissions: [] };
+    }
+    return this.authService.getTeacherPermissionsForCampaign(
+      user.id,
+      Number(campaignId),
+    );
   }
 }

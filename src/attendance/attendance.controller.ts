@@ -1,4 +1,13 @@
-import { Controller, Get, Body, Param, Put, Post, Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Body,
+  Param,
+  Put,
+  Post,
+  Query,
+  Headers,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -11,7 +20,7 @@ import { AttendanceService } from './attendance.service';
 import { BulkUpdateAttendanceDto, UpdateAttendanceDto } from './attendance.dto';
 
 @ApiTags('attendance')
-@Controller('attendance/:groupId/:campaignId')
+@Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
 
@@ -22,9 +31,9 @@ export class AttendanceController {
     status: 200,
     description: 'Return all records',
   })
-  @Get()
+  @Get('group/:groupId')
   async findAll(
-    @Param('campaignId') campaignId: number,
+    @Headers('campaign_id') campaignId: number,
     @Param('groupId') groupId: number,
   ) {
     return this.attendanceService.findAll(campaignId, groupId);
@@ -36,7 +45,7 @@ export class AttendanceController {
     description: 'Update attendance status',
     type: UpdateAttendanceDto,
   })
-  @Put('attendance/:id')
+  @Put(':id')
   async update(
     @Param('id') id: number,
     @Body() updateAttendanceDto: UpdateAttendanceDto,
@@ -50,7 +59,7 @@ export class AttendanceController {
     description: 'Create attendance',
     type: UpdateAttendanceDto,
   })
-  @Post('attendance/:campaignId/:groupId/:studentId')
+  @Post('group/:groupId/:studentId')
   async createAll(
     @Param('campaignId') campaignId: number,
     @Param('groupId') groupId: number,
@@ -64,9 +73,9 @@ export class AttendanceController {
     status: 200,
     description: 'List attendance',
   })
-  @Get('attendance/group/:campaignId/:groupId')
+  @Get('group/:groupId')
   async listByGroup(
-    @Param('campaignId') campaignId: number,
+    @Headers('campaign_id') campaignId: number,
     @Param('groupId') groupId: number,
   ) {
     return this.attendanceService.getByGroup(campaignId, groupId);
@@ -101,9 +110,9 @@ export class AttendanceController {
     status: 200,
     description: 'List attendance by student, group, and campaign',
   })
-  @Get('attendance/student/:campaignId/:groupId/:studentId')
+  @Get('student/:studentId')
   async listByStudentGroupCampaign(
-    @Param('campaignId') campaignId: number,
+    @Headers('campaign_id') campaignId: number,
     @Param('groupId') groupId: number,
     @Param('studentId') studentId: number,
   ) {
@@ -120,5 +129,33 @@ export class AttendanceController {
   @Post('batch-update')
   async updateAttendanceBatch(@Body() updates: BulkUpdateAttendanceDto[]) {
     return this.attendanceService.batchUpdate(updates);
+  }
+
+  @ApiOperation({
+    summary: 'Get all attendance records for a campaign grouped by groups',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all attendance records grouped by groups',
+  })
+  @Get('campaign/all')
+  async getAllAttendanceByCampaign(@Headers('campaign_id') campaignId: number) {
+    return this.attendanceService.getAllAttendanceByCampaign(campaignId);
+  }
+
+  @ApiOperation({
+    summary: 'Get attendance record by ID',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns attendance record by ID',
+  })
+  @ApiResponse({
+    status: 404,
+    description: 'Attendance record not found',
+  })
+  @Get(':id')
+  async getAttendanceById(@Param('id') id: number) {
+    return this.attendanceService.getAttendanceById(id);
   }
 }

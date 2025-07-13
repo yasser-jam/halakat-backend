@@ -10,11 +10,17 @@ export class AttendanceService {
   async findAll(campaignId: number, groupId: number) {
     return await this.prisma.attendance.findMany({
       where: {
-        groupId: Number(groupId),
-        campaignId: Number(campaignId),
+        group_id:Number(groupId), 
+        campaign_id: Number(campaignId),
       },
       include: {
-        student: true,
+        student: {
+          select: {
+            first_name: true,
+            last_name: true,
+            educational_class: true
+          }
+        },
       },
     });
   }
@@ -59,8 +65,8 @@ export class AttendanceService {
     });
 
     // divide days from start date of that campaign to the end date
-    const startDate = campaign.startDate;
-    const endDate = campaign.endDate;
+    const startDate = campaign.start_date;
+    const endDate = campaign.end_date;
     const days = campaign.days.split(',');
 
     const attendDays = this.getMatchingDaysBetweenDates(
@@ -72,11 +78,11 @@ export class AttendanceService {
     for (const day of attendDays) {
       await this.prisma.attendance.create({
         data: {
-          studentId: Number(studentId),
-          groupId: Number(groupId),
-          campaignId: Number(campaignId),
-          takenDate: new Date(day).toISOString(),
-          delayTime: -1,
+          student_id: Number(studentId),
+          group_id: Number(groupId),
+          campaign_id: Number(campaignId),
+          taken_date: new Date(day).toISOString(),
+          delay_time: -1,
           status: 'NOT_TAKEN',
         },
       });
@@ -108,9 +114,9 @@ export class AttendanceService {
     const endOfDay = new Date(`${date}T23:59:59.999Z`);
     const res = await this.prisma.attendance.findMany({
       where: {
-        campaignId: Number(campaignId),
-        groupId: Number(groupId),
-        takenDate: {
+        campaign_id: Number(campaignId),
+        group_id: Number(groupId),
+        taken_date: {
           gte: startOfDay,
           lte: endOfDay,
         },
@@ -130,19 +136,19 @@ export class AttendanceService {
   ) {
     const attendances = await this.prisma.attendance.findMany({
       where: {
-        campaignId: Number(campaignId),
-        takenDate: {
+        campaign_id: Number(campaignId),
+        taken_date: {
           gte: startDate,
           lte: endDate,
         },
       },
       select: {
-        campaignId: true,
+        campaign_id: true,
         student: true,
         group: true,
-        groupId: true,
+        group_id: true,
         status: true,
-        studentId: true,
+        student_id: true,
       },
     });
 
@@ -150,7 +156,7 @@ export class AttendanceService {
     const groupStats = new Map();
 
     for (const attendance of attendances) {
-      const groupId = attendance.groupId;
+      const groupId = attendance.group_id;
       if (!groupStats.has(groupId)) {
         groupStats.set(groupId, {
           groupId,
@@ -183,9 +189,9 @@ export class AttendanceService {
   ) {
     return this.prisma.attendance.findMany({
       where: {
-        studentId: Number(studentId),
-        campaignId: Number(campaignId),
-        groupId: Number(groupId),
+        student_id: Number(studentId),
+        campaign_id: Number(campaignId),
+        group_id: Number(groupId),
         status: {
           not: 'NOT_TAKEN',
         },
@@ -199,9 +205,9 @@ export class AttendanceService {
     for (const record of data) {
       const attendance = await this.prisma.attendance.findFirst({
         where: {
-          studentId: record.student_id,
-          campaignId: record.campaign_id,
-          takenDate: {
+          student_id: record.student_id,
+          campaign_id: record.campaign_id,
+          taken_date: {
             gte: new Date(record.date + 'T00:00:00.000Z'),
             lt: new Date(record.date + 'T23:59:59.999Z'),
           },
@@ -222,7 +228,7 @@ export class AttendanceService {
         where: { id: attendance.id },
         data: {
           status: record.status,
-          delayTime: record.delay,
+          delay_time: record.delay,
         },
       });
 
@@ -235,5 +241,137 @@ export class AttendanceService {
     }
 
     return results;
+  }
+
+  async getAllAttendanceByCampaign(campaignId: number) {
+    const attendances = await this.prisma.attendance.findMany({
+      where: {
+        campaign_id: Number(campaignId),
+      },
+      include: {
+        student: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            educational_class: true
+          }
+        },
+        group: {
+          select: {
+            id: true,
+            title: true,
+            teachers: {
+              include: {
+                teacher: {
+                  select: {
+                    first_name: true,
+                    last_name: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      orderBy: [
+        { group_id: 'asc' },
+        { taken_date: 'asc' }
+      ]
+    });
+
+    // Group attendances by group
+    const groupedAttendances = {};
+    
+    for (const attendance of attendances) {
+      const groupKey = `group-${attendance.group_id}`;
+      
+      if (!groupedAttendances[groupKey]) {
+        groupedAttendances[groupKey] = [];
+      }
+      
+      // Map the attendance record to include teacher names
+      const mappedAttendance = {
+        ...attendance,
+        group: {
+          ...attendance.group,
+          teachers: attendance.group.teachers.map(teacherGroup => 
+            `${teacherGroup.teacher.first_name} ${teacherGroup.teacher.last_name}`
+          )
+        }
+      };
+      
+      groupedAttendances[groupKey].push(mappedAttendance);
+    }
+
+    // Convert to array of objects with group details
+    const result = Object.entries(groupedAttendances).map(([groupKey, attendances]) => {
+      // Get group details from the first attendance record (all records in a group have same group info)
+      const groupInfo = (attendances as any[])[0]?.group;
+      
+      return {
+        groupKey,
+        groupTitle: groupInfo?.title || '',
+        groupTeachers: groupInfo?.teachers || [],
+        attendances: (attendances as any[]).map((attendance: any) => ({
+          ...attendance,
+          group: {
+            id: attendance.group.id,
+            title: attendance.group.title
+          }
+        }))
+      };
+    });
+
+    return result;
+  }
+
+  async getAttendanceById(id: number) {
+    const attendance = await this.prisma.attendance.findUnique({
+      where: { id: Number(id) },
+      include: {
+        student: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            educational_class: true
+          }
+        },
+        group: {
+          select: {
+            id: true,
+            title: true,
+            teachers: {
+              include: {
+                teacher: {
+                  select: {
+                    first_name: true,
+                    last_name: true
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!attendance) {
+      throw new NotFoundException(`Attendance with ID ${id} not found`);
+    }
+
+    // Map teachers to names
+    const mappedAttendance = {
+      ...attendance,
+      group: {
+        ...attendance.group,
+        teachers: attendance.group.teachers.map(teacherGroup => 
+          `${teacherGroup.teacher.first_name} ${teacherGroup.teacher.last_name}`
+        )
+      }
+    };
+
+    return mappedAttendance;
   }
 }

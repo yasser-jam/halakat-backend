@@ -9,14 +9,14 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: 'your_jwt_secret', // Use an environment variable in production
+      secretOrKey: 'your_secret_key', // Use the same secret as auth module
     });
   }
 
   async validate(payload: any) {
     const { sub, userType } = payload;
 
-    if (userType === 'TEACHER') {
+    if (userType === 'TEACHER' || userType == 'ADMIN') {
       const user = await this.prisma.teacher.findUnique({ where: { id: sub } });
       if (!user) throw new UnauthorizedException();
       return { ...user, userType };

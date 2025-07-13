@@ -10,12 +10,27 @@ export class EvaluationService {
     return this.prisma.evaluation.create({ data });
   }
 
-  findAll() {
-    return this.prisma.evaluation.findMany();
+  async findAll(campaignId: string) {
+    const evaluations = await this.prisma.evaluation.findMany({
+      where: {
+        campaign_id: Number(campaignId),
+      },
+      include: {
+        sessions: true,
+      },
+    });
+
+    return evaluations.map((el) => ({
+      ...el,
+      sessions: undefined,
+      is_related: !!el.sessions?.length,
+    }));
   }
 
   findByCampaign(campaignId: number) {
-    return this.prisma.evaluation.findMany({ where: { campaignId } });
+    return this.prisma.evaluation.findMany({
+      where: { campaign_id: campaignId },
+    });
   }
 
   async assert(
@@ -24,12 +39,12 @@ export class EvaluationService {
       id?: number;
       title: string;
       points: number;
-      reducedAmount: number;
+      minimum_marks: number;
     }>,
   ) {
     // 1. Get current evaluations for this campaign
     const existing = await this.prisma.evaluation.findMany({
-      where: { campaignId },
+      where: { campaign_id: campaignId },
     });
 
     const incomingIds = new Set(
@@ -44,24 +59,24 @@ export class EvaluationService {
         if (
           current?.title !== item.title ||
           current?.points !== item.points ||
-          current?.reducedAmount !== item.reducedAmount
+          current?.minimum_marks !== item.minimum_marks
         ) {
           await this.prisma.evaluation.update({
             where: { id: item.id },
             data: {
               title: item.title,
               points: item.points,
-              reducedAmount: item.reducedAmount,
+              minimum_marks: item.minimum_marks,
             },
           });
         }
       } else {
         await this.prisma.evaluation.create({
           data: {
-            campaignId,
+            campaign_id: campaignId,
             title: item.title,
             points: item.points,
-            reducedAmount: item.reducedAmount,
+            minimum_marks: item.minimum_marks,
           },
         });
       }

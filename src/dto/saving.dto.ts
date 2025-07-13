@@ -40,7 +40,7 @@ export class CreateSavingSessionDto {
   @ApiProperty({ example: 1, description: 'ID of the campaign' })
   @IsInt()
   @IsNotEmpty()
-  campaignId: number;
+  campaign_id: number;
 
   @ApiProperty({ example: 1, description: 'Start page number' })
   @IsInt()
@@ -123,7 +123,7 @@ export class FilterSavingSessionDto {
 
   @IsOptional()
   @IsInt()
-  campaignId?: number;
+  campaign_id?: number;
 
   @IsOptional()
   @IsDateString()

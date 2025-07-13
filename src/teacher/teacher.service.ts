@@ -1,33 +1,27 @@
-/* eslint-disable prettier/prettier */
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { UpdateTeacherDto, ValidateTeacherIdDto } from './../dto/teacher.dto';
+import { PrismaService } from '../prisma.service';
+import { CreateTeacherDto } from './teacher.dto';
 import * as bcrypt from 'bcryptjs';
-import { PrismaService } from './../prisma.service';
 
 @Injectable()
 export class TeacherService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(campaignId?: number) {
-    let res : any = await this.prisma.teacher.findMany({
+    let res: any = await this.prisma.teacher.findMany({
       where: {
         role: 'TEACHER',
-      },
-      include: {
-        groups: {
-          include: {
-            group: {
-              include: {
-                campaigns: {
-                  where: {
-                    campaignId: Number(campaignId),
-                  },
-                },
-              },
-            },
+        campaign_assignments: {
+          some: {
+            campaign_id: Number(campaignId),
           },
         },
-        teacherRoles: {
+      },
+      include: {
+        teacher_roles: {
+          where: {
+            campaign_id: Number(campaignId),
+          },
           include: {
             role: true,
             campaign: true,
@@ -35,51 +29,60 @@ export class TeacherService {
           },
         },
       },
+      orderBy: {
+        first_name: 'asc',
+      },
     });
 
     res = res.map((item) => ({
-      ...item,
-      teacherRoles: undefined,
-      groups: item.groups.map((gr) => gr.group),
-      roles: item.teacherRoles.map((tr) => ({
-        role: tr.role.name,
-        campaign: tr.campaign.name,
-        group: tr.group.title,
-      })),
+      id: item.id,
+      birth_date: item.birth_date,
+      image_url: item.image_url,
+      first_name: item.first_name,
+      last_name: item.last_name,
+      teacher_roles: undefined,
+      mobile_phone_number: item.mobile_phone_number,
+      is_mojaz: item.is_mojaz,
+      // Todo: handle this in better shape from DB
+      role: item.teacher_roles?.[0]?.role.name || '',
+      permissions: item.teacher_roles?.[0]?.role.permissions || [],
     }));
 
     return res;
   }
 
-  async create(CreateTeacherDto) {
-    const { roleAssignments = [], ...data } = CreateTeacherDto;
+  async create(createTeacherDto: CreateTeacherDto, campaignId: number) {
+    // Prepare data for Prisma, ensuring role is of enum type if present
+    const { role, ...rest } = createTeacherDto as any;
+    const data: any = {
+      ...rest,
+      password: await bcrypt.hash('password', 10),
+    };
+    if (role) {
+      data.role = role;
+    }
 
+    console.log('check campaiagn', campaignId);
     const newTeacher = await this.prisma.teacher.create({
+      data,
+    });
+
+    // Assign teacher to campaign
+    await this.prisma.teacherCampaign.create({
       data: {
-        ...data,
-        password: await bcrypt.hash('password', 10),
+        teacher_id: newTeacher.id,
+        campaign_id: campaignId,
       },
     });
 
-    for (const assignment of roleAssignments) {
-      await this.prisma.teacherRole.create({
-        data: {
-          teacherId: newTeacher.id,
-          roleId: assignment.roleId,
-          groupId: assignment.groupId,
-          campaignId: assignment.campaignId,
-        },
-      });
-    }
-
-    return newTeacher;
+    return { message: 'Teacher created', data: newTeacher };
   }
 
-  async findOne(params: ValidateTeacherIdDto) {
+  async findOne(id: number) {
     const teacher = await this.prisma.teacher.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: {
-        teacherRoles: {
+        teacher_roles: {
           include: {
             role: true,
             campaign: true,
@@ -90,26 +93,31 @@ export class TeacherService {
     });
 
     if (!teacher) {
-      throw new NotFoundException(`Teacher with ID ${params.id} not found`);
+      throw new NotFoundException(`Teacher with ID ${id} not found`);
     }
 
-    return {
+    const result = {
       ...teacher,
-      teacherRoles: undefined,
-      roles: teacher.teacherRoles.map((tr) => ({
+      teacher_roles: undefined,
+      roles: teacher.teacher_roles.map((tr) => ({
         role: tr.role.name,
         campaign: tr.campaign.name,
         group: tr.group.title,
       })),
     };
+
+    return result;
   }
 
-  async findInfo(params: ValidateTeacherIdDto) {
+  async findInfo(id: number, campaign_id: number) {
+    // Fetch teacher with roles and groups for the campaign
     const teacher = await this.prisma.teacher.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
       include: {
-        groups: {
+        teacher_roles: {
+          where: { campaign_id },
           include: {
+            role: true,
             group: {
               include: {
                 students: {
@@ -120,92 +128,132 @@ export class TeacherService {
               },
             },
           },
-          where: {
-            group: {
-              campaigns: {
-                some: {
-                  campaignId: params.campaign_id,
-                },
-              },
-            },
-          },
-        },
-        teacherRoles: {
-          include: {
-            role: true,
-            campaign: true,
-            group: true,
-          },
         },
       },
     });
 
     if (!teacher) {
-      throw new NotFoundException(`Teacher with ID ${params.id} not found`);
+      throw new NotFoundException(`Teacher with ID ${id} not found`);
     }
 
-    teacher.groups = teacher.groups.map((g: any) => {
-      g.group.students = g.group.students.map((stud) => stud.student);
-      return g.group;
-    });
+    // Get the first (should be only) teacher_role for this campaign
+    const teacherRole = teacher.teacher_roles[0];
+    let role = null;
+    let group = null;
+
+    if (teacherRole) {
+      // Role info
+      const permissions = Array.isArray(teacherRole.role.permissions)
+        ? teacherRole.role.permissions
+        : typeof teacherRole.role.permissions === 'string'
+          ? JSON.parse(teacherRole.role.permissions)
+          : [];
+      role = {
+        name: teacherRole.role.name,
+        permissions,
+      };
+
+      // Group info
+      if (teacherRole.group) {
+        group = {
+          id: teacherRole.group.id,
+          title: teacherRole.group.title,
+          class: teacherRole.group.class,
+          // Add other group fields as needed
+          students: teacherRole.group.students.map((stud: any) => {
+            return {
+              first_name: stud.student.first_name,
+              last_name: stud.student.last_name,
+              image: stud.student.image_url,
+              mobile_phone: stud.student.student_mobile,
+              class: stud.student.educational_class,
+            };
+          }),
+        };
+      }
+    }
+
+    // Prepare teacher data (remove sensitive fields)
+    const teacherData = { ...teacher };
+    delete teacherData.password;
+    delete teacherData.teacher_roles;
 
     return {
-      ...teacher,
-      roles: teacher.teacherRoles.map((tr) => ({
-        role: tr.role.name,
-        campaign: tr.campaign.name,
-        group: tr.group.title,
-      })),
+      ...teacherData,
+      role,
+      group,
     };
   }
 
-  async update(params: ValidateTeacherIdDto, updateTeacherDto: UpdateTeacherDto) {
-    const { teacherRoles = [], ...data } = updateTeacherDto;
+  async update(id: number, updateTeacherDto: CreateTeacherDto) {
+    const { teacherRoles = [], ...data } = updateTeacherDto as any;
 
     const teacher = await this.prisma.teacher.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
     });
 
     if (!teacher) {
-      throw new NotFoundException(`Teacher with ID ${params.id} not found`);
+      throw new NotFoundException(`Teacher with ID ${id} not found`);
     }
 
     const updated = await this.prisma.teacher.update({
-      where: { id: Number(params.id) },
-      data,
+      where: { id: Number(id) },
+      data: {
+        ...data,
+        id: undefined,
+        roles: undefined,
+      },
     });
 
     // optional: delete existing roles first (if full replace strategy)
     await this.prisma.teacherRole.deleteMany({
-      where: { teacherId: updated.id },
+      where: { teacher_id: updated.id },
     });
 
     // then insert new roles
     for (const assignment of teacherRoles) {
       await this.prisma.teacherRole.create({
         data: {
-          teacherId: updated.id,
-          roleId: assignment.roleId,
-          groupId: assignment.groupId,
-          campaignId: assignment.campaignId,
+          teacher_id: updated.id,
+          role_id: assignment.roleId,
+          group_id: assignment.groupId,
+          campaign_id: assignment.campaignId,
         },
       });
     }
 
-    return updated;
+    return { message: `Teacher ${id} updated`, data: updated };
   }
 
-  async delete(params: ValidateTeacherIdDto) {
+  async delete(id: number) {
     const teacher = await this.prisma.teacher.findUnique({
-      where: { id: Number(params.id) },
+      where: { id: Number(id) },
     });
 
     if (!teacher) {
-      throw new NotFoundException(`Teacher with ID ${params.id} not found`);
+      throw new NotFoundException(`Teacher with ID ${id} not found`);
     }
 
-    return this.prisma.teacher.delete({
-      where: { id: Number(params.id) },
+    await this.prisma.teacher.delete({
+      where: { id: Number(id) },
     });
+
+    return { message: `Teacher ${id} deleted` };
+  }
+
+  // List unassigned teachers for a campaign (simplified)
+  async listUnassigned(campaignId: number) {
+    const unassignedTeachers = await this.prisma.teacher.findMany({
+      where: {
+        campaign_assignments: {
+          some: { campaign_id: Number(campaignId) },
+        },
+        role: 'TEACHER',
+        groups: {
+          none: { campaign_id: Number(campaignId) },
+        },
+      },
+    });
+    return unassignedTeachers;
   }
 }

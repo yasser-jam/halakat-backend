@@ -13,15 +13,28 @@ export class MistakeService {
   async create(dto: CreateMistakeDto) {
     return this.prisma.mistake.create({
       data: {
-        campaignId: dto.campaign_id,
+        campaign_id: dto.campaign_id,
         title: dto.title,
-        removed_points: dto.removed_points,
+        reduced_marks: dto.reduced_marks,
       },
     });
   }
 
-  async findAll() {
-    return this.prisma.mistake.findMany();
+  async findAll(campaignId: string) {
+    const mistakes = await this.prisma.mistake.findMany({
+      where: {
+        campaign_id: Number(campaignId),
+      },
+      include: {
+        mistakes_in_session: true,
+      },
+    });
+
+    return mistakes.map((el) => ({
+      ...el,
+      mistakes_in_session: undefined,
+      is_related: !!el.mistakes_in_session?.length,
+    }));
   }
 
   async findOne(params: ValidateMistakeIdDto) {
@@ -67,17 +80,17 @@ export class MistakeService {
 
   async findByCampaign(campaignId: number) {
     return this.prisma.mistake.findMany({
-      where: { campaignId: Number(campaignId) },
+      where: { campaign_id: Number(campaignId) },
     });
   }
 
   async assertCampaignMistakes(
     campaignId: number,
-    mistakes: Array<{ id?: number; title: string; removed_points: number }>,
+    mistakes: Array<{ id?: number; title: string; reduced_marks: number }>,
   ) {
     // 1. Get current mistakes for this campaign
     const existing = await this.prisma.mistake.findMany({
-      where: { campaignId },
+      where: { campaign_id: campaignId },
     });
 
     const incomingIds = new Set(mistakes.filter((m) => m.id).map((m) => m.id));
@@ -89,22 +102,22 @@ export class MistakeService {
         const current = existing.find((m) => m.id === item.id);
         if (
           current?.title !== item.title ||
-          current?.removed_points !== item.removed_points
+          current?.reduced_marks !== item.reduced_marks
         ) {
           await this.prisma.mistake.update({
             where: { id: item.id },
             data: {
               title: item.title,
-              removed_points: item.removed_points,
+              reduced_marks: item.reduced_marks,
             },
           });
         }
       } else {
         await this.prisma.mistake.create({
           data: {
-            campaignId,
+            campaign_id: campaignId,
             title: item.title,
-            removed_points: item.removed_points,
+            reduced_marks: item.reduced_marks,
           },
         });
       }

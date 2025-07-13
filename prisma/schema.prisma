@@ -8,21 +8,84 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model student {
-  id                                  Int             @id @default(autoincrement())
+// Top-level Organization model
+model Organization {
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  contact_email String?
+  contact_phone String?
+  address       String?
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+  metadata      Json?
+
+  // Relations
+  mosques Mosque[]
+  users   OrganizationUser[]
+
+  @@index([name])
+}
+
+// Second-level Mosque model
+model Mosque {
+  id              Int      @id @default(autoincrement())
+  organization_id Int
+  name            String
+  city            String?
+  address_area    String?
+  address_details String?
+  contact_phone   String?
+  contact_email   String?
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  metadata        Json?
+
+  // Relations
+  organization Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  campaigns    Campaign[]
+
+  @@index([organization_id])
+  @@index([name])
+}
+
+// Organization users for managing access across organizations
+model OrganizationUser {
+  id              Int      @id @default(autoincrement())
+  organization_id Int
+  email           String
+  first_name      String?
+  last_name       String?
+  role            OrgRole  @default(ADMIN)
+  is_active       Boolean  @default(true)
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+  password        String?
+
+  organization Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+
+  @@unique([organization_id, email])
+  @@index([email])
+}
+
+// Global Student model - students can participate in multiple campaigns across different mosques
+model Student {
+  id                                  Int       @id @default(autoincrement())
   current_mosque_name                 String?
   educational_class                   Int?
   first_name                          String?
   last_name                           String?
   birth_date                          DateTime?
-  student_mobile                      String          @unique
+  student_mobile                      String    @unique // Globally unique
   school                              String?
-  in_another_mosque                   Boolean         @default(false)
+  in_another_mosque                   Boolean   @default(false)
   other_mosque_names                  String?
   student_health_status               String?
   special_talent                      String?
   father_name                         String?
-  father_status                       STATUS          @default(ALIVE)
+  father_status                       STATUS    @default(ALIVE)
   father_job                          String?
   father_income_level                 String?
   father_education_level              String?
@@ -30,14 +93,14 @@ model student {
   father_phone_number                 String?
   father_work_number                  String?
   mother_name                         String?
-  mother_status                       STATUS          @default(ALIVE)
+  mother_status                       STATUS    @default(ALIVE)
   mother_job                          String?
   mother_income_level                 String?
   mother_education_level              String?
   mother_health_status                String?
   mother_phone_number                 String?
   mother_home_number                  String?
-  parent_marital_status               MARITAL         @default(MARRIED)
+  parent_marital_status               MARITAL   @default(MARRIED)
   student_mobile_number               String?
   student_home_number                 String?
   original_residence_address_area     String?
@@ -52,23 +115,30 @@ model student {
   parts_tested_by_the_endowments      String?
   image_url                           String?
   password                            String?
-  groups                              StudentGroup[]
-  created_at                          DateTime        @default(now())
-  updated_at                          DateTime?       @updatedAt
-  Attendance                          Attendance[]
-  SavingSession                       SavingSession[]
-  Log                                 Log[]
+  created_at                          DateTime  @default(now())
+  updated_at                          DateTime? @updatedAt
+
+  // Relations - all through campaigns
+  campaign_enrollments StudentCampaign[]
+  groups               StudentGroup[]
+  attendance           Attendance[]
+  saving_sessions      SavingSession[]
+  logs                 Log[]
+
+  @@index([student_mobile])
+  @@index([first_name, last_name])
 }
 
-model teacher {
-  id                                 Int             @id @default(autoincrement())
+// Global Teacher model - teachers can work in multiple campaigns across different mosques
+model Teacher {
+  id                                 Int       @id @default(autoincrement())
   educational_level                  String?
   university_name                    String?
   college_name                       String?
   first_name                         String?
   last_name                          String?
   birth_date                         DateTime?
-  mobile_phone_number                String          @unique
+  mobile_phone_number                String    @unique // Globally unique
   in_another_mosque                  Boolean?
   other_mosque_names                 String?
   special_talent                     String?
@@ -83,163 +153,285 @@ model teacher {
   is_working                         Boolean?
   job_role                           String?
   workplace_name                     String?
-  groups                             TeacherGroup[]
   password                           String
-  role                               Role            @default(TEACHER)
-  created_at                         DateTime        @default(now())
-  updated_at                         DateTime?       @updatedAt
-  SavingSession                      SavingSession[]
-  teacherRoles                       TeacherRole[]
-  Log                                Log[]
+  role                               Role      @default(TEACHER)
+  created_at                         DateTime  @default(now())
+  updated_at                         DateTime? @updatedAt
+
+  // Relations - all through campaigns
+  campaign_assignments TeacherCampaign[]
+  groups               TeacherGroup[]
+  saving_sessions      SavingSession[]
+  teacher_roles        TeacherRole[]
+  logs                 Log[]
+
+  @@index([mobile_phone_number])
+  @@index([first_name, last_name])
 }
 
+// Groups belong to specific mosques but are used within campaigns
 model Group {
-  id               Int              @id @default(autoincrement())
-  title            String
-  class            Int?
-  currentTeacherId Int?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  students         StudentGroup[]
-  teachers         TeacherGroup[]
-  campaigns        GroupCampaigns[]
-  Attendance       Attendance[]
-  teacherRoles     TeacherRole[]
+  id                 Int      @id @default(autoincrement())
+  mosque_id          Int?
+  title              String
+  class              Int?
+  current_teacher_id Int?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
+
+  // Relations
+  students      StudentGroup[]
+  teachers      TeacherGroup[]
+  campaigns     GroupCampaigns[]
+  attendance    Attendance[]
+  teacher_roles TeacherRole[]
+
+  @@index([mosque_id])
 }
 
 model Campaign {
-  id                    Int              @id @default(autoincrement())
-  name                  String
-  startDate             DateTime         @default(now())
-  endDate               DateTime?
-  assignEndDate         DateTime?
-  assignStartDate       DateTime?        @default(now())
-  isCampaignContinous   Boolean          @default(false)
-  limitedStudentsCount  Boolean?
-  studentsCount         Int?
-  assignByLink          Boolean?
-  completeCountApproach String           @default("UNLIMIT_ASSIGN")
-  days                  String?
-  timingApproach        String           @default("hours")
-  startTime             String?
-  status                Boolean          @default(false)
-  endTime               String?
-  createdAt             DateTime         @default(now())
-  updatedAt             DateTime         @updatedAt
-  groups                GroupCampaigns[]
-  StudentGroup          StudentGroup[]
-  Attendance            Attendance[]
-  SavingSession         SavingSession[]
-  Mistake               Mistake[]
-  Evaluation            Evaluation[]
-  teacherRoles          TeacherRole[]
+  id                      Int       @id @default(autoincrement())
+  mosque_id               Int
+  name                    String
+  start_date              DateTime  @default(now())
+  end_date                DateTime?
+  assign_end_date         DateTime?
+  assign_start_date       DateTime? @default(now())
+  is_campaign_continuous  Boolean   @default(false)
+  limited_students_count  Boolean?
+  students_count          Int?
+  assign_by_link          Boolean?
+  complete_count_approach String    @default("UNLIMIT_ASSIGN")
+  days                    String?
+  timing_approach         String    @default("hours")
+  start_time              String?
+  status                  Boolean   @default(false)
+  end_time                String?
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+  metadata                Json?
+
+  // Relations
+  mosque              Mosque            @relation(fields: [mosque_id], references: [id], onDelete: Cascade)
+  groups              GroupCampaigns[]
+  student_enrollments StudentCampaign[]
+  teacher_assignments TeacherCampaign[]
+  student_groups      StudentGroup[]
+  attendance          Attendance[]
+  saving_sessions     SavingSession[]
+  mistakes            Mistake[]
+  evaluations         Evaluation[]
+  teacher_roles       TeacherRole[]
+  TeacherGroup        TeacherGroup[]
+  AppRole             AppRole[]
+
+  @@index([mosque_id])
+  @@index([status])
+}
+
+// Junction table for students enrolled in specific campaigns
+model StudentCampaign {
+  student_id    Int
+  campaign_id   Int
+  enrolled_date DateTime @default(now())
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  student  Student  @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+
+  @@id([student_id, campaign_id])
+  @@index([campaign_id])
+}
+
+// Junction table for teachers assigned to specific campaigns
+model TeacherCampaign {
+  teacher_id    Int
+  campaign_id   Int
+  assigned_date DateTime @default(now())
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  teacher  Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+
+  @@id([teacher_id, campaign_id])
+  @@index([campaign_id])
 }
 
 model GroupCampaigns {
-  groupId    Int
-  campaignId Int
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  group_id    Int
+  campaign_id Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
-  @@id([groupId, campaignId])
+  group    Group    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+
+  @@id([group_id, campaign_id])
 }
 
 model StudentGroup {
-  studentId  Int
-  groupId    Int
-  campaignId Int
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  student    student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  student_id  Int
+  group_id    Int
+  campaign_id Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
-  @@id([studentId, groupId, campaignId])
+  student  Student  @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  group    Group    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+
+  @@id([student_id, group_id, campaign_id])
 }
 
 model TeacherGroup {
-  teacherId  Int
-  groupId    Int
-  created_at DateTime @default(now())
-  updated_at DateTime @updatedAt
-  teacher    teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  teacher_id  Int
+  group_id    Int
+  campaign_id Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
 
-  @@id([teacherId, groupId])
+  teacher  Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  group    Group    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+
+  @@id([teacher_id, group_id, campaign_id])
 }
 
 model Attendance {
-  id         Int      @id @default(autoincrement())
-  studentId  Int
-  groupId    Int
-  campaignId Int
-  takenDate  DateTime @default(now())
-  delayTime  Int
-  status     String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  student    student  @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  group      Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  campaign   Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  id          Int      @id @default(autoincrement())
+  student_id  Int
+  group_id    Int
+  campaign_id Int
+  taken_date  DateTime @default(now())
+  delay_time  Int
+  status      String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  student  Student  @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  group    Group    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+
+  @@index([student_id])
+  @@index([campaign_id])
+  @@index([taken_date])
 }
 
 model Evaluation {
-  id            Int             @id @default(autoincrement())
+  id            Int    @id @default(autoincrement())
   title         String
   points        Int
-  reducedAmount Int
-  campaignId    Int
-  campaign      Campaign        @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  sessions      SavingSession[] // reverse relation
+  minimum_marks Int
+  campaign_id   Int
+
+  campaign Campaign        @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  sessions SavingSession[]
+
+  @@index([campaign_id])
 }
 
 model SavingSession {
-  id           Int      @id @default(autoincrement())
-  teacherId    Int
-  studentId    Int
-  campaignId   Int
-  evaluationId Int? // new optional relation
-  start        Int
-  end          Int
-  rating       Int
-  duration     Int
-  created_at   DateTime @default(now())
+  id            Int      @id @default(autoincrement())
+  teacher_id    Int
+  student_id    Int
+  campaign_id   Int
+  evaluation_id Int?
+  start         Int
+  end           Int
+  rating        Int
+  duration      Int
+  created_at    DateTime @default(now())
 
-  teacher          teacher            @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  student          student            @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  campaign         Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  evaluation       Evaluation?        @relation(fields: [evaluationId], references: [id], onDelete: SetNull)
-  MistakeInSession MistakeInSession[]
+  teacher             Teacher            @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  student             Student            @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  campaign            Campaign           @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  evaluation          Evaluation?        @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
+  mistakes_in_session MistakeInSession[]
 
-  @@index([teacherId])
-  @@index([studentId])
-  @@index([campaignId])
+  @@index([teacher_id])
+  @@index([student_id])
+  @@index([campaign_id])
+  @@index([created_at])
 }
 
 model Mistake {
-  id             Int    @id @default(autoincrement())
-  campaignId     Int
-  title          String
-  removed_points Int
+  id            Int    @id @default(autoincrement())
+  campaign_id   Int
+  title         String
+  reduced_marks Int
 
-  campaign         Campaign           @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  MistakeInSession MistakeInSession[]
+  campaign            Campaign           @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  mistakes_in_session MistakeInSession[]
 
-  @@index([campaignId])
+  @@index([campaign_id])
 }
 
 model MistakeInSession {
-  id              Int @id @default(autoincrement())
-  savingSessionId Int
-  mistakeId       Int
-  page            Int
+  id                Int @id @default(autoincrement())
+  saving_session_id Int
+  mistake_id        Int
+  page              Int
 
-  savingSession SavingSession @relation(fields: [savingSessionId], references: [id], onDelete: Cascade)
-  mistake       Mistake       @relation(fields: [mistakeId], references: [id], onDelete: Cascade)
+  saving_session SavingSession @relation(fields: [saving_session_id], references: [id], onDelete: Cascade)
+  mistake        Mistake       @relation(fields: [mistake_id], references: [id], onDelete: Restrict)
+
+  @@index([saving_session_id])
+  @@index([mistake_id])
 }
 
+model AppRole {
+  id          Int      @id @default(autoincrement())
+  name        String
+  description String?
+  permissions Json
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  campaign_id Int
+
+  campaign      Campaign      @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  teacher_roles TeacherRole[]
+}
+
+model TeacherRole {
+  id          Int      @id @default(autoincrement())
+  teacher_id  Int
+  group_id    Int
+  campaign_id Int
+  role_id     Int
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  teacher  Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  group    Group    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  role     AppRole  @relation(fields: [role_id], references: [id], onDelete: Cascade)
+
+  @@unique([teacher_id, group_id, campaign_id, role_id])
+  @@index([teacher_id])
+  @@index([campaign_id])
+}
+
+model Log {
+  id         Int      @id @default(autoincrement())
+  event      LogEvent
+  timestamp  DateTime @default(now())
+  teacher_id Int?
+  student_id Int?
+  metadata   Json?
+  created_at DateTime @default(now())
+
+  teacher Teacher? @relation(fields: [teacher_id], references: [id], onDelete: SetNull)
+  student Student? @relation(fields: [student_id], references: [id], onDelete: SetNull)
+
+  @@index([event])
+  @@index([timestamp])
+}
+
+// Enums
 enum STATUS {
   ALIVE
   DEAD
@@ -262,58 +454,22 @@ enum Role {
   AUDIBLE_ASSISTANT
 }
 
+enum OrgRole {
+  OWNER
+  ADMIN
+  MANAGER
+}
+
 enum Permission {
   STUDENT_MANAGEMENT
   TEACHER_MANAGEMENT
   ROLES_MANAGEMENT
   SAVING_SESSION_MANAGEMENT
   ATTENDANCE_MANAGEMENT
-  CIRRUCULUM_MANAGEMENT
+  CURRICULUM_MANAGEMENT
   SETTINGS_MANAGEMENT
   POINTS_MANAGEMENT
   AWARDS_MANAGEMENT
-}
-
-model AppRole {
-  id           Int           @id @default(autoincrement())
-  name         String        @unique
-  description  String?
-  permissions  Json
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
-  teacherRoles TeacherRole[]
-}
-
-model TeacherRole {
-  id         Int @id @default(autoincrement())
-  teacherId  Int
-  groupId    Int
-  campaignId Int
-  roleId     Int
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  teacher  teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
-  group    Group    @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  campaign Campaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
-  role     AppRole  @relation(fields: [roleId], references: [id], onDelete: Cascade)
-
-  @@unique([teacherId, groupId, campaignId, roleId])
-}
-
-model Log {
-  id        Int      @id @default(autoincrement())
-  event     LogEvent
-  timestamp DateTime @default(now())
-  teacherId Int?
-  studentId Int?
-  metadata  Json?
-  createdAt DateTime @default(now())
-
-
-  teacher teacher? @relation(fields: [teacherId], references: [id], onDelete: SetNull)
-  student student? @relation(fields: [studentId], references: [id], onDelete: SetNull)
 }
 
 enum LogEvent {

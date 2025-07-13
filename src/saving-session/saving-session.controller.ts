@@ -1,4 +1,12 @@
-import { Controller, Post, Body, Get, Param, Query, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Param,
+  Query,
+  Delete,
+} from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -80,7 +88,7 @@ export class SavingSessionController {
     return this.savingSessionService.getById(id);
   }
 
-    @ApiOperation({ summary: 'Delete Saving Session' })
+  @ApiOperation({ summary: 'Delete Saving Session' })
   @ApiResponse({
     status: 200,
     description: 'Deleted Successfully',
@@ -95,5 +103,4 @@ export class SavingSessionController {
   async remove(@Param('id') id: number) {
     return this.savingSessionService.remove(Number(id));
   }
-
 }

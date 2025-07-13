@@ -12,39 +12,33 @@ export class SavingSessionService {
   constructor(private prisma: PrismaService) {}
 
   async createSavingSession(dto: CreateSavingSessionDto) {
-    const { mistakes, ...savingSessionData } = dto;
-    // 1. Calculate total reduced points from mistake list
-    let totalReduced = 0;
-    for (const m of mistakes) {
-      const mistake = await this.prisma.mistake.findUnique({
-        where: { id: m.mistakeId },
-      });
-      if (mistake) totalReduced += mistake.removed_points;
-    }
-
-    // 2. Fetch all evaluations for this campaign
-    const evaluations = await this.prisma.evaluation.findMany({
-      where: { campaignId: dto.campaignId },
-      orderBy: { reducedAmount: 'desc' }, // get the highest matching evaluation first
-    });
-
-    const matchedEvaluation = evaluations.find(
-      (ev) => totalReduced >= ev.reducedAmount,
-    );
+    const {
+      mistakes,
+      teacherId,
+      studentId,
+      campaign_id,
+      ...savingSessionData
+    } = dto;
 
     return this.prisma.savingSession.create({
       data: {
         ...savingSessionData,
-        evaluationId: matchedEvaluation.id,
-        MistakeInSession: {
+        teacher_id: teacherId,
+        student_id: studentId,
+        campaign_id: campaign_id,
+        mistakes_in_session: {
           create: mistakes.map((m) => ({
             page: m.pageNumber,
-            mistake: { connect: { id: m.mistakeId } },
+            mistake: {
+              connect: {
+                id: m.mistakeId,
+              },
+            },
           })),
         },
       },
       include: {
-        MistakeInSession: {
+        mistakes_in_session: {
           include: { mistake: true },
         },
         evaluation: true,
@@ -58,7 +52,7 @@ export class SavingSessionService {
   async getAll() {
     return this.prisma.savingSession.findMany({
       include: {
-        MistakeInSession: {
+        mistakes_in_session: {
           include: { mistake: true },
         },
         student: true,
@@ -72,7 +66,7 @@ export class SavingSessionService {
     return this.prisma.savingSession.findUnique({
       where: { id: Number(id) },
       include: {
-        MistakeInSession: {
+        mistakes_in_session: {
           include: { mistake: true },
         },
         student: true,
@@ -83,13 +77,13 @@ export class SavingSessionService {
   }
 
   async filter(dto: FilterSavingSessionDto) {
-    const { studentId, teacherId, mistakeId, campaignId, dateFrom, dateTo } =
+    const { studentId, teacherId, mistakeId, campaign_id, dateFrom, dateTo } =
       dto;
 
     const where: Prisma.SavingSessionWhereInput = {
       ...(studentId ? { studentId: Number(studentId) } : {}),
       ...(teacherId ? { teacherId: Number(teacherId) } : {}),
-      ...(campaignId ? { campaignId: Number(campaignId) } : {}),
+      ...(campaign_id ? { campaignId: Number(campaign_id) } : {}),
       ...(dateFrom || dateTo
         ? {
             created_at: {
@@ -112,7 +106,7 @@ export class SavingSessionService {
     const res = await this.prisma.savingSession.findMany({
       where,
       include: {
-        MistakeInSession: {
+        mistakes_in_session: {
           include: { mistake: true },
         },
         student: {
@@ -147,7 +141,7 @@ export class SavingSessionService {
     return res.map((el) => ({
       ...el,
       MistakeInSession: undefined,
-      mistakes: el.MistakeInSession?.map((item) => ({
+      mistakes: el.mistakes_in_session?.map((item) => ({
         id: item.id,
         page: item.page,
         title: item.mistake?.title,

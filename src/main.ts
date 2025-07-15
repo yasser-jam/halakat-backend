@@ -11,17 +11,8 @@ async function bootstrap() {
 
   // Enable CORS
   app.enableCors({
-    origin: [
-      'http://localhost:3000',
-      'https://ali-aldikker.vercel.app',
-      'https://aldekker-dev.vercel.app',
-      'https://halakat-mosque-admin.vercel.app',
-    ],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
-    allowedHeaders: 'Content-Type, Accept, Authorization, Campaign_id',
+    origin: true,
     credentials: true,
-    preflightContinue: false,
-    optionsSuccessStatus: 204,
   });
 
   // Serve Swagger UI static files (needed in production)

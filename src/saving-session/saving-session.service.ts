@@ -81,9 +81,9 @@ export class SavingSessionService {
       dto;
 
     const where: Prisma.SavingSessionWhereInput = {
-      ...(studentId ? { studentId: Number(studentId) } : {}),
-      ...(teacherId ? { teacherId: Number(teacherId) } : {}),
-      ...(campaign_id ? { campaignId: Number(campaign_id) } : {}),
+      ...(studentId ? { student_id: Number(studentId) } : {}),
+      ...(teacherId ? { teacher_id: Number(teacherId) } : {}),
+      ...(campaign_id ? { campaign_id: Number(campaign_id) } : {}),
       ...(dateFrom || dateTo
         ? {
             created_at: {

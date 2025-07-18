@@ -187,6 +187,7 @@ export class AttendanceService {
     campaignId: number,
     groupId: number,
   ) {
+    console.log(studentId, campaignId, groupId);
     return this.prisma.attendance.findMany({
       where: {
         student_id: Number(studentId),

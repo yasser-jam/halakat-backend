@@ -110,7 +110,7 @@ export class AttendanceController {
     status: 200,
     description: 'List attendance by student, group, and campaign',
   })
-  @Get('student/:studentId')
+  @Get('/group/:groupId/student/:studentId')
   async listByStudentGroupCampaign(
     @Headers('campaign_id') campaignId: number,
     @Param('groupId') groupId: number,

@@ -369,16 +369,16 @@ async function main() {
     data: {
       mosque_id: mosque1.id,
       name: 'حملة تحفيظ القرآن الكريم - الفصل الأول',
-      start_date: new Date('2024-01-01'),
-      end_date: new Date('2024-06-30'),
-      assign_start_date: new Date('2024-01-01'),
-      assign_end_date: new Date('2024-06-30'),
+      start_date: new Date('2024-06-15'),
+      end_date: new Date('2024-07-16'),
+      assign_start_date: new Date('2024-06-15'),
+      assign_end_date: new Date('2024-07-16'),
       is_campaign_continuous: true,
       limited_students_count: false,
       students_count: 100,
       assign_by_link: false,
       complete_count_approach: 'UNLIMIT_ASSIGN',
-      days: 'sunday,monday,tuesday,wednesday,thursday',
+      days: 'sunday,tuesday,thursday',
       timing_approach: 'hours',
       start_time: '16:00',
       end_time: '18:00',
@@ -711,19 +711,41 @@ async function main() {
 
   // إنشاء سجلات الحضور
   const attendanceData = [];
+  // توليد التواريخ فقط لأيام الأحد والثلاثاء والخميس بين 15 يونيو و16 يوليو 2024
+  function getCampaign1Dates() {
+    const start = new Date('2024-06-15');
+    const end = new Date('2024-07-16');
+    const result: Date[] = [];
+
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const day = d.getDay(); // 0=Sunday, 2=Tuesday, 4=Thursday
+      if ([0, 2, 4].includes(day)) {
+        result.push(new Date(d));
+      }
+    }
+
+    return result;
+  }
+
+  const attendanceDatesCampaign1 = getCampaign1Dates();
+
   for (let i = 0; i < students.length; i++) {
     const student = students[i];
     const groupId =
       i < 4 ? group1.id : i < 8 ? group2.id : i < 12 ? group3.id : group4.id;
     const campaignId = i < 8 ? campaign1.id : campaign2.id;
 
-    // إنشاء 10 سجلات حضور لكل طالب
-    for (let j = 0; j < 10; j++) {
+    const dates =
+      campaignId === campaign1.id
+        ? attendanceDatesCampaign1
+        : Array.from({ length: 10 }, (_, j) => new Date(2024, 0, j + 1)); // القديمة لحملة 2
+
+    for (const date of dates) {
       attendanceData.push({
         student_id: student.id,
         group_id: groupId,
         campaign_id: campaignId,
-        taken_date: new Date(2024, 0, j + 1),
+        taken_date: date,
         delay_time: Math.floor(Math.random() * 30),
         status: Math.random() > 0.1 ? 'ATTEND' : 'MISS',
       });

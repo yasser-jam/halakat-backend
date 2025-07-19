@@ -280,6 +280,12 @@ async function main() {
       university: 'جامعة الملك عبدالعزيز',
       college: 'كلية الآداب',
     },
+    {
+      first_name: 'ياسر',
+      last_name: 'جمال الدين',
+      university: 'جامعة دمشق',
+      college: 'كلية الهندسة المعلوماتية',
+    },
   ];
 
   const teachers = [];
@@ -297,7 +303,10 @@ async function main() {
           Math.floor(Math.random() * 12),
           Math.floor(Math.random() * 28) + 1,
         ),
-        mobile_phone_number: `05${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`,
+        mobile_phone_number:
+          teacherData.first_name == 'ياسر'
+            ? '0986365515'
+            : `05${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`,
         in_another_mosque: false,
         special_talent: ['تجويد', 'حفظ متقن', 'قراءات', 'تفسير'][
           Math.floor(Math.random() * 4)
@@ -312,7 +321,7 @@ async function main() {
         job_role: 'معلم قرآن',
         workplace_name: i < 2 ? 'مسجد النور' : 'مسجد الهداية',
         password: '123456',
-        role: 'TEACHER',
+        role: teacherData.first_name == 'ياسر' ? 'SUPER_ADMIN' : 'TEACHER',
       },
     });
     teachers.push(teacher);
@@ -555,6 +564,8 @@ async function main() {
       { teacher_id: teachers[1].id, campaign_id: campaign1.id },
       { teacher_id: teachers[2].id, campaign_id: campaign2.id },
       { teacher_id: teachers[3].id, campaign_id: campaign2.id },
+      { teacher_id: teachers[4].id, campaign_id: campaign1.id },
+      { teacher_id: teachers[4].id, campaign_id: campaign2.id },
     ],
   });
 
@@ -640,6 +651,18 @@ async function main() {
         group_id: group4.id,
         campaign_id: campaign2.id,
         role_id: teacherRole2.id,
+      },
+      {
+        teacher_id: teachers[4].id,
+        group_id: group1.id,
+        campaign_id: campaign1.id,
+        role_id: adminRole1.id,
+      },
+      {
+        teacher_id: teachers[4].id,
+        group_id: group4.id,
+        campaign_id: campaign2.id,
+        role_id: adminRole2.id,
       },
     ],
   });
@@ -728,6 +751,8 @@ async function main() {
   }
 
   const attendanceDatesCampaign1 = getCampaign1Dates();
+  console.log('check the dates: ');
+  console.log(attendanceDatesCampaign1);
 
   for (let i = 0; i < students.length; i++) {
     const student = students[i];

@@ -78,7 +78,7 @@ export class TeacherService {
     await this.prisma.teacherRole.create({
       data: {
         teacher_id: newTeacher.id,
-        role_id: 3, // default role
+        role_id: 1, // default role
         campaign_id: campaignId,
       },
     });

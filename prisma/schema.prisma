@@ -399,14 +399,14 @@ model AppRole {
 model TeacherRole {
   id          Int      @id @default(autoincrement())
   teacher_id  Int
-  group_id    Int
+  group_id    Int? // made optional
   campaign_id Int
   role_id     Int
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
   teacher  Teacher  @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
-  group    Group    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  group    Group?   @relation(fields: [group_id], references: [id], onDelete: Cascade)
   campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
   role     AppRole  @relation(fields: [role_id], references: [id], onDelete: Cascade)
 

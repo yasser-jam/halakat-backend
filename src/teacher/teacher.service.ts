@@ -62,7 +62,6 @@ export class TeacherService {
       data.role = role;
     }
 
-    console.log('check campaiagn', campaignId);
     const newTeacher = await this.prisma.teacher.create({
       data,
     });
@@ -71,6 +70,15 @@ export class TeacherService {
     await this.prisma.teacherCampaign.create({
       data: {
         teacher_id: newTeacher.id,
+        campaign_id: campaignId,
+      },
+    });
+
+    // Assign default role (role_id = 3) to the teacher for this campaign
+    await this.prisma.teacherRole.create({
+      data: {
+        teacher_id: newTeacher.id,
+        role_id: 3, // default role
         campaign_id: campaignId,
       },
     });

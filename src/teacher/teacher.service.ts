@@ -86,10 +86,18 @@ export class TeacherService {
     return { message: 'Teacher created', data: newTeacher };
   }
 
-  async findOne(id: number) {
+  async findOne(id: number, campaign_id: string) {
     const teacher = await this.prisma.teacher.findUnique({
       where: { id: Number(id) },
       include: {
+        groups: {
+          where: {
+            campaign_id: Number(campaign_id),
+          },
+          include: {
+            group: true,
+          },
+        },
         teacher_roles: {
           include: {
             role: true,
@@ -104,28 +112,28 @@ export class TeacherService {
       throw new NotFoundException(`Teacher with ID ${id} not found`);
     }
 
+    const group = teacher.groups?.[0]?.group;
+
     const result = {
       ...teacher,
       teacher_roles: undefined,
       roles: teacher.teacher_roles.map((tr) => ({
         role: tr.role.name,
         campaign: tr.campaign.name,
-        group: tr.group.title,
+        group: group,
       })),
     };
 
     return result;
   }
 
-  async findInfo(id: number, campaign_id: number) {
+  async findInfo(id: number, campaign_id: string) {
     // Fetch teacher with roles and groups for the campaign
     const teacher = await this.prisma.teacher.findUnique({
       where: { id: Number(id) },
       include: {
-        teacher_roles: {
-          where: { campaign_id },
+        groups: {
           include: {
-            role: true,
             group: {
               include: {
                 students: {
@@ -137,6 +145,12 @@ export class TeacherService {
             },
           },
         },
+        teacher_roles: {
+          where: { campaign_id: Number(campaign_id) },
+          include: {
+            role: true,
+          },
+        },
       },
     });
 
@@ -146,6 +160,7 @@ export class TeacherService {
 
     // Get the first (should be only) teacher_role for this campaign
     const teacherRole = teacher.teacher_roles[0];
+    const teacherGroup = teacher.groups?.[0];
     let role = null;
     let group = null;
 
@@ -162,13 +177,13 @@ export class TeacherService {
       };
 
       // Group info
-      if (teacherRole.group) {
+      if (teacherGroup?.group) {
         group = {
-          id: teacherRole.group.id,
-          title: teacherRole.group.title,
-          class: teacherRole.group.class,
+          id: teacherGroup.group.id,
+          title: teacherGroup.group.title,
+          class: teacherGroup.group.class,
           // Add other group fields as needed
-          students: teacherRole.group.students.map((stud: any) => {
+          students: teacherGroup.group.students.map((stud: any) => {
             return {
               first_name: stud.student.first_name,
               last_name: stud.student.last_name,
@@ -185,6 +200,7 @@ export class TeacherService {
     const teacherData = { ...teacher };
     delete teacherData.password;
     delete teacherData.teacher_roles;
+    delete teacherData.groups;
 
     return {
       ...teacherData,

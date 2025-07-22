@@ -67,12 +67,16 @@ export class TeachersController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a teacher by ID' })
   @ApiParam({ name: 'id', type: Number })
+  @ApiHeader({ name: 'campaign_id' })
   @ApiResponse({
     status: 200,
     description: 'Return the teacher with the given ID',
   })
-  async findOne(@Param('id') id: number) {
-    return this.teacherService.findOne(Number(id));
+  async findOne(
+    @Param('id') id: number,
+    @Headers('campaign_id') campaign_id: string,
+  ) {
+    return this.teacherService.findOne(Number(id), campaign_id);
   }
 
   @Get('mobile/:id')
@@ -84,9 +88,9 @@ export class TeachersController {
   })
   async findInfo(
     @Param('id') id: number,
-    @Query('campaign_id') campaign_id: number,
+    @Query('campaign_id') campaign_id: string,
   ) {
-    return this.teacherService.findInfo(Number(id), Number(campaign_id));
+    return this.teacherService.findInfo(Number(id), campaign_id);
   }
 
   @Put(':id')

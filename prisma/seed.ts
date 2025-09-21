@@ -8,6 +8,8 @@ async function main() {
   // تنظيف البيانات الموجودة
   await prisma.log.deleteMany();
   await prisma.mistakeInSession.deleteMany();
+  await prisma.sessionSurah.deleteMany();
+  await prisma.sessionSurahTemplate.deleteMany();
   await prisma.mistake.deleteMany();
   await prisma.savingSession.deleteMany();
   await prisma.evaluation.deleteMany();
@@ -732,6 +734,192 @@ async function main() {
 
   console.log('✅ تم إنشاء التقييمات');
 
+  // إنشاء قوالب السور والصفحات
+  let surahTemplates = [];
+
+  // بيانات السور والصفحات (بناءً على المصحف القياسي 604 صفحة)
+  const surahData = [
+    { number: 1, name: 'الفاتحة', startPage: 1, endPage: 1, weight: 1.0 },
+    { number: 2, name: 'البقرة', startPage: 2, endPage: 49, weight: 1.0 },
+    { number: 3, name: 'آل عمران', startPage: 50, endPage: 76, weight: 1.0 },
+    { number: 4, name: 'النساء', startPage: 77, endPage: 106, weight: 1.0 },
+    { number: 5, name: 'المائدة', startPage: 107, endPage: 127, weight: 1.0 },
+    { number: 6, name: 'الأنعام', startPage: 128, endPage: 150, weight: 1.0 },
+    { number: 7, name: 'الأعراف', startPage: 151, endPage: 176, weight: 1.0 },
+    { number: 8, name: 'الأنفال', startPage: 177, endPage: 186, weight: 1.0 },
+    { number: 9, name: 'التوبة', startPage: 187, endPage: 207, weight: 1.0 },
+    { number: 10, name: 'يونس', startPage: 208, endPage: 221, weight: 1.0 },
+    { number: 11, name: 'هود', startPage: 222, endPage: 235, weight: 1.0 },
+    { number: 12, name: 'يوسف', startPage: 236, endPage: 248, weight: 1.0 },
+    { number: 13, name: 'الرعد', startPage: 249, endPage: 255, weight: 1.0 },
+    { number: 14, name: 'إبراهيم', startPage: 256, endPage: 261, weight: 1.0 },
+    { number: 15, name: 'الحجر', startPage: 262, endPage: 266, weight: 1.0 },
+    { number: 16, name: 'النحل', startPage: 267, endPage: 281, weight: 1.0 },
+    { number: 17, name: 'الإسراء', startPage: 282, endPage: 293, weight: 1.0 },
+    { number: 18, name: 'الكهف', startPage: 294, endPage: 305, weight: 1.0 },
+    { number: 19, name: 'مريم', startPage: 306, endPage: 312, weight: 1.0 },
+    { number: 20, name: 'طه', startPage: 313, endPage: 321, weight: 1.0 },
+    { number: 21, name: 'الأنبياء', startPage: 322, endPage: 331, weight: 1.0 },
+    { number: 22, name: 'الحج', startPage: 332, endPage: 341, weight: 1.0 },
+    { number: 23, name: 'المؤمنون', startPage: 342, endPage: 349, weight: 1.0 },
+    { number: 24, name: 'النور', startPage: 350, endPage: 359, weight: 1.0 },
+    { number: 25, name: 'الفرقان', startPage: 360, endPage: 366, weight: 1.0 },
+    { number: 26, name: 'الشعراء', startPage: 367, endPage: 376, weight: 1.0 },
+    { number: 27, name: 'النمل', startPage: 377, endPage: 385, weight: 1.0 },
+    { number: 28, name: 'القصص', startPage: 386, endPage: 395, weight: 1.0 },
+    { number: 29, name: 'العنكبوت', startPage: 396, endPage: 404, weight: 1.0 },
+    { number: 30, name: 'الروم', startPage: 405, endPage: 410, weight: 1.0 },
+    { number: 31, name: 'لقمان', startPage: 411, endPage: 414, weight: 1.0 },
+    { number: 32, name: 'السجدة', startPage: 415, endPage: 417, weight: 1.0 },
+    { number: 33, name: 'الأحزاب', startPage: 418, endPage: 427, weight: 1.0 },
+    { number: 34, name: 'سبأ', startPage: 428, endPage: 433, weight: 1.0 },
+    { number: 35, name: 'فاطر', startPage: 434, endPage: 439, weight: 1.0 },
+    { number: 36, name: 'يس', startPage: 440, endPage: 445, weight: 1.0 },
+    { number: 37, name: 'الصافات', startPage: 446, endPage: 452, weight: 1.0 },
+    { number: 38, name: 'ص', startPage: 453, endPage: 458, weight: 1.0 },
+    { number: 39, name: 'الزمر', startPage: 459, endPage: 467, weight: 1.0 },
+    { number: 40, name: 'غافر', startPage: 468, endPage: 477, weight: 1.0 },
+    { number: 41, name: 'فصلت', startPage: 478, endPage: 483, weight: 1.0 },
+    { number: 42, name: 'الشورى', startPage: 484, endPage: 489, weight: 1.0 },
+    { number: 43, name: 'الزخرف', startPage: 490, endPage: 495, weight: 1.0 },
+    { number: 44, name: 'الدخان', startPage: 496, endPage: 498, weight: 1.0 },
+    { number: 45, name: 'الجاثية', startPage: 499, endPage: 502, weight: 1.0 },
+    { number: 46, name: 'الأحقاف', startPage: 503, endPage: 506, weight: 1.0 },
+    { number: 47, name: 'محمد', startPage: 507, endPage: 510, weight: 1.0 },
+    { number: 48, name: 'الفتح', startPage: 511, endPage: 514, weight: 1.0 },
+    { number: 49, name: 'الحجرات', startPage: 515, endPage: 517, weight: 1.0 },
+    { number: 50, name: 'ق', startPage: 518, endPage: 520, weight: 1.0 },
+    { number: 51, name: 'الذاريات', startPage: 521, endPage: 523, weight: 1.0 },
+    { number: 52, name: 'الطور', startPage: 524, endPage: 526, weight: 1.0 },
+    { number: 53, name: 'النجم', startPage: 527, endPage: 529, weight: 1.0 },
+    { number: 54, name: 'القمر', startPage: 530, endPage: 532, weight: 1.0 },
+    { number: 55, name: 'الرحمن', startPage: 533, endPage: 535, weight: 1.0 },
+    { number: 56, name: 'الواقعة', startPage: 536, endPage: 538, weight: 1.0 },
+    { number: 57, name: 'الحديد', startPage: 539, endPage: 541, weight: 1.0 },
+    { number: 58, name: 'المجادلة', startPage: 542, endPage: 544, weight: 1.0 },
+    { number: 59, name: 'الحشر', startPage: 545, endPage: 547, weight: 1.0 },
+    { number: 60, name: 'الممتحنة', startPage: 548, endPage: 549, weight: 1.0 },
+    { number: 61, name: 'الصف', startPage: 550, endPage: 551, weight: 1.0 },
+    { number: 62, name: 'الجمعة', startPage: 552, endPage: 553, weight: 1.0 },
+    {
+      number: 63,
+      name: 'المنافقون',
+      startPage: 554,
+      endPage: 555,
+      weight: 1.0,
+    },
+    { number: 64, name: 'التغابن', startPage: 556, endPage: 557, weight: 1.0 },
+    { number: 65, name: 'الطلاق', startPage: 558, endPage: 559, weight: 1.0 },
+    { number: 66, name: 'التحريم', startPage: 560, endPage: 561, weight: 1.0 },
+    { number: 67, name: 'الملك', startPage: 562, endPage: 563, weight: 1.0 },
+    { number: 68, name: 'القلم', startPage: 564, endPage: 565, weight: 1.0 },
+    { number: 69, name: 'الحاقة', startPage: 566, endPage: 567, weight: 1.0 },
+    { number: 70, name: 'المعارج', startPage: 568, endPage: 569, weight: 1.0 },
+    { number: 71, name: 'نوح', startPage: 570, endPage: 571, weight: 1.0 },
+    { number: 72, name: 'الجن', startPage: 572, endPage: 573, weight: 1.0 },
+    { number: 73, name: 'المزمل', startPage: 574, endPage: 575, weight: 1.0 },
+    { number: 74, name: 'المدثر', startPage: 576, endPage: 577, weight: 1.0 },
+    { number: 75, name: 'القيامة', startPage: 578, endPage: 578, weight: 1.0 },
+    { number: 76, name: 'الإنسان', startPage: 579, endPage: 580, weight: 1.0 },
+    {
+      number: 77,
+      name: 'المرسلات',
+      startPage: 581,
+      endPage: 581,
+      weight: 0.75,
+    }, // مثال على صفحة جزئية
+    { number: 78, name: 'النبأ', startPage: 582, endPage: 582, weight: 1.0 },
+    { number: 79, name: 'النازعات', startPage: 583, endPage: 583, weight: 1.0 },
+    { number: 80, name: 'عبس', startPage: 584, endPage: 584, weight: 1.0 },
+    { number: 81, name: 'التكوير', startPage: 585, endPage: 585, weight: 1.0 },
+    { number: 82, name: 'الانفطار', startPage: 586, endPage: 586, weight: 1.0 },
+    { number: 83, name: 'المطففين', startPage: 587, endPage: 587, weight: 1.0 },
+    { number: 84, name: 'الانشقاق', startPage: 588, endPage: 588, weight: 1.0 },
+    { number: 85, name: 'البروج', startPage: 589, endPage: 589, weight: 1.0 },
+    { number: 86, name: 'الطارق', startPage: 590, endPage: 590, weight: 1.0 },
+    { number: 87, name: 'الأعلى', startPage: 591, endPage: 591, weight: 1.0 },
+    { number: 88, name: 'الغاشية', startPage: 592, endPage: 592, weight: 1.0 },
+    { number: 89, name: 'الفجر', startPage: 593, endPage: 593, weight: 1.0 },
+    { number: 90, name: 'البلد', startPage: 594, endPage: 594, weight: 1.0 },
+    { number: 91, name: 'الشمس', startPage: 595, endPage: 595, weight: 1.0 },
+    { number: 92, name: 'الليل', startPage: 596, endPage: 596, weight: 1.0 },
+    { number: 93, name: 'الضحى', startPage: 597, endPage: 597, weight: 1.0 },
+    { number: 94, name: 'الشرح', startPage: 598, endPage: 598, weight: 1.0 },
+    { number: 95, name: 'التين', startPage: 599, endPage: 599, weight: 1.0 },
+    { number: 96, name: 'العلق', startPage: 600, endPage: 600, weight: 1.0 },
+    { number: 97, name: 'القدر', startPage: 601, endPage: 601, weight: 1.0 },
+    { number: 98, name: 'البينة', startPage: 602, endPage: 602, weight: 1.0 },
+    { number: 99, name: 'الزلزلة', startPage: 603, endPage: 603, weight: 1.0 },
+    {
+      number: 100,
+      name: 'العاديات',
+      startPage: 604,
+      endPage: 604,
+      weight: 1.0,
+    },
+    { number: 101, name: 'القارعة', startPage: 604, endPage: 604, weight: 0.5 }, // مثال على صفحة جزئية
+    {
+      number: 102,
+      name: 'التكاثر',
+      startPage: 604,
+      endPage: 604,
+      weight: 0.25,
+    }, // مثال على صفحة جزئية
+    { number: 103, name: 'العصر', startPage: 604, endPage: 604, weight: 0.25 }, // مثال على صفحة جزئية
+    { number: 104, name: 'الهمزة', startPage: 604, endPage: 604, weight: 0.25 }, // مثال على صفحة جزئية
+    { number: 105, name: 'الفيل', startPage: 604, endPage: 604, weight: 0.25 }, // مثال على صفحة جزئية
+    { number: 106, name: 'قريش', startPage: 604, endPage: 604, weight: 0.25 }, // مثال على صفحة جزئية
+    {
+      number: 107,
+      name: 'الماعون',
+      startPage: 604,
+      endPage: 604,
+      weight: 0.25,
+    }, // مثال على صفحة جزئية
+    { number: 108, name: 'الكوثر', startPage: 604, endPage: 604, weight: 0.25 }, // مثال على صفحة جزئية
+    {
+      number: 109,
+      name: 'الكافرون',
+      startPage: 604,
+      endPage: 604,
+      weight: 0.25,
+    }, // مثال على صفحة جزئية
+    { number: 110, name: 'النصر', startPage: 604, endPage: 604, weight: 0.25 }, // مثال على صفحة جزئية
+    { number: 111, name: 'المسد', startPage: 604, endPage: 604, weight: 0.25 }, // مثال على صفحة جزئية
+    {
+      number: 112,
+      name: 'الإخلاص',
+      startPage: 604,
+      endPage: 604,
+      weight: 0.25,
+    }, // مثال على صفحة جزئية
+    { number: 113, name: 'الفلق', startPage: 604, endPage: 604, weight: 0.25 }, // مثال على صفحة جزئية
+    { number: 114, name: 'الناس', startPage: 604, endPage: 604, weight: 0.25 }, // مثال على صفحة جزئية
+  ];
+
+  // إنشاء قوالب السور والصفحات
+  for (const surah of surahData) {
+    for (let page = surah.startPage; page <= surah.endPage; page++) {
+      surahTemplates.push({
+        surahNumber: surah.number,
+        surahName: surah.name,
+        pageNumber: page,
+        startLine: page === surah.startPage ? 1 : null,
+        endLine: page === surah.endPage ? 15 : null, // افتراض 15 سطر لكل صفحة
+        weight:
+          page === surah.startPage && page === surah.endPage
+            ? surah.weight
+            : 1.0,
+      });
+    }
+  }
+
+  await prisma.sessionSurahTemplate.createMany({
+    data: surahTemplates,
+  });
+
+  console.log('✅ تم إنشاء قوالب السور والصفحات');
+
   // إنشاء سجلات الحضور
   const attendanceData = [];
   // توليد التواريخ فقط لأيام الأحد والثلاثاء والخميس بين 15 يونيو و16 يوليو 2024
@@ -783,9 +971,9 @@ async function main() {
 
   console.log('✅ تم إنشاء سجلات الحضور');
 
-  // إنشاء جلسات التسميع
-  const savingSessionsData = [];
+  // إنشاء جلسات التسميع مع السور الجديدة
   const evaluations = await prisma.evaluation.findMany();
+  surahTemplates = await prisma.sessionSurahTemplate.findMany();
 
   for (let i = 0; i < students.length; i++) {
     const student = students[i];
@@ -802,56 +990,84 @@ async function main() {
 
     // إنشاء 5 جلسات تسميع لكل طالب
     for (let j = 0; j < 5; j++) {
-      savingSessionsData.push({
-        teacher_id: teacherId,
-        student_id: student.id,
-        campaign_id: campaignId,
-        evaluation_id: evaluation?.id,
-        start: j * 20 + 1, // صفحة البداية
-        end: (j + 1) * 20, // صفحة النهاية
-        rating: Math.floor(Math.random() * 5) + 6, // تقييم من 6 إلى 10
-        duration: Math.floor(Math.random() * 30) + 15, // مدة من 15 إلى 45 دقيقة
-        created_at: new Date(2024, 0, j + 1),
+      const startPage = j * 20 + 1;
+      const endPage = (j + 1) * 20;
+
+      // إنشاء جلسة التسميع
+      const savingSession = await prisma.savingSession.create({
+        data: {
+          teacher_id: teacherId,
+          student_id: student.id,
+          campaign_id: campaignId,
+          evaluation_id: evaluation?.id,
+          start: startPage,
+          end: endPage,
+          rating: Math.floor(Math.random() * 5) + 6, // تقييم من 6 إلى 10
+          duration: Math.floor(Math.random() * 30) + 15, // مدة من 15 إلى 45 دقيقة
+          created_at: new Date(2024, 0, j + 1),
+        },
       });
+
+      // إنشاء سور الجلسة بناءً على الصفحات
+      const sessionTemplates = surahTemplates.filter(
+        (template) =>
+          template.pageNumber >= startPage && template.pageNumber <= endPage,
+      );
+
+      for (const template of sessionTemplates) {
+        const isPassed = Math.random() > 0.3; // 70% نجاح
+        const score = isPassed
+          ? Math.floor(Math.random() * 20) + 80
+          : Math.floor(Math.random() * 30) + 50;
+
+        await prisma.sessionSurah.create({
+          data: {
+            saving_session_id: savingSession.id,
+            template_id: template.id,
+            isPassed: isPassed,
+            score: score,
+            notes: isPassed ? null : 'يحتاج مراجعة',
+          },
+        });
+      }
     }
   }
 
-  await prisma.savingSession.createMany({
-    data: savingSessionsData,
+  console.log('✅ تم إنشاء جلسات التسميع مع السور');
+
+  // إنشاء الأخطاء في السور
+  const createdSessions = await prisma.savingSession.findMany({
+    include: { session_surahs: true },
   });
-
-  console.log('✅ تم إنشاء جلسات التسميع');
-
-  // إنشاء الأخطاء في الجلسات
-  const createdSessions = await prisma.savingSession.findMany();
   const allMistakes = await prisma.mistake.findMany();
 
-  const mistakeInSessionData = [];
   for (const session of createdSessions) {
     const campaignMistakes = allMistakes.filter(
       (m) => m.campaign_id === session.campaign_id,
     );
 
-    // إضافة 1-3 أخطاء عشوائية لكل جلسة
-    const numMistakes = Math.floor(Math.random() * 3) + 1;
-    for (let i = 0; i < numMistakes; i++) {
-      const randomMistake =
-        campaignMistakes[Math.floor(Math.random() * campaignMistakes.length)];
-      mistakeInSessionData.push({
-        saving_session_id: session.id,
-        mistake_id: randomMistake.id,
-        page:
-          Math.floor(Math.random() * (session.end - session.start + 1)) +
-          session.start,
-      });
+    // إضافة أخطاء عشوائية لبعض السور في الجلسة
+    const sessionSurahs = session.session_surahs;
+    const surahsWithMistakes = sessionSurahs.filter(() => Math.random() > 0.7); // 30% من السور تحتوي على أخطاء
+
+    for (const sessionSurah of surahsWithMistakes) {
+      // إضافة 1-2 خطأ لكل سورة
+      const numMistakes = Math.floor(Math.random() * 2) + 1;
+      for (let i = 0; i < numMistakes; i++) {
+        const randomMistake =
+          campaignMistakes[Math.floor(Math.random() * campaignMistakes.length)];
+
+        await prisma.mistakeInSession.create({
+          data: {
+            session_surah_id: sessionSurah.id,
+            mistake_id: randomMistake.id,
+          },
+        });
+      }
     }
   }
 
-  await prisma.mistakeInSession.createMany({
-    data: mistakeInSessionData,
-  });
-
-  console.log('✅ تم إنشاء الأخطاء في الجلسات');
+  console.log('✅ تم إنشاء الأخطاء في السور');
 
   // إنشاء سجلات النشاط
   const logData = [];
@@ -921,14 +1137,15 @@ async function main() {
 - 6 أدوار: 3 أدوار لكل حملة (أدمن، أستاذ، مسمع)
 - 4 أخطاء: خطأان لكل حملة
 - 4 تقييمات: تقييمان لكل حملة
-- ${savingSessionsData.length} جلسة تسميع
-- ${mistakeInSessionData.length} خطأ في الجلسات
+- ${surahTemplates.length} قالب سورة وصفحة
+- ${students.length * 5} جلسة تسميع مع السور
 - ${attendanceData.length} سجل حضور
 - ${logData.length} سجل نشاط
 
 ✅ جميع العلاقات تم ربطها بنجاح
 ✅ جميع الأسماء والبيانات باللغة العربية
 ✅ كلمات المرور مشفرة: 123456
+✅ نظام التقييم الجديد يعمل على مستوى السورة والصفحة
   `);
 }
 

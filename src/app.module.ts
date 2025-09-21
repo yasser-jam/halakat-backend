@@ -46,6 +46,7 @@ import { RoleService } from './role/role.service';
 import { AttendanceController } from './attendance/attendance.controller';
 import { AttendanceService } from './attendance/attendance.service';
 import { AuthModule } from './auth/auth.module';
+import { SessionSurahModule } from './session-surah/session-surah.module';
 // import { AuthController } from './auth/auth.controller';
 // import { AuthService } from './auth/auth.service';
 
@@ -82,6 +83,6 @@ import { AuthModule } from './auth/auth.module';
     MosqueService,
     SavingSessionService,
   ],
-  imports: [AuthModule],
+  imports: [AuthModule, SessionSurahModule],
 })
 export class AppModule {}

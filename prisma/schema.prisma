@@ -1,6 +1,5 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["interactiveTransactions"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -340,22 +339,54 @@ model SavingSession {
   student_id    Int
   campaign_id   Int
   evaluation_id Int?
-  start         Int
-  end           Int
+  start         Int       // start page (for reporting)
+  end           Int       // end page (for reporting)
   rating        Int
   duration      Int
-  created_at    DateTime @default(now())
+  created_at    DateTime  @default(now())
 
-  teacher             Teacher            @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
-  student             Student            @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  campaign            Campaign           @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
-  evaluation          Evaluation?        @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
-  mistakes_in_session MistakeInSession[]
+  teacher        Teacher          @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  student        Student          @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  campaign       Campaign         @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  evaluation     Evaluation?      @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
+  session_surahs SessionSurah[]
 
   @@index([teacher_id])
   @@index([student_id])
   @@index([campaign_id])
   @@index([created_at])
+}
+
+model SessionSurahTemplate {
+  id          Int    @id @default(autoincrement())
+  surahNumber Int
+  surahName   String
+  pageNumber  Int
+  startLine   Int?
+  endLine     Int?
+  weight      Float  // 1.0 full page, <1.0 partial
+
+  session_surahs SessionSurah[]
+
+  @@unique([surahNumber, pageNumber])
+  @@index([surahNumber])
+  @@index([pageNumber])
+}
+
+model SessionSurah {
+  id                Int    @id @default(autoincrement())
+  saving_session_id Int
+  template_id       Int
+  isPassed          Boolean?
+  score             Int?
+  notes             String?
+
+  saving_session SavingSession       @relation(fields: [saving_session_id], references: [id], onDelete: Cascade)
+  template       SessionSurahTemplate @relation(fields: [template_id], references: [id], onDelete: Restrict)
+  mistakes       MistakeInSession[]
+
+  @@index([saving_session_id])
+  @@index([template_id])
 }
 
 model Mistake {
@@ -364,22 +395,21 @@ model Mistake {
   title         String
   reduced_marks Int
 
-  campaign            Campaign           @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
-  mistakes_in_session MistakeInSession[]
+  campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  mistakes MistakeInSession[]
 
   @@index([campaign_id])
 }
 
 model MistakeInSession {
-  id                Int @id @default(autoincrement())
-  saving_session_id Int
-  mistake_id        Int
-  page              Int
+  id               Int @id @default(autoincrement())
+  session_surah_id Int
+  mistake_id       Int
 
-  saving_session SavingSession @relation(fields: [saving_session_id], references: [id], onDelete: Cascade)
-  mistake        Mistake       @relation(fields: [mistake_id], references: [id], onDelete: Restrict)
+  session_surah SessionSurah @relation(fields: [session_surah_id], references: [id], onDelete: Cascade)
+  mistake       Mistake      @relation(fields: [mistake_id], references: [id], onDelete: Restrict)
 
-  @@index([saving_session_id])
+  @@index([session_surah_id])
   @@index([mistake_id])
 }
 

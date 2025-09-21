@@ -16,14 +16,36 @@ export class MistakeInSessionDto {
   @IsInt()
   @IsNotEmpty()
   mistakeId: number;
+}
 
-  @ApiProperty({
-    example: 10,
-    description: 'Page number where mistake occurred',
-  })
+export class SessionSurahDto {
+  @ApiProperty({ example: 1, description: 'Template ID for the surah' })
   @IsInt()
   @IsNotEmpty()
-  pageNumber: number;
+  templateId: number;
+
+  @ApiProperty({ example: true, description: 'Whether the surah was passed' })
+  @IsOptional()
+  isPassed?: boolean;
+
+  @ApiProperty({ example: 85, description: 'Score for the surah' })
+  @IsOptional()
+  @IsInt()
+  score?: number;
+
+  @ApiProperty({ example: 'Good recitation', description: 'Notes about the surah' })
+  @IsOptional()
+  notes?: string;
+
+  @ApiProperty({
+    type: [MistakeInSessionDto],
+    description: 'Mistakes made in this surah',
+  })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => MistakeInSessionDto)
+  mistakes?: MistakeInSessionDto[];
 }
 
 export class CreateSavingSessionDto {
@@ -64,13 +86,13 @@ export class CreateSavingSessionDto {
   duration: number;
 
   @ApiProperty({
-    type: [MistakeInSessionDto],
-    description: 'List of mistakes during session',
+    type: [SessionSurahDto],
+    description: 'List of surahs recited in this session',
   })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => MistakeInSessionDto)
-  mistakes: MistakeInSessionDto[];
+  @Type(() => SessionSurahDto)
+  sessionSurahs: SessionSurahDto[];
 }
 
 export class SavingSessionDto {
@@ -102,10 +124,10 @@ export class SavingSessionDto {
   created_at: Date;
 
   @ApiProperty({
-    description: 'List of mistakes with page info',
-    type: [MistakeInSessionDto],
+    description: 'List of surahs recited in this session',
+    type: [SessionSurahDto],
   })
-  mistakes: MistakeInSessionDto[];
+  sessionSurahs: SessionSurahDto[];
 }
 
 export class FilterSavingSessionDto {

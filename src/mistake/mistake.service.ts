@@ -26,14 +26,14 @@ export class MistakeService {
         campaign_id: Number(campaignId),
       },
       include: {
-        mistakes_in_session: true,
+        mistakes: true,
       },
     });
 
     return mistakes.map((el) => ({
       ...el,
-      mistakes_in_session: undefined,
-      is_related: !!el.mistakes_in_session?.length,
+      mistakes: undefined,
+      is_related: !!el.mistakes?.length,
     }));
   }
 

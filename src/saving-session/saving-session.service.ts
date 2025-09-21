@@ -13,7 +13,7 @@ export class SavingSessionService {
 
   async createSavingSession(dto: CreateSavingSessionDto) {
     const {
-      mistakes,
+      sessionSurahs,
       teacherId,
       studentId,
       campaign_id,
@@ -26,20 +26,28 @@ export class SavingSessionService {
         teacher_id: teacherId,
         student_id: studentId,
         campaign_id: campaign_id,
-        mistakes_in_session: {
-          create: mistakes.map((m) => ({
-            page: m.pageNumber,
-            mistake: {
-              connect: {
-                id: m.mistakeId,
-              },
+        session_surahs: {
+          create: sessionSurahs.map((surah) => ({
+            template_id: surah.templateId,
+            isPassed: surah.isPassed,
+            score: surah.score,
+            notes: surah.notes,
+            mistakes: {
+              create: surah.mistakes?.map((mistake) => ({
+                mistake_id: mistake.mistakeId,
+              })) || [],
             },
           })),
         },
       },
       include: {
-        mistakes_in_session: {
-          include: { mistake: true },
+        session_surahs: {
+          include: {
+            template: true,
+            mistakes: {
+              include: { mistake: true },
+            },
+          },
         },
         evaluation: true,
         student: true,
@@ -52,8 +60,13 @@ export class SavingSessionService {
   async getAll() {
     return this.prisma.savingSession.findMany({
       include: {
-        mistakes_in_session: {
-          include: { mistake: true },
+        session_surahs: {
+          include: {
+            template: true,
+            mistakes: {
+              include: { mistake: true },
+            },
+          },
         },
         student: true,
         teacher: true,
@@ -66,8 +79,13 @@ export class SavingSessionService {
     return this.prisma.savingSession.findUnique({
       where: { id: Number(id) },
       include: {
-        mistakes_in_session: {
-          include: { mistake: true },
+        session_surahs: {
+          include: {
+            template: true,
+            mistakes: {
+              include: { mistake: true },
+            },
+          },
         },
         student: true,
         teacher: true,
@@ -94,9 +112,13 @@ export class SavingSessionService {
         : {}),
       ...(mistakeId
         ? {
-            MistakeInSession: {
+            session_surahs: {
               some: {
-                mistakeId: Number(mistakeId),
+                mistakes: {
+                  some: {
+                    mistake_id: Number(mistakeId),
+                  },
+                },
               },
             },
           }
@@ -106,8 +128,13 @@ export class SavingSessionService {
     const res = await this.prisma.savingSession.findMany({
       where,
       include: {
-        mistakes_in_session: {
-          include: { mistake: true },
+        session_surahs: {
+          include: {
+            template: true,
+            mistakes: {
+              include: { mistake: true },
+            },
+          },
         },
         student: {
           select: {
@@ -140,11 +167,20 @@ export class SavingSessionService {
 
     return res.map((el) => ({
       ...el,
-      MistakeInSession: undefined,
-      mistakes: el.mistakes_in_session?.map((item) => ({
-        id: item.id,
-        page: item.page,
-        title: item.mistake?.title,
+      sessionSurahs: el.session_surahs?.map((surah) => ({
+        id: surah.id,
+        templateId: surah.template_id,
+        isPassed: surah.isPassed,
+        score: surah.score,
+        notes: surah.notes,
+        surahNumber: surah.template.surahNumber,
+        pageNumber: surah.template.pageNumber,
+        weight: surah.template.weight,
+        mistakes: surah.mistakes?.map((mistake) => ({
+          id: mistake.id,
+          title: mistake.mistake?.title,
+          reducedMarks: mistake.mistake?.reduced_marks,
+        })),
       })),
     }));
   }

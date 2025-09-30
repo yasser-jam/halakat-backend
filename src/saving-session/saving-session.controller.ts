@@ -55,6 +55,7 @@ export class SavingSessionController {
   @ApiQuery({ name: 'teacherId', required: false, type: Number })
   @ApiQuery({ name: 'mistakeId', required: false, type: Number })
   @ApiQuery({ name: 'campaignId', required: false, type: Number })
+  @ApiQuery({ name: 'evaluationId', required: false, type: Number })
   @ApiQuery({
     name: 'dateFrom',
     required: false,

@@ -24,6 +24,11 @@ export class SessionSurahDto {
   @IsNotEmpty()
   templateId: number;
 
+  @ApiProperty({ example: 1, description: 'Evaluation ID for the surah' })
+  @IsInt()
+  @IsNotEmpty()
+  evaluationId: number;
+
   @ApiProperty({ example: true, description: 'Whether the surah was passed' })
   @IsOptional()
   isPassed?: boolean;
@@ -33,7 +38,29 @@ export class SessionSurahDto {
   @IsInt()
   score?: number;
 
-  @ApiProperty({ example: 'Good recitation', description: 'Notes about the surah' })
+  @ApiProperty({ example: 90, description: 'Raw score before applying weight' })
+  @IsOptional()
+  @IsInt()
+  rawScore?: number;
+
+  @ApiProperty({
+    example: 90.5,
+    description: 'Weighted score after applying template weight',
+  })
+  @IsOptional()
+  weightedScore?: number;
+
+  @ApiProperty({
+    example: true,
+    description: 'Whether this template was completed',
+  })
+  @IsOptional()
+  isCompleted?: boolean;
+
+  @ApiProperty({
+    example: 'Good recitation',
+    description: 'Notes about the surah',
+  })
   @IsOptional()
   notes?: string;
 
@@ -64,6 +91,11 @@ export class CreateSavingSessionDto {
   @IsNotEmpty()
   campaign_id: number;
 
+  @ApiProperty({ example: 1, description: 'ID of the evaluation (optional)' })
+  @IsOptional()
+  @IsInt()
+  evaluation_id?: number;
+
   @ApiProperty({ example: 1, description: 'Start page number' })
   @IsInt()
   @IsNotEmpty()
@@ -84,6 +116,27 @@ export class CreateSavingSessionDto {
   @IsInt()
   @IsNotEmpty()
   duration: number;
+
+  @ApiProperty({
+    example: 85.5,
+    description: 'Total score from all completed templates',
+  })
+  @IsOptional()
+  totalScore?: number;
+
+  @ApiProperty({
+    example: 100.0,
+    description: 'Maximum possible score for completed templates',
+  })
+  @IsOptional()
+  maxPossibleScore?: number;
+
+  @ApiProperty({
+    example: true,
+    description: 'Whether the overall session passed',
+  })
+  @IsOptional()
+  overallPassed?: boolean;
 
   @ApiProperty({
     type: [SessionSurahDto],
@@ -108,6 +161,9 @@ export class SavingSessionDto {
   @ApiProperty()
   campaignId: number;
 
+  @ApiProperty({ required: false })
+  evaluationId?: number;
+
   @ApiProperty()
   start: number;
 
@@ -119,6 +175,15 @@ export class SavingSessionDto {
 
   @ApiProperty()
   duration: number;
+
+  @ApiProperty({ required: false })
+  totalScore?: number;
+
+  @ApiProperty({ required: false })
+  maxPossibleScore?: number;
+
+  @ApiProperty({ required: false })
+  overallPassed?: boolean;
 
   @ApiProperty()
   created_at: Date;
@@ -146,6 +211,10 @@ export class FilterSavingSessionDto {
   @IsOptional()
   @IsInt()
   campaign_id?: number;
+
+  @IsOptional()
+  @IsInt()
+  evaluationId?: number;
 
   @IsOptional()
   @IsDateString()

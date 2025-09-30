@@ -17,6 +17,10 @@ export class SavingSessionService {
       teacherId,
       studentId,
       campaign_id,
+      evaluation_id,
+      totalScore,
+      maxPossibleScore,
+      overallPassed,
       ...savingSessionData
     } = dto;
 
@@ -26,16 +30,25 @@ export class SavingSessionService {
         teacher_id: teacherId,
         student_id: studentId,
         campaign_id: campaign_id,
+        evaluation_id: evaluation_id,
+        totalScore: totalScore,
+        maxPossibleScore: maxPossibleScore,
+        overallPassed: overallPassed,
         session_surahs: {
           create: sessionSurahs.map((surah) => ({
             template_id: surah.templateId,
+            evaluation_id: surah.evaluationId,
             isPassed: surah.isPassed,
             score: surah.score,
+            rawScore: surah.rawScore,
+            weightedScore: surah.weightedScore,
+            isCompleted: surah.isCompleted ?? false,
             notes: surah.notes,
             mistakes: {
-              create: surah.mistakes?.map((mistake) => ({
-                mistake_id: mistake.mistakeId,
-              })) || [],
+              create:
+                surah.mistakes?.map((mistake) => ({
+                  mistake_id: mistake.mistakeId,
+                })) || [],
             },
           })),
         },
@@ -44,6 +57,7 @@ export class SavingSessionService {
         session_surahs: {
           include: {
             template: true,
+            evaluation: true,
             mistakes: {
               include: { mistake: true },
             },
@@ -63,11 +77,13 @@ export class SavingSessionService {
         session_surahs: {
           include: {
             template: true,
+            evaluation: true,
             mistakes: {
               include: { mistake: true },
             },
           },
         },
+        evaluation: true,
         student: true,
         teacher: true,
         campaign: true,
@@ -82,11 +98,13 @@ export class SavingSessionService {
         session_surahs: {
           include: {
             template: true,
+            evaluation: true,
             mistakes: {
               include: { mistake: true },
             },
           },
         },
+        evaluation: true,
         student: true,
         teacher: true,
         campaign: true,
@@ -95,13 +113,21 @@ export class SavingSessionService {
   }
 
   async filter(dto: FilterSavingSessionDto) {
-    const { studentId, teacherId, mistakeId, campaign_id, dateFrom, dateTo } =
-      dto;
+    const {
+      studentId,
+      teacherId,
+      mistakeId,
+      campaign_id,
+      evaluationId,
+      dateFrom,
+      dateTo,
+    } = dto;
 
     const where: Prisma.SavingSessionWhereInput = {
       ...(studentId ? { student_id: Number(studentId) } : {}),
       ...(teacherId ? { teacher_id: Number(teacherId) } : {}),
       ...(campaign_id ? { campaign_id: Number(campaign_id) } : {}),
+      ...(evaluationId ? { evaluation_id: Number(evaluationId) } : {}),
       ...(dateFrom || dateTo
         ? {
             created_at: {
@@ -131,6 +157,7 @@ export class SavingSessionService {
         session_surahs: {
           include: {
             template: true,
+            evaluation: true,
             mistakes: {
               include: { mistake: true },
             },
@@ -158,8 +185,10 @@ export class SavingSessionService {
         },
         evaluation: {
           select: {
+            id: true,
             title: true,
             points: true,
+            minimum_marks: true,
           },
         },
       },
@@ -170,12 +199,25 @@ export class SavingSessionService {
       sessionSurahs: el.session_surahs?.map((surah) => ({
         id: surah.id,
         templateId: surah.template_id,
+        evaluationId: surah.evaluation_id,
         isPassed: surah.isPassed,
         score: surah.score,
+        rawScore: surah.rawScore,
+        weightedScore: surah.weightedScore,
+        isCompleted: surah.isCompleted,
         notes: surah.notes,
         surahNumber: surah.template.surahNumber,
+        surahName: surah.template.surahName,
         pageNumber: surah.template.pageNumber,
+        startLine: surah.template.startLine,
+        endLine: surah.template.endLine,
         weight: surah.template.weight,
+        evaluation: {
+          id: surah.evaluation.id,
+          title: surah.evaluation.title,
+          points: surah.evaluation.points,
+          minimum_marks: surah.evaluation.minimum_marks,
+        },
         mistakes: surah.mistakes?.map((mistake) => ({
           id: mistake.id,
           title: mistake.mistake?.title,

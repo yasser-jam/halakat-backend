@@ -308,7 +308,7 @@ async function main() {
         mobile_phone_number:
           teacherData.first_name == 'ياسر'
             ? '0986365515'
-            : `05${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`,
+            : `09${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`,
         in_another_mosque: false,
         special_talent: ['تجويد', 'حفظ متقن', 'قراءات', 'تفسير'][
           Math.floor(Math.random() * 4)
@@ -993,6 +993,46 @@ async function main() {
       const startPage = j * 20 + 1;
       const endPage = (j + 1) * 20;
 
+      // إنشاء سور الجلسة بناءً على الصفحات
+      const sessionTemplates = surahTemplates.filter(
+        (template) =>
+          template.pageNumber >= startPage && template.pageNumber <= endPage,
+      );
+
+      // حساب النتائج الإجمالية للجلسة
+      let totalScore = 0;
+      let maxPossibleScore = 0;
+      const sessionSurahsData = [];
+
+      for (const template of sessionTemplates) {
+        const isPassed = Math.random() > 0.3; // 70% نجاح
+        const rawScore = isPassed
+          ? Math.floor(Math.random() * 20) + 80 // 80-100
+          : Math.floor(Math.random() * 30) + 50; // 50-80
+
+        const weightedScore = rawScore * template.weight;
+        const isCompleted = Math.random() > 0.1; // 90% مكتمل
+        if (isCompleted) {
+          totalScore += weightedScore;
+          maxPossibleScore += 100 * template.weight;
+        }
+
+        sessionSurahsData.push({
+          template_id: template.id,
+          evaluation_id: evaluation?.id || evaluations[0].id,
+          isPassed: isPassed,
+          score: rawScore,
+          rawScore: rawScore,
+          weightedScore: weightedScore,
+          isCompleted: isCompleted,
+          notes: isPassed ? null : 'يحتاج مراجعة',
+        });
+      }
+
+      const overallPassed = evaluation
+        ? totalScore >= evaluation.minimum_marks
+        : totalScore >= maxPossibleScore * 0.7; // 70% كحد أدنى افتراضي
+
       // إنشاء جلسة التسميع
       const savingSession = await prisma.savingSession.create({
         data: {
@@ -1004,29 +1044,19 @@ async function main() {
           end: endPage,
           rating: Math.floor(Math.random() * 5) + 6, // تقييم من 6 إلى 10
           duration: Math.floor(Math.random() * 30) + 15, // مدة من 15 إلى 45 دقيقة
+          totalScore: totalScore,
+          maxPossibleScore: maxPossibleScore,
+          overallPassed: overallPassed,
           created_at: new Date(2024, 0, j + 1),
         },
       });
 
-      // إنشاء سور الجلسة بناءً على الصفحات
-      const sessionTemplates = surahTemplates.filter(
-        (template) =>
-          template.pageNumber >= startPage && template.pageNumber <= endPage,
-      );
-
-      for (const template of sessionTemplates) {
-        const isPassed = Math.random() > 0.3; // 70% نجاح
-        const score = isPassed
-          ? Math.floor(Math.random() * 20) + 80
-          : Math.floor(Math.random() * 30) + 50;
-
+      // إنشاء سور الجلسة
+      for (const surahData of sessionSurahsData) {
         await prisma.sessionSurah.create({
           data: {
             saving_session_id: savingSession.id,
-            template_id: template.id,
-            isPassed: isPassed,
-            score: score,
-            notes: isPassed ? null : 'يحتاج مراجعة',
+            ...surahData,
           },
         });
       }
@@ -1035,9 +1065,16 @@ async function main() {
 
   console.log('✅ تم إنشاء جلسات التسميع مع السور');
 
-  // إنشاء الأخطاء في السور
+  // إنشاء الأخطاء في السور وإعادة حساب النتائج
   const createdSessions = await prisma.savingSession.findMany({
-    include: { session_surahs: true },
+    include: {
+      session_surahs: {
+        include: {
+          template: true,
+        },
+      },
+      evaluation: true,
+    },
   });
   const allMistakes = await prisma.mistake.findMany();
 
@@ -1050,21 +1087,67 @@ async function main() {
     const sessionSurahs = session.session_surahs;
     const surahsWithMistakes = sessionSurahs.filter(() => Math.random() > 0.7); // 30% من السور تحتوي على أخطاء
 
-    for (const sessionSurah of surahsWithMistakes) {
-      // إضافة 1-2 خطأ لكل سورة
-      const numMistakes = Math.floor(Math.random() * 2) + 1;
-      for (let i = 0; i < numMistakes; i++) {
-        const randomMistake =
-          campaignMistakes[Math.floor(Math.random() * campaignMistakes.length)];
+    let sessionTotalScore = 0;
+    let sessionMaxPossibleScore = 0;
 
-        await prisma.mistakeInSession.create({
-          data: {
-            session_surah_id: sessionSurah.id,
-            mistake_id: randomMistake.id,
-          },
-        });
+    for (const sessionSurah of sessionSurahs) {
+      let totalReducedMarks = 0;
+
+      // إضافة أخطاء إذا كانت هذه السورة مختارة للأخطاء
+      if (surahsWithMistakes.includes(sessionSurah)) {
+        const numMistakes = Math.floor(Math.random() * 2) + 1;
+        for (let i = 0; i < numMistakes; i++) {
+          const randomMistake =
+            campaignMistakes[
+              Math.floor(Math.random() * campaignMistakes.length)
+            ];
+
+          await prisma.mistakeInSession.create({
+            data: {
+              session_surah_id: sessionSurah.id,
+              mistake_id: randomMistake.id,
+            },
+          });
+
+          totalReducedMarks += randomMistake.reduced_marks;
+        }
+      }
+
+      // حساب النتيجة الخام بعد خصم الأخطاء
+      const originalScore = sessionSurah.score || 100;
+      const newRawScore = Math.max(0, originalScore - totalReducedMarks);
+      const newWeightedScore = newRawScore * sessionSurah.template.weight;
+
+      // تحديث SessionSurah بالنتائج الجديدة
+      await prisma.sessionSurah.update({
+        where: { id: sessionSurah.id },
+        data: {
+          rawScore: newRawScore,
+          weightedScore: newWeightedScore,
+          isPassed: newRawScore >= (session.evaluation?.minimum_marks || 70),
+        },
+      });
+
+      // إضافة للمجموع إذا كانت مكتملة
+      if (sessionSurah.isCompleted) {
+        sessionTotalScore += newWeightedScore;
+        sessionMaxPossibleScore += 100 * sessionSurah.template.weight;
       }
     }
+
+    // تحديث SavingSession بالنتائج الإجمالية الجديدة
+    const overallPassed = session.evaluation
+      ? sessionTotalScore >= session.evaluation.minimum_marks
+      : sessionTotalScore >= sessionMaxPossibleScore * 0.7;
+
+    await prisma.savingSession.update({
+      where: { id: session.id },
+      data: {
+        totalScore: sessionTotalScore,
+        maxPossibleScore: sessionMaxPossibleScore,
+        overallPassed: overallPassed,
+      },
+    });
   }
 
   console.log('✅ تم إنشاء الأخطاء في السور');
@@ -1146,6 +1229,10 @@ async function main() {
 ✅ جميع الأسماء والبيانات باللغة العربية
 ✅ كلمات المرور مشفرة: 123456
 ✅ نظام التقييم الجديد يعمل على مستوى السورة والصفحة
+✅ حساب النتائج الموزونة بناءً على أوزان السور والصفحات
+✅ حساب النتائج الخام بعد خصم نقاط الأخطاء
+✅ تتبع حالة الإكمال لكل سورة في الجلسة
+✅ حساب النجاح الإجمالي للجلسة بناءً على التقييم المحدد
   `);
 }
 

@@ -9,3 +9,6 @@ import { PrismaService } from '../prisma.service';
   exports: [SessionSurahService],
 })
 export class SessionSurahModule {}
+
+
+

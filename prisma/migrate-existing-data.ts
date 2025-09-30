@@ -30,6 +30,7 @@ async function migrateExistingData() {
         for (let page = surah.startPage; page <= surah.endPage; page++) {
           surahTemplates.push({
             surahNumber: surah.number,
+            surahName: surah.name,
             pageNumber: page,
             startLine: page === surah.startPage ? 1 : null,
             endLine: page === surah.endPage ? 15 : null,
@@ -44,7 +45,55 @@ async function migrateExistingData() {
       console.log('✅ تم إنشاء قوالب السور والصفحات');
     }
 
-    // 2. ترحيل جلسات التسميع الموجودة
+    // 2. إنشاء تقييم افتراضي إذا لم يكن موجود
+    console.log('🔄 إنشاء تقييم افتراضي...');
+    
+    let defaultEvaluation = await prisma.evaluation.findFirst();
+    if (!defaultEvaluation) {
+      // نحتاج إلى campaign_id، لذا سنجد أول حملة أو ننشئ واحدة
+      let defaultCampaign = await prisma.campaign.findFirst();
+      if (!defaultCampaign) {
+        // إنشاء مسجد افتراضي إذا لم يكن موجود
+        let defaultMosque = await prisma.mosque.findFirst();
+        if (!defaultMosque) {
+          // إنشاء منظمة افتراضية إذا لم تكن موجودة
+          let defaultOrg = await prisma.organization.findFirst();
+          if (!defaultOrg) {
+            defaultOrg = await prisma.organization.create({
+              data: {
+                name: 'منظمة افتراضية للترحيل',
+                description: 'منظمة مؤقتة لترحيل البيانات'
+              }
+            });
+          }
+          
+          defaultMosque = await prisma.mosque.create({
+            data: {
+              organization_id: defaultOrg.id,
+              name: 'مسجد افتراضي للترحيل'
+            }
+          });
+        }
+        
+        defaultCampaign = await prisma.campaign.create({
+          data: {
+            mosque_id: defaultMosque.id,
+            name: 'حملة افتراضية للترحيل'
+          }
+        });
+      }
+      
+      defaultEvaluation = await prisma.evaluation.create({
+        data: {
+          title: 'تقييم افتراضي للترحيل',
+          points: 100,
+          minimum_marks: 70,
+          campaign_id: defaultCampaign.id
+        }
+      });
+    }
+
+    // 3. ترحيل جلسات التسميع الموجودة
     console.log('🔄 ترحيل جلسات التسميع الموجودة...');
     
     const existingSessions = await prisma.savingSession.findMany({
@@ -79,6 +128,7 @@ async function migrateExistingData() {
           data: {
             saving_session_id: session.id,
             template_id: template.id,
+            evaluation_id: defaultEvaluation.id,
             isPassed: isPassed,
             score: score,
             notes: isPassed ? null : 'يحتاج مراجعة',
@@ -93,7 +143,7 @@ async function migrateExistingData() {
 
     console.log('✅ تم ترحيل جميع جلسات التسميع');
 
-    // 3. حذف البيانات القديمة (اختياري - يمكن تعليق هذا الجزء للاحتفاظ بالبيانات القديمة)
+    // 4. حذف البيانات القديمة (اختياري - يمكن تعليق هذا الجزء للاحتفاظ بالبيانات القديمة)
     console.log('🗑️ حذف البيانات القديمة...');
     
     // حذف الأخطاء القديمة المرتبطة بالجلسات

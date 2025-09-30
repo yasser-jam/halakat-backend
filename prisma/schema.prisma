@@ -327,8 +327,9 @@ model Evaluation {
   minimum_marks Int
   campaign_id   Int
 
-  campaign Campaign        @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
-  sessions SavingSession[]
+  campaign        Campaign        @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  sessions        SavingSession[]
+  session_surahs  SessionSurah[]
 
   @@index([campaign_id])
 }
@@ -343,6 +344,9 @@ model SavingSession {
   end           Int       // end page (for reporting)
   rating        Int
   duration      Int
+  totalScore       Float?   // Sum of weighted scores from completed templates
+  maxPossibleScore Float?   // Sum of weights * 100 for completed templates only
+  overallPassed    Boolean? // totalScore >= evaluation.minimum_marks
   created_at    DateTime  @default(now())
 
   teacher        Teacher          @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
@@ -377,16 +381,23 @@ model SessionSurah {
   id                Int    @id @default(autoincrement())
   saving_session_id Int
   template_id       Int
+  evaluation_id     Int
   isPassed          Boolean?
   score             Int?
   notes             String?
 
+  rawScore      Int?     // 100 - Σ(mistake.reduced_marks), min 0
+  weightedScore Float?   // rawScore * template.weight
+  isCompleted   Boolean  @default(false) // Track if template was finished
+
   saving_session SavingSession       @relation(fields: [saving_session_id], references: [id], onDelete: Cascade)
   template       SessionSurahTemplate @relation(fields: [template_id], references: [id], onDelete: Restrict)
+  evaluation     Evaluation          @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
   mistakes       MistakeInSession[]
 
   @@index([saving_session_id])
   @@index([template_id])
+  @@index([evaluation_id])
 }
 
 model Mistake {

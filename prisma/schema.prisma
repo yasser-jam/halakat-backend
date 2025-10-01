@@ -21,8 +21,10 @@ model Organization {
   metadata      Json?
 
   // Relations
-  mosques Mosque[]
-  users   OrganizationUser[]
+  mosques    Mosque[]
+  users      OrganizationUser[]
+  Curriculum Curriculum[]
+  Category   Category[]
 
   @@index([name])
 }
@@ -158,11 +160,12 @@ model Teacher {
   updated_at                         DateTime? @updatedAt
 
   // Relations - all through campaigns
-  campaign_assignments TeacherCampaign[]
-  groups               TeacherGroup[]
-  saving_sessions      SavingSession[]
-  teacher_roles        TeacherRole[]
-  logs                 Log[]
+  campaign_assignments    TeacherCampaign[]
+  groups                  TeacherGroup[]
+  saving_sessions         SavingSession[]
+  teacher_roles           TeacherRole[]
+  logs                    Log[]
+  CurriculumLessonSession CurriculumLessonSession[]
 
   @@index([mobile_phone_number])
   @@index([first_name, last_name])
@@ -179,11 +182,13 @@ model Group {
   updated_at         DateTime @updatedAt
 
   // Relations
-  students      StudentGroup[]
-  teachers      TeacherGroup[]
-  campaigns     GroupCampaigns[]
-  attendance    Attendance[]
-  teacher_roles TeacherRole[]
+  students                StudentGroup[]
+  teachers                TeacherGroup[]
+  campaigns               GroupCampaigns[]
+  attendance              Attendance[]
+  teacher_roles           TeacherRole[]
+  CurriculumLessonSession CurriculumLessonSession[]
+  GroupCurriculum         GroupCurriculum[]
 
   @@index([mosque_id])
 }
@@ -211,18 +216,21 @@ model Campaign {
   metadata                Json?
 
   // Relations
-  mosque              Mosque            @relation(fields: [mosque_id], references: [id], onDelete: Cascade)
-  groups              GroupCampaigns[]
-  student_enrollments StudentCampaign[]
-  teacher_assignments TeacherCampaign[]
-  student_groups      StudentGroup[]
-  attendance          Attendance[]
-  saving_sessions     SavingSession[]
-  mistakes            Mistake[]
-  evaluations         Evaluation[]
-  teacher_roles       TeacherRole[]
-  TeacherGroup        TeacherGroup[]
-  AppRole             AppRole[]
+  mosque                  Mosque                    @relation(fields: [mosque_id], references: [id], onDelete: Cascade)
+  groups                  GroupCampaigns[]
+  student_enrollments     StudentCampaign[]
+  teacher_assignments     TeacherCampaign[]
+  student_groups          StudentGroup[]
+  attendance              Attendance[]
+  saving_sessions         SavingSession[]
+  mistakes                Mistake[]
+  evaluations             Evaluation[]
+  teacher_roles           TeacherRole[]
+  TeacherGroup            TeacherGroup[]
+  AppRole                 AppRole[]
+  CurriculumTemplate      CurriculumTemplate[]
+  CurriculumLessonSession CurriculumLessonSession[]
+  GroupCurriculum         GroupCurriculum[]
 
   @@index([mosque_id])
   @@index([status])
@@ -327,32 +335,32 @@ model Evaluation {
   minimum_marks Int
   campaign_id   Int
 
-  campaign        Campaign        @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
-  sessions        SavingSession[]
-  session_surahs  SessionSurah[]
+  campaign       Campaign        @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  sessions       SavingSession[]
+  session_surahs SessionSurah[]
 
   @@index([campaign_id])
 }
 
 model SavingSession {
-  id            Int      @id @default(autoincrement())
-  teacher_id    Int
-  student_id    Int
-  campaign_id   Int
-  evaluation_id Int?
-  start         Int       // start page (for reporting)
-  end           Int       // end page (for reporting)
-  rating        Int
-  duration      Int
-  totalScore       Float?   // Sum of weighted scores from completed templates
-  maxPossibleScore Float?   // Sum of weights * 100 for completed templates only
+  id               Int      @id @default(autoincrement())
+  teacher_id       Int
+  student_id       Int
+  campaign_id      Int
+  evaluation_id    Int?
+  start            Int // start page (for reporting)
+  end              Int // end page (for reporting)
+  rating           Int
+  duration         Int
+  totalScore       Float? // Sum of weighted scores from completed templates
+  maxPossibleScore Float? // Sum of weights * 100 for completed templates only
   overallPassed    Boolean? // totalScore >= evaluation.minimum_marks
-  created_at    DateTime  @default(now())
+  created_at       DateTime @default(now())
 
-  teacher        Teacher          @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
-  student        Student          @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  campaign       Campaign         @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
-  evaluation     Evaluation?      @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
+  teacher        Teacher        @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  student        Student        @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  campaign       Campaign       @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  evaluation     Evaluation?    @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
   session_surahs SessionSurah[]
 
   @@index([teacher_id])
@@ -368,7 +376,7 @@ model SessionSurahTemplate {
   pageNumber  Int
   startLine   Int?
   endLine     Int?
-  weight      Float  // 1.0 full page, <1.0 partial
+  weight      Float // 1.0 full page, <1.0 partial
 
   session_surahs SessionSurah[]
 
@@ -378,7 +386,7 @@ model SessionSurahTemplate {
 }
 
 model SessionSurah {
-  id                Int    @id @default(autoincrement())
+  id                Int      @id @default(autoincrement())
   saving_session_id Int
   template_id       Int
   evaluation_id     Int
@@ -386,13 +394,13 @@ model SessionSurah {
   score             Int?
   notes             String?
 
-  rawScore      Int?     // 100 - Σ(mistake.reduced_marks), min 0
-  weightedScore Float?   // rawScore * template.weight
-  isCompleted   Boolean  @default(false) // Track if template was finished
+  rawScore      Int? // 100 - Σ(mistake.reduced_marks), min 0
+  weightedScore Float? // rawScore * template.weight
+  isCompleted   Boolean @default(false) // Track if template was finished
 
-  saving_session SavingSession       @relation(fields: [saving_session_id], references: [id], onDelete: Cascade)
+  saving_session SavingSession        @relation(fields: [saving_session_id], references: [id], onDelete: Cascade)
   template       SessionSurahTemplate @relation(fields: [template_id], references: [id], onDelete: Restrict)
-  evaluation     Evaluation          @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
+  evaluation     Evaluation           @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
   mistakes       MistakeInSession[]
 
   @@index([saving_session_id])
@@ -406,7 +414,7 @@ model Mistake {
   title         String
   reduced_marks Int
 
-  campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  campaign Campaign           @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
   mistakes MistakeInSession[]
 
   @@index([campaign_id])
@@ -472,6 +480,148 @@ model Log {
   @@index([timestamp])
 }
 
+// ============================================
+// CURRICULUM (Base Definition - Campaign Independent)
+// ============================================
+
+model Curriculum {
+  id              Int      @id @default(autoincrement())
+  organization_id Int? // NULL = global, otherwise org-specific
+  name            String
+  description     String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  organization Organization?        @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  categories   CurriculumCategory[]
+  templates    CurriculumTemplate[] // Different implementations per campaign
+
+  @@index([organization_id])
+}
+
+model Category {
+  id              Int      @id @default(autoincrement())
+  organization_id Int? // NULL = global category
+  name            String
+  description     String?
+  color           String?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  organization Organization?        @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  curricula    CurriculumCategory[]
+
+  @@index([organization_id])
+}
+
+model CurriculumCategory {
+  curriculum_id Int
+  category_id   Int
+
+  curriculum Curriculum @relation(fields: [curriculum_id], references: [id], onDelete: Cascade)
+  category   Category   @relation(fields: [category_id], references: [id], onDelete: Cascade)
+
+  @@id([curriculum_id, category_id])
+}
+
+// ============================================
+// CURRICULUM TEMPLATE (Campaign-Specific Implementation)
+// ============================================
+
+model CurriculumTemplate {
+  id            Int      @id @default(autoincrement())
+  curriculum_id Int // Which curriculum this implements
+  campaign_id   Int // Which campaign this is for
+  name          String? // Optional override of curriculum name
+  notes         String? // Campaign-specific notes
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  curriculum      Curriculum               @relation(fields: [curriculum_id], references: [id], onDelete: Cascade)
+  campaign        Campaign                 @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  nodes           CurriculumTemplateNode[]
+  group_curricula GroupCurriculum[]
+
+  @@unique([curriculum_id, campaign_id]) // One implementation per curriculum per campaign
+  @@index([campaign_id])
+}
+
+// Template structure with hierarchy and time estimates
+model CurriculumTemplateNode {
+  id                         Int      @id @default(autoincrement())
+  template_id                Int
+  parent_id                  Int?
+  name                       String
+  description                String?
+  node_type                  String?
+  order_index                Int
+  estimated_lessons_count    Int?
+  estimated_duration_minutes Int?
+  
+  // NEW: Lesson span and status tracking
+  lesson_span                Int?     // How many lessons allocated for this node
+  status                     NodeStatus @default(PLANNED)
+  
+  created_at                 DateTime @default(now())
+  updated_at                 DateTime @updatedAt
+  
+  template         CurriculumTemplate      @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  parent           CurriculumTemplateNode? @relation("NodeHierarchy", fields: [parent_id], references: [id], onDelete: Cascade)
+  children         CurriculumTemplateNode[] @relation("NodeHierarchy")
+  lesson_sessions  CurriculumLessonSession[]
+  
+  @@index([template_id, parent_id])
+  @@index([status])
+}
+// ============================================
+// LESSON DELIVERY & TRACKING
+// ============================================
+
+model CurriculumLessonSession {
+  id                      Int       @id @default(autoincrement())
+  node_id                 Int
+  group_id                Int
+  teacher_id              Int
+  campaign_id             Int
+  session_number          Int       // NEW: Which lesson number in the span (1, 2, 3...)
+  date                    DateTime?
+  is_finished             Boolean   @default(false)
+  duration_minutes        Int?
+  notes                   String?
+  created_at              DateTime  @default(now())
+  updated_at              DateTime  @updatedAt
+  
+  lesson_node CurriculumTemplateNode @relation(fields: [node_id], references: [id], onDelete: Cascade)
+  group       Group                  @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  teacher     Teacher                @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  campaign    Campaign               @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  
+  @@unique([node_id, group_id, session_number]) // Prevent duplicate session numbers
+  @@index([node_id, group_id])
+  @@index([teacher_id, campaign_id])
+  @@index([date])
+}
+
+// Link curriculum templates to groups
+model GroupCurriculum {
+  id              Int       @id @default(autoincrement())
+  group_id        Int
+  template_id     Int // Links to CurriculumTemplate
+  campaign_id     Int
+  assigned_date   DateTime  @default(now())
+  target_end_date DateTime?
+  is_active       Boolean   @default(true)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  group    Group              @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  template CurriculumTemplate @relation(fields: [template_id], references: [id], onDelete: Cascade)
+  campaign Campaign           @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+
+  @@unique([group_id, template_id, campaign_id])
+  @@index([campaign_id])
+}
+
 // Enums
 enum STATUS {
   ALIVE
@@ -522,4 +672,13 @@ enum LogEvent {
   EVALUATION_ASSERTED
   ROLE_ASSIGNED
   CAMPAIGN_CREATED
+}
+
+enum NodeStatus {
+  PLANNED       // Not started yet
+  IN_PROGRESS   // Started but not completed
+  COMPLETED     // Finished within span
+  LATE          // Exceeded lesson_span without completion
+  SKIPPED       // Intentionally skipped
+  CANCELLED     // Cancelled/removed from plan
 }

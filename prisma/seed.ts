@@ -734,6 +734,723 @@ async function main() {
 
   console.log('✅ تم إنشاء التقييمات');
 
+  // Add this after creating the evaluations and before creating SessionSurahTemplate
+
+  console.log('بدء إنشاء المناهج...');
+
+  // إنشاء الفئات
+  const fiqhCategory = await prisma.category.create({
+    data: {
+      organization_id: organization.id,
+      name: 'الفقه الإسلامي',
+      description: 'دراسة أحكام الشريعة الإسلامية',
+      color: '#4CAF50',
+    },
+  });
+
+  const usulCategory = await prisma.category.create({
+    data: {
+      organization_id: organization.id,
+      name: 'أصول الفقه',
+      description: 'القواعد والأصول التي يُبنى عليها الفقه',
+      color: '#2196F3',
+    },
+  });
+
+  console.log('✅ تم إنشاء الفئات');
+
+  // إنشاء المنهج الأساسي
+  const fiqhCurriculum = await prisma.curriculum.create({
+    data: {
+      organization_id: organization.id,
+      name: 'كتاب الفقه المنهجي',
+      description: 'منهج شامل لدراسة الفقه الإسلامي على المذاهب الأربعة',
+    },
+  });
+
+  // ربط المنهج بالفئات
+  await prisma.curriculumCategory.createMany({
+    data: [
+      { curriculum_id: fiqhCurriculum.id, category_id: fiqhCategory.id },
+      { curriculum_id: fiqhCurriculum.id, category_id: usulCategory.id },
+    ],
+  });
+
+  console.log('✅ تم إنشاء المنهج الأساسي');
+
+  // إنشاء قالب المنهج للحملة الأولى
+  const fiqhTemplate = await prisma.curriculumTemplate.create({
+    data: {
+      curriculum_id: fiqhCurriculum.id,
+      campaign_id: campaign1.id,
+      name: 'كتاب الفقه المنهجي - الفصل الأول',
+      notes: 'تطبيق المنهج على حملة الفصل الأول',
+    },
+  });
+
+  console.log('✅ تم إنشاء قالب المنهج');
+
+  // بناء هيكل المنهج بالعقد (Nodes)
+
+  // الجزء الأول
+  const part1 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: null,
+      name: 'الجزء الأول',
+      description: 'مقدمة في الفقه الإسلامي ومصادره',
+      node_type: 'جزء',
+      order_index: 1,
+      estimated_lessons_count: 8,
+      estimated_duration_minutes: 360, // 8 دروس × 45 دقيقة
+      lesson_span: 8,
+      status: 'PLANNED',
+    },
+  });
+
+  // الباب الأول - مصادر الفقه الإسلامي
+  const chapter1 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: part1.id,
+      name: 'الباب الأول: مصادر الفقه الإسلامي',
+      description: 'دراسة المصادر الأساسية والتبعية للفقه الإسلامي',
+      node_type: 'باب',
+      order_index: 1,
+      estimated_lessons_count: 8,
+      estimated_duration_minutes: 360,
+      lesson_span: 8,
+      status: 'PLANNED',
+    },
+  });
+
+  // الدروس الأربعة للباب الأول
+  const lesson1_1 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter1.id,
+      name: 'الدرس الأول: القرآن الكريم كمصدر للتشريع',
+      description: 'دراسة مكانة القرآن في التشريع وطرق الاستدلال به',
+      node_type: 'درس',
+      order_index: 1,
+      estimated_duration_minutes: 90, // درسين × 45 دقيقة
+      lesson_span: 2,
+      status: 'PLANNED',
+    },
+  });
+
+  const lesson1_2 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter1.id,
+      name: 'الدرس الثاني: السنة النبوية ومكانتها في التشريع',
+      description: 'أنواع السنة وحجيتها وطرق التعامل معها',
+      node_type: 'درس',
+      order_index: 2,
+      estimated_duration_minutes: 90,
+      lesson_span: 2,
+      status: 'PLANNED',
+    },
+  });
+
+  const lesson1_3 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter1.id,
+      name: 'الدرس الثالث: الإجماع والقياس',
+      description: 'دراسة الإجماع كمصدر والقياس وشروطه',
+      node_type: 'درس',
+      order_index: 3,
+      estimated_duration_minutes: 90,
+      lesson_span: 2,
+      status: 'PLANNED',
+    },
+  });
+
+  const lesson1_4 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter1.id,
+      name: 'الدرس الرابع: المصادر التبعية للفقه',
+      description: 'الاستحسان، المصالح المرسلة، العرف، وسد الذرائع',
+      node_type: 'درس',
+      order_index: 4,
+      estimated_duration_minutes: 90,
+      lesson_span: 2,
+      status: 'PLANNED',
+    },
+  });
+
+  // الباب الثاني - أحكام الطهارة
+  const chapter2 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: part1.id,
+      name: 'الباب الثاني: أحكام الطهارة',
+      description: 'دراسة أنواع الطهارة وأحكامها',
+      node_type: 'باب',
+      order_index: 2,
+      estimated_lessons_count: 6,
+      estimated_duration_minutes: 270,
+      lesson_span: 6,
+      status: 'PLANNED',
+    },
+  });
+
+  // فصول الباب الثاني
+  const section2_1 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter2.id,
+      name: 'الفصل الأول: الوضوء',
+      description: 'أحكام الوضوء وفروضه وسننه',
+      node_type: 'فصل',
+      order_index: 1,
+      estimated_lessons_count: 2,
+      estimated_duration_minutes: 90,
+      lesson_span: 2,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: section2_1.id,
+      name: 'درس: فروض الوضوء وسننه',
+      description: 'دراسة تفصيلية لأركان الوضوء وسننه',
+      node_type: 'درس',
+      order_index: 1,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: section2_1.id,
+      name: 'درس: نواقض الوضوء',
+      description: 'ما ينقض الوضوء وأدلته',
+      node_type: 'درس',
+      order_index: 2,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  const section2_2 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter2.id,
+      name: 'الفصل الثاني: الغسل',
+      description: 'موجبات الغسل وكيفيته',
+      node_type: 'فصل',
+      order_index: 2,
+      estimated_lessons_count: 2,
+      estimated_duration_minutes: 90,
+      lesson_span: 2,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: section2_2.id,
+      name: 'درس: موجبات الغسل',
+      description: 'الأسباب الموجبة للغسل',
+      node_type: 'درس',
+      order_index: 1,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: section2_2.id,
+      name: 'درس: صفة الغسل الكامل',
+      description: 'كيفية الغسل الصحيح',
+      node_type: 'درس',
+      order_index: 2,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  const section2_3 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter2.id,
+      name: 'الفصل الثالث: التيمم',
+      description: 'أحكام التيمم والمسح على الخفين',
+      node_type: 'فصل',
+      order_index: 3,
+      estimated_lessons_count: 2,
+      estimated_duration_minutes: 90,
+      lesson_span: 2,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: section2_3.id,
+      name: 'درس: أحكام التيمم',
+      description: 'شروط التيمم وكيفيته',
+      node_type: 'درس',
+      order_index: 1,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: section2_3.id,
+      name: 'درس: المسح على الخفين والجوربين',
+      description: 'أحكام المسح ومدته',
+      node_type: 'درس',
+      order_index: 2,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  // الجزء الثاني
+  const part2 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: null,
+      name: 'الجزء الثاني',
+      description: 'أحكام الصلاة والزكاة',
+      node_type: 'جزء',
+      order_index: 2,
+      estimated_lessons_count: 12,
+      estimated_duration_minutes: 540,
+      lesson_span: 12,
+      status: 'PLANNED',
+    },
+  });
+
+  // الباب الأول - الصلاة
+  const chapter3 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: part2.id,
+      name: 'الباب الأول: الصلاة',
+      description: 'أحكام الصلاة وشروطها وأركانها',
+      node_type: 'باب',
+      order_index: 1,
+      estimated_lessons_count: 8,
+      estimated_duration_minutes: 360,
+      lesson_span: 8,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter3.id,
+      name: 'الدرس الأول: شروط الصلاة',
+      description: 'الشروط الواجبة لصحة الصلاة',
+      node_type: 'درس',
+      order_index: 1,
+      estimated_duration_minutes: 90,
+      lesson_span: 2,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter3.id,
+      name: 'الدرس الثاني: أركان الصلاة',
+      description: 'الأركان الأربعة عشر للصلاة',
+      node_type: 'درس',
+      order_index: 2,
+      estimated_duration_minutes: 90,
+      lesson_span: 2,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter3.id,
+      name: 'الدرس الثالث: واجبات الصلاة',
+      description: 'الواجبات الثمانية في الصلاة',
+      node_type: 'درس',
+      order_index: 3,
+      estimated_duration_minutes: 90,
+      lesson_span: 2,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter3.id,
+      name: 'الدرس الرابع: سنن الصلاة ومكروهاتها',
+      description: 'السنن والمكروهات في الصلاة',
+      node_type: 'درس',
+      order_index: 4,
+      estimated_duration_minutes: 90,
+      lesson_span: 2,
+      status: 'PLANNED',
+    },
+  });
+
+  // الباب الثاني - الزكاة
+  const chapter4 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: part2.id,
+      name: 'الباب الثاني: الزكاة',
+      description: 'أحكام الزكاة ومصارفها',
+      node_type: 'باب',
+      order_index: 2,
+      estimated_lessons_count: 4,
+      estimated_duration_minutes: 180,
+      lesson_span: 4,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter4.id,
+      name: 'الدرس الأول: شروط الزكاة ونصابها',
+      description: 'الشروط الواجبة للزكاة والنصاب المقرر',
+      node_type: 'درس',
+      order_index: 1,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter4.id,
+      name: 'الدرس الثاني: زكاة الذهب والفضة والنقود',
+      description: 'كيفية حساب زكاة الأموال النقدية',
+      node_type: 'درس',
+      order_index: 2,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter4.id,
+      name: 'الدرس الثالث: زكاة الزروع والثمار',
+      description: 'أحكام زكاة المحاصيل الزراعية',
+      node_type: 'درس',
+      order_index: 3,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter4.id,
+      name: 'الدرس الرابع: مصارف الزكاة',
+      description: 'الأصناف الثمانية المستحقة للزكاة',
+      node_type: 'درس',
+      order_index: 4,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  // الجزء الثالث
+  const part3 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: null,
+      name: 'الجزء الثالث',
+      description: 'أحكام الصيام والحج',
+      node_type: 'جزء',
+      order_index: 3,
+      estimated_lessons_count: 10,
+      estimated_duration_minutes: 450,
+      lesson_span: 10,
+      status: 'PLANNED',
+    },
+  });
+
+  // الباب الأول - الصيام
+  const chapter5 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: part3.id,
+      name: 'الباب الأول: الصيام',
+      description: 'أحكام الصيام ومفطراته',
+      node_type: 'باب',
+      order_index: 1,
+      estimated_lessons_count: 5,
+      estimated_duration_minutes: 225,
+      lesson_span: 5,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter5.id,
+      name: 'الدرس الأول: فضل الصيام وشروطه',
+      description: 'فضائل الصيام والشروط الواجبة',
+      node_type: 'درس',
+      order_index: 1,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter5.id,
+      name: 'الدرس الثاني: مفطرات الصيام',
+      description: 'ما يفطر الصائم وما لا يفطره',
+      node_type: 'درس',
+      order_index: 2,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter5.id,
+      name: 'الدرس الثالث: أحكام القضاء والكفارة',
+      description: 'متى يجب القضاء ومتى تجب الكفارة',
+      node_type: 'درس',
+      order_index: 3,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter5.id,
+      name: 'الدرس الرابع: صيام التطوع',
+      description: 'الأيام المستحبة للصيام',
+      node_type: 'درس',
+      order_index: 4,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter5.id,
+      name: 'الدرس الخامس: الاعتكاف وليلة القدر',
+      description: 'أحكام الاعتكاف وفضل ليلة القدر',
+      node_type: 'درس',
+      order_index: 5,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  // الباب الثاني - الحج والعمرة
+  const chapter6 = await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: part3.id,
+      name: 'الباب الثاني: الحج والعمرة',
+      description: 'مناسك الحج والعمرة وأحكامها',
+      node_type: 'باب',
+      order_index: 2,
+      estimated_lessons_count: 5,
+      estimated_duration_minutes: 225,
+      lesson_span: 5,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter6.id,
+      name: 'الدرس الأول: فضل الحج وشروط وجوبه',
+      description: 'مكانة الحج في الإسلام وشروطه',
+      node_type: 'درس',
+      order_index: 1,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter6.id,
+      name: 'الدرس الثاني: أركان الحج وواجباته',
+      description: 'الأركان الأربعة والواجبات',
+      node_type: 'درس',
+      order_index: 2,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter6.id,
+      name: 'الدرس الثالث: صفة الحج والعمرة',
+      description: 'كيفية أداء مناسك الحج والعمرة',
+      node_type: 'درس',
+      order_index: 3,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter6.id,
+      name: 'الدرس الرابع: محظورات الإحرام',
+      description: 'ما يحرم على المحرم فعله',
+      node_type: 'درس',
+      order_index: 4,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  await prisma.curriculumTemplateNode.create({
+    data: {
+      template_id: fiqhTemplate.id,
+      parent_id: chapter6.id,
+      name: 'الدرس الخامس: الهدي والأضحية',
+      description: 'أحكام الهدي والأضاحي',
+      node_type: 'درس',
+      order_index: 5,
+      estimated_duration_minutes: 45,
+      lesson_span: 1,
+      status: 'PLANNED',
+    },
+  });
+
+  console.log('✅ تم إنشاء هيكل المنهج الكامل');
+
+  // ربط المنهج بمجموعات الحملة الأولى
+  await prisma.groupCurriculum.createMany({
+    data: [
+      {
+        group_id: group1.id,
+        template_id: fiqhTemplate.id,
+        campaign_id: campaign1.id,
+        target_end_date: new Date('2024-09-15'),
+        is_active: true,
+      },
+      {
+        group_id: group2.id,
+        template_id: fiqhTemplate.id,
+        campaign_id: campaign1.id,
+        target_end_date: new Date('2024-09-15'),
+        is_active: true,
+      },
+    ],
+  });
+
+  console.log('✅ تم ربط المنهج بالمجموعات');
+
+  // إنشاء بعض جلسات الدروس النموذجية لمجموعة الفجر
+  await prisma.curriculumLessonSession.createMany({
+    data: [
+      {
+        node_id: lesson1_1.id,
+        group_id: group1.id,
+        teacher_id: teachers[0].id,
+        campaign_id: campaign1.id,
+        session_number: 1,
+        date: new Date('2024-06-16'),
+        is_finished: true,
+        duration_minutes: 45,
+        notes: 'الطلاب متفاعلون ومستوعبون للدرس',
+      },
+      {
+        node_id: lesson1_1.id,
+        group_id: group1.id,
+        teacher_id: teachers[0].id,
+        campaign_id: campaign1.id,
+        session_number: 2,
+        date: new Date('2024-06-18'),
+        is_finished: true,
+        duration_minutes: 45,
+        notes: 'تم إكمال الدرس بنجاح',
+      },
+      {
+        node_id: lesson1_2.id,
+        group_id: group1.id,
+        teacher_id: teachers[0].id,
+        campaign_id: campaign1.id,
+        session_number: 1,
+        date: new Date('2024-06-20'),
+        is_finished: false,
+        duration_minutes: 40,
+        notes: 'جاري شرح الدرس',
+      },
+    ],
+  });
+
+  // تحديث حالة الدروس
+  await prisma.curriculumTemplateNode.update({
+    where: { id: lesson1_1.id },
+    data: { status: 'COMPLETED' },
+  });
+
+  await prisma.curriculumTemplateNode.update({
+    where: { id: lesson1_2.id },
+    data: { status: 'IN_PROGRESS' },
+  });
+
+  console.log('✅ تم إنشاء جلسات الدروس النموذجية');
+
   // إنشاء قوالب السور والصفحات
   let surahTemplates = [];
 

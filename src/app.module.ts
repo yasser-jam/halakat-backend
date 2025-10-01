@@ -47,6 +47,14 @@ import { AttendanceController } from './attendance/attendance.controller';
 import { AttendanceService } from './attendance/attendance.service';
 import { AuthModule } from './auth/auth.module';
 import { SessionSurahModule } from './session-surah/session-surah.module';
+import { CurriculumController } from './curriculum/curriculum.controller';
+import { CurriculumService } from './curriculum/curriculum.service';
+import { CategoryController } from './category/category.controller';
+import { CategoryService } from './category/category.service';
+import { CurriculumTemplateController } from './curriculum-template/curriculum-template.controller';
+import { CurriculumTemplateService } from './curriculum-template/curriculum-template.service';
+import { CurriculumLessonSessionController } from './curriculum-lesson-session/curriculum-lesson-session.controller';
+import { CurriculumLessonSessionService } from './curriculum-lesson-session/curriculum-lesson-session.service';
 // import { AuthController } from './auth/auth.controller';
 // import { AuthService } from './auth/auth.service';
 
@@ -66,6 +74,10 @@ import { SessionSurahModule } from './session-surah/session-surah.module';
     MosqueController,
     MistakeController,
     SavingSessionController,
+    CurriculumController,
+    CategoryController,
+    CurriculumTemplateController,
+    CurriculumLessonSessionController,
   ],
   providers: [
     AppService,
@@ -82,6 +94,10 @@ import { SessionSurahModule } from './session-surah/session-surah.module';
     MistakeService,
     MosqueService,
     SavingSessionService,
+    CurriculumService,
+    CategoryService,
+    CurriculumTemplateService,
+    CurriculumLessonSessionService,
   ],
   imports: [AuthModule, SessionSurahModule],
 })

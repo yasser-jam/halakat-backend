@@ -1,13 +1,17 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { 
-  CreateCurriculumTemplateDto, 
-  UpdateCurriculumTemplateDto, 
+import {
+  CreateCurriculumTemplateDto,
+  UpdateCurriculumTemplateDto,
   CurriculumTemplateResponseDto,
   CreateCurriculumTemplateNodeDto,
   UpdateCurriculumTemplateNodeDto,
   CurriculumTemplateNodeResponseDto,
-  NodeStatus
+  NodeStatus,
 } from '../dto/curriculum-template.dto';
 
 @Injectable()
@@ -15,7 +19,9 @@ export class CurriculumTemplateService {
   constructor(private prisma: PrismaService) {}
 
   // CurriculumTemplate CRUD operations
-  async create(createCurriculumTemplateDto: CreateCurriculumTemplateDto): Promise<CurriculumTemplateResponseDto> {
+  async create(
+    createCurriculumTemplateDto: CreateCurriculumTemplateDto,
+  ): Promise<CurriculumTemplateResponseDto> {
     // Verify curriculum exists
     const curriculum = await this.prisma.curriculum.findUnique({
       where: { id: createCurriculumTemplateDto.curriculum_id },
@@ -43,7 +49,9 @@ export class CurriculumTemplateService {
     });
 
     if (existingTemplate) {
-      throw new BadRequestException('Template already exists for this curriculum and campaign');
+      throw new BadRequestException(
+        'Template already exists for this curriculum and campaign',
+      );
     }
 
     const template = await this.prisma.curriculumTemplate.create({
@@ -60,7 +68,10 @@ export class CurriculumTemplateService {
     return this.mapTemplateToResponseDto(template);
   }
 
-  async findAll(campaignId?: number, curriculumId?: number): Promise<CurriculumTemplateResponseDto[]> {
+  async findAll(
+    campaignId?: number,
+    curriculumId?: number,
+  ): Promise<CurriculumTemplateResponseDto[]> {
     const where: any = {};
     if (campaignId) where.campaign_id = campaignId;
     if (curriculumId) where.curriculum_id = curriculumId;
@@ -77,7 +88,7 @@ export class CurriculumTemplateService {
       orderBy: { created_at: 'desc' },
     });
 
-    return templates.map(template => this.mapTemplateToResponseDto(template));
+    return templates.map((template) => this.mapTemplateToResponseDto(template));
   }
 
   async findOne(id: number): Promise<CurriculumTemplateResponseDto> {
@@ -105,7 +116,10 @@ export class CurriculumTemplateService {
     return this.mapTemplateToResponseDto(template);
   }
 
-  async update(id: number, updateCurriculumTemplateDto: UpdateCurriculumTemplateDto): Promise<CurriculumTemplateResponseDto> {
+  async update(
+    id: number,
+    updateCurriculumTemplateDto: UpdateCurriculumTemplateDto,
+  ): Promise<CurriculumTemplateResponseDto> {
     const existingTemplate = await this.prisma.curriculumTemplate.findUnique({
       where: { id },
     });
@@ -164,7 +178,9 @@ export class CurriculumTemplateService {
   }
 
   // CurriculumTemplateNode CRUD operations
-  async createNode(createNodeDto: CreateCurriculumTemplateNodeDto): Promise<CurriculumTemplateNodeResponseDto> {
+  async createNode(
+    createNodeDto: CreateCurriculumTemplateNodeDto,
+  ): Promise<CurriculumTemplateNodeResponseDto> {
     // Verify template exists
     const template = await this.prisma.curriculumTemplate.findUnique({
       where: { id: createNodeDto.template_id },
@@ -199,7 +215,9 @@ export class CurriculumTemplateService {
     return this.mapNodeToResponseDto(node);
   }
 
-  async findNodesByTemplate(templateId: number): Promise<CurriculumTemplateNodeResponseDto[]> {
+  async findNodesByTemplate(
+    templateId: number,
+  ): Promise<CurriculumTemplateNodeResponseDto[]> {
     const nodes = await this.prisma.curriculumTemplateNode.findMany({
       where: { template_id: templateId },
       include: {
@@ -211,7 +229,7 @@ export class CurriculumTemplateService {
       orderBy: { order_index: 'asc' },
     });
 
-    return nodes.map(node => this.mapNodeToResponseDto(node));
+    return nodes.map((node) => this.mapNodeToResponseDto(node));
   }
 
   async findNode(id: number): Promise<CurriculumTemplateNodeResponseDto> {
@@ -232,7 +250,10 @@ export class CurriculumTemplateService {
     return this.mapNodeToResponseDto(node);
   }
 
-  async updateNode(id: number, updateNodeDto: UpdateCurriculumTemplateNodeDto): Promise<CurriculumTemplateNodeResponseDto> {
+  async updateNode(
+    id: number,
+    updateNodeDto: UpdateCurriculumTemplateNodeDto,
+  ): Promise<CurriculumTemplateNodeResponseDto> {
     const existingNode = await this.prisma.curriculumTemplateNode.findUnique({
       where: { id },
     });
@@ -289,7 +310,9 @@ export class CurriculumTemplateService {
     });
   }
 
-  private mapTemplateToResponseDto(template: any): CurriculumTemplateResponseDto {
+  private mapTemplateToResponseDto(
+    template: any,
+  ): CurriculumTemplateResponseDto {
     return {
       id: template.id,
       curriculum_id: template.curriculum_id,
@@ -298,16 +321,22 @@ export class CurriculumTemplateService {
       notes: template.notes,
       created_at: template.created_at,
       updated_at: template.updated_at,
-      curriculum: template.curriculum ? {
-        id: template.curriculum.id,
-        name: template.curriculum.name,
-        description: template.curriculum.description,
-      } : undefined,
-      campaign: template.campaign ? {
-        id: template.campaign.id,
-        name: template.campaign.name,
-      } : undefined,
-      nodes: template.nodes?.map((node: any) => this.mapNodeToResponseDto(node)),
+      curriculum: template.curriculum
+        ? {
+            id: template.curriculum.id,
+            name: template.curriculum.name,
+            description: template.curriculum.description,
+          }
+        : undefined,
+      campaign: template.campaign
+        ? {
+            id: template.campaign.id,
+            name: template.campaign.name,
+          }
+        : undefined,
+      nodes: template.nodes?.map((node: any) =>
+        this.mapNodeToResponseDto(node),
+      ),
     };
   }
 
@@ -326,7 +355,9 @@ export class CurriculumTemplateService {
       status: node.status,
       created_at: node.created_at,
       updated_at: node.updated_at,
-      children: node.children?.map((child: any) => this.mapNodeToResponseDto(child)),
+      children: node.children?.map((child: any) =>
+        this.mapNodeToResponseDto(child),
+      ),
       parent: node.parent ? this.mapNodeToResponseDto(node.parent) : undefined,
     };
   }

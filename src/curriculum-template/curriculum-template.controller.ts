@@ -3,7 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
+  Put,
   Param,
   Delete,
   ParseIntPipe,
@@ -12,13 +12,13 @@ import {
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CurriculumTemplateService } from './curriculum-template.service';
-import { 
-  CreateCurriculumTemplateDto, 
-  UpdateCurriculumTemplateDto, 
+import {
+  CreateCurriculumTemplateDto,
+  UpdateCurriculumTemplateDto,
   CurriculumTemplateResponseDto,
   CreateCurriculumTemplateNodeDto,
   UpdateCurriculumTemplateNodeDto,
-  CurriculumTemplateNodeResponseDto
+  CurriculumTemplateNodeResponseDto,
 } from '../dto/curriculum-template.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
@@ -29,12 +29,16 @@ import { Permission } from '../role/permissions.enum';
 @Controller('curriculum-template')
 @UseGuards(JwtAuthGuard, RolesGuard)
 export class CurriculumTemplateController {
-  constructor(private readonly curriculumTemplateService: CurriculumTemplateService) {}
+  constructor(
+    private readonly curriculumTemplateService: CurriculumTemplateService,
+  ) {}
 
   // CurriculumTemplate endpoints
   @Post()
   // @Roles(Permission.CURRICULUM_MANAGEMENT)
-  async create(@Body() createCurriculumTemplateDto: CreateCurriculumTemplateDto): Promise<CurriculumTemplateResponseDto> {
+  async create(
+    @Body() createCurriculumTemplateDto: CreateCurriculumTemplateDto,
+  ): Promise<CurriculumTemplateResponseDto> {
     return this.curriculumTemplateService.create(createCurriculumTemplateDto);
   }
 
@@ -42,7 +46,7 @@ export class CurriculumTemplateController {
   // @Roles(Permission.CURRICULUM_MANAGEMENT)
   async findAll(
     @Query('campaignId') campaignId?: string,
-    @Query('curriculumId') curriculumId?: string
+    @Query('curriculumId') curriculumId?: string,
   ): Promise<CurriculumTemplateResponseDto[]> {
     const campId = campaignId ? parseInt(campaignId, 10) : undefined;
     const currId = curriculumId ? parseInt(curriculumId, 10) : undefined;
@@ -51,22 +55,29 @@ export class CurriculumTemplateController {
 
   @Get(':id')
   // @Roles(Permission.CURRICULUM_MANAGEMENT)
-  async findOne(@Param('id', ParseIntPipe) id: number): Promise<CurriculumTemplateResponseDto> {
+  async findOne(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<CurriculumTemplateResponseDto> {
     return this.curriculumTemplateService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   // @Roles(Permission.CURRICULUM_MANAGEMENT)
   async update(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateCurriculumTemplateDto: UpdateCurriculumTemplateDto,
   ): Promise<CurriculumTemplateResponseDto> {
-    return this.curriculumTemplateService.update(id, updateCurriculumTemplateDto);
+    return this.curriculumTemplateService.update(
+      id,
+      updateCurriculumTemplateDto,
+    );
   }
 
   @Delete(':id')
   // @Roles(Permission.CURRICULUM_MANAGEMENT)
-  async remove(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
+  async remove(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{ message: string }> {
     await this.curriculumTemplateService.remove(id);
     return { message: 'Curriculum template deleted successfully' };
   }
@@ -74,23 +85,29 @@ export class CurriculumTemplateController {
   // CurriculumTemplateNode endpoints
   @Post('node')
   // @Roles(Permission.CURRICULUM_MANAGEMENT)
-  async createNode(@Body() createNodeDto: CreateCurriculumTemplateNodeDto): Promise<CurriculumTemplateNodeResponseDto> {
+  async createNode(
+    @Body() createNodeDto: CreateCurriculumTemplateNodeDto,
+  ): Promise<CurriculumTemplateNodeResponseDto> {
     return this.curriculumTemplateService.createNode(createNodeDto);
   }
 
   @Get(':templateId/nodes')
   // @Roles(Permission.CURRICULUM_MANAGEMENT)
-  async findNodesByTemplate(@Param('templateId', ParseIntPipe) templateId: number): Promise<CurriculumTemplateNodeResponseDto[]> {
+  async findNodesByTemplate(
+    @Param('templateId', ParseIntPipe) templateId: number,
+  ): Promise<CurriculumTemplateNodeResponseDto[]> {
     return this.curriculumTemplateService.findNodesByTemplate(templateId);
   }
 
   @Get('node/:id')
   // @Roles(Permission.CURRICULUM_MANAGEMENT)
-  async findNode(@Param('id', ParseIntPipe) id: number): Promise<CurriculumTemplateNodeResponseDto> {
+  async findNode(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<CurriculumTemplateNodeResponseDto> {
     return this.curriculumTemplateService.findNode(id);
   }
 
-  @Patch('node/:id')
+  @Put('node/:id')
   // @Roles(Permission.CURRICULUM_MANAGEMENT)
   async updateNode(
     @Param('id', ParseIntPipe) id: number,
@@ -101,7 +118,9 @@ export class CurriculumTemplateController {
 
   @Delete('node/:id')
   // @Roles(Permission.CURRICULUM_MANAGEMENT)
-  async removeNode(@Param('id', ParseIntPipe) id: number): Promise<{ message: string }> {
+  async removeNode(
+    @Param('id', ParseIntPipe) id: number,
+  ): Promise<{ message: string }> {
     await this.curriculumTemplateService.removeNode(id);
     return { message: 'Template node deleted successfully' };
   }

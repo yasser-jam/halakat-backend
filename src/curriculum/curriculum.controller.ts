@@ -3,7 +3,7 @@ import {
   Get,
   Post,
   Body,
-  Patch,
+  Put,
   Param,
   Delete,
   ParseIntPipe,
@@ -51,7 +51,7 @@ export class CurriculumController {
     return this.curriculumService.findOne(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   // @Roles(Permission.CURRICULUM_MANAGEMENT)
   async update(
     @Param('id', ParseIntPipe) id: number,

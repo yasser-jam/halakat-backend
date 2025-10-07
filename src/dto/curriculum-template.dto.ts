@@ -164,3 +164,41 @@ export class CurriculumTemplateNodeResponseDto {
   children?: CurriculumTemplateNodeResponseDto[];
   parent?: CurriculumTemplateNodeResponseDto;
 }
+
+// Group Assignment DTOs
+export class AssignTemplateToGroupDto {
+  @IsInt()
+  group_id: number;
+
+  @IsInt()
+  template_id: number;
+
+  @IsInt()
+  campaign_id: number;
+
+  @IsOptional()
+  @IsDateString()
+  target_end_date?: string;
+}
+
+export class GroupCurriculumResponseDto {
+  id: number;
+  group_id: number;
+  template_id: number;
+  campaign_id: number;
+  assigned_date: Date;
+  target_end_date?: Date;
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+  group?: {
+    id: number;
+    title: string;
+    class?: number;
+  };
+  template?: CurriculumTemplateResponseDto;
+  campaign?: {
+    id: number;
+    name: string;
+  };
+}

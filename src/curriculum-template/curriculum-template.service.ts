@@ -12,6 +12,8 @@ import {
   UpdateCurriculumTemplateNodeDto,
   CurriculumTemplateNodeResponseDto,
   NodeStatus,
+  AssignTemplateToGroupDto,
+  GroupCurriculumResponseDto,
 } from '../dto/curriculum-template.dto';
 
 @Injectable()
@@ -89,6 +91,112 @@ export class CurriculumTemplateService {
     });
 
     return templates.map((template) => this.mapTemplateToResponseDto(template));
+  }
+
+  async findByGroup(groupId: number): Promise<CurriculumTemplateResponseDto[]> {
+    // Verify group exists
+    const group = await this.prisma.group.findUnique({
+      where: { id: groupId },
+    });
+    if (!group) {
+      throw new NotFoundException('Group not found');
+    }
+
+    // Find all curriculum templates assigned to this group
+    const groupCurricula = await this.prisma.groupCurriculum.findMany({
+      where: { 
+        group_id: groupId,
+        is_active: true 
+      },
+      include: {
+        template: {
+          include: {
+            curriculum: true,
+            campaign: true,
+            nodes: {
+              orderBy: { order_index: 'asc' },
+            },
+          },
+        },
+      },
+      orderBy: { assigned_date: 'desc' },
+    });
+
+    return groupCurricula.map((groupCurriculum) => 
+      this.mapTemplateToResponseDto(groupCurriculum.template)
+    );
+  }
+
+  async assignTemplateToGroup(
+    assignDto: AssignTemplateToGroupDto,
+  ): Promise<GroupCurriculumResponseDto> {
+    // Verify group exists
+    const group = await this.prisma.group.findUnique({
+      where: { id: assignDto.group_id },
+    });
+    if (!group) {
+      throw new BadRequestException('Group not found');
+    }
+
+    // Verify template exists
+    const template = await this.prisma.curriculumTemplate.findUnique({
+      where: { id: assignDto.template_id },
+    });
+    if (!template) {
+      throw new BadRequestException('Template not found');
+    }
+
+    // Verify campaign exists
+    const campaign = await this.prisma.campaign.findUnique({
+      where: { id: assignDto.campaign_id },
+    });
+    if (!campaign) {
+      throw new BadRequestException('Campaign not found');
+    }
+
+    // Check if assignment already exists
+    const existingAssignment = await this.prisma.groupCurriculum.findUnique({
+      where: {
+        group_id_template_id_campaign_id: {
+          group_id: assignDto.group_id,
+          template_id: assignDto.template_id,
+          campaign_id: assignDto.campaign_id,
+        },
+      },
+    });
+
+    if (existingAssignment) {
+      throw new BadRequestException(
+        'Template is already assigned to this group for this campaign',
+      );
+    }
+
+    // Create the assignment
+    const groupCurriculum = await this.prisma.groupCurriculum.create({
+      data: {
+        group_id: assignDto.group_id,
+        template_id: assignDto.template_id,
+        campaign_id: assignDto.campaign_id,
+        target_end_date: assignDto.target_end_date 
+          ? new Date(assignDto.target_end_date) 
+          : undefined,
+      },
+      include: {
+        group: true,
+        template: {
+          include: {
+            curriculum: true,
+            campaign: true,
+            nodes: {
+              orderBy: { order_index: 'asc' },
+            },
+          },
+        },
+        campaign: true,
+      },
+    });
+
+    return this.mapGroupCurriculumToResponseDto(groupCurriculum);
   }
 
   async findOne(id: number): Promise<CurriculumTemplateResponseDto> {
@@ -359,6 +467,38 @@ export class CurriculumTemplateService {
         this.mapNodeToResponseDto(child),
       ),
       parent: node.parent ? this.mapNodeToResponseDto(node.parent) : undefined,
+    };
+  }
+
+  private mapGroupCurriculumToResponseDto(
+    groupCurriculum: any,
+  ): GroupCurriculumResponseDto {
+    return {
+      id: groupCurriculum.id,
+      group_id: groupCurriculum.group_id,
+      template_id: groupCurriculum.template_id,
+      campaign_id: groupCurriculum.campaign_id,
+      assigned_date: groupCurriculum.assigned_date,
+      target_end_date: groupCurriculum.target_end_date,
+      is_active: groupCurriculum.is_active,
+      created_at: groupCurriculum.created_at,
+      updated_at: groupCurriculum.updated_at,
+      group: groupCurriculum.group
+        ? {
+            id: groupCurriculum.group.id,
+            title: groupCurriculum.group.title,
+            class: groupCurriculum.group.class,
+          }
+        : undefined,
+      template: groupCurriculum.template
+        ? this.mapTemplateToResponseDto(groupCurriculum.template)
+        : undefined,
+      campaign: groupCurriculum.campaign
+        ? {
+            id: groupCurriculum.campaign.id,
+            name: groupCurriculum.campaign.name,
+          }
+        : undefined,
     };
   }
 }

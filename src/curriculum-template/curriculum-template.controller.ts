@@ -19,11 +19,13 @@ import {
   CreateCurriculumTemplateNodeDto,
   UpdateCurriculumTemplateNodeDto,
   CurriculumTemplateNodeResponseDto,
+  AssignTemplateToGroupDto,
+  GroupCurriculumResponseDto,
 } from '../dto/curriculum-template.dto';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
-import { Roles } from '../auth/roles.decorator';
-import { Permission } from '../role/permissions.enum';
+// import { Roles } from '../auth/roles.decorator';
+// import { Permission } from '../role/permissions.enum';
 
 @ApiTags('Curriculum Management')
 @Controller('curriculum-template')
@@ -51,6 +53,22 @@ export class CurriculumTemplateController {
     const campId = campaignId ? parseInt(campaignId, 10) : undefined;
     const currId = curriculumId ? parseInt(curriculumId, 10) : undefined;
     return this.curriculumTemplateService.findAll(campId, currId);
+  }
+
+  @Get('group/:groupId')
+  // @Roles(Permission.CURRICULUM_MANAGEMENT)
+  async findByGroup(
+    @Param('groupId', ParseIntPipe) groupId: number,
+  ): Promise<CurriculumTemplateResponseDto[]> {
+    return this.curriculumTemplateService.findByGroup(groupId);
+  }
+
+  @Post('assign')
+  // @Roles(Permission.CURRICULUM_MANAGEMENT)
+  async assignTemplateToGroup(
+    @Body() assignDto: AssignTemplateToGroupDto,
+  ): Promise<GroupCurriculumResponseDto> {
+    return this.curriculumTemplateService.assignTemplateToGroup(assignDto);
   }
 
   @Get(':id')

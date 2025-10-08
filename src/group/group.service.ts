@@ -83,13 +83,40 @@ export class GroupService {
   async findOne(id: number) {
     const group = await this.prisma.group.findUnique({
       where: { id: Number(id) },
+      include: {
+        teachers: {
+          include: {
+            teacher: true,
+          },
+        },
+        students: {
+          include: {
+            student: true,
+          },
+        },
+      },
     });
 
     if (!group) {
       throw new NotFoundException(`Group with ID ${id} not found`);
     }
 
-    return { message: `Group ${id} found`, data: group };
+    // Get the current teacher based on current_teacher_id
+    let currentTeacher = null;
+    if (group.current_teacher_id) {
+      currentTeacher = await this.prisma.teacher.findUnique({
+        where: { id: group.current_teacher_id },
+      });
+    }
+
+    const result = {
+      ...group,
+      currentTeacher,
+      teachers: undefined, // Remove the teachers array to avoid confusion
+      students: group.students.map((stud) => stud.student),
+    };
+
+    return { message: `Group ${id} found`, data: result };
   }
 
   async update(id: number, updateGroupDto: CreateGroupDto) {

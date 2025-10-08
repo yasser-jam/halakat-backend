@@ -135,9 +135,6 @@ export class CreateSavingSessionDto {
     example: true,
     description: 'Whether the overall session passed',
   })
-  @IsOptional()
-  overallPassed?: boolean;
-
   @ApiProperty({
     type: [SessionSurahDto],
     description: 'List of surahs recited in this session',
@@ -181,9 +178,6 @@ export class SavingSessionDto {
 
   @ApiProperty({ required: false })
   maxPossibleScore?: number;
-
-  @ApiProperty({ required: false })
-  overallPassed?: boolean;
 
   @ApiProperty()
   created_at: Date;

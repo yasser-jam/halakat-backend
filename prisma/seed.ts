@@ -1028,10 +1028,7 @@ async function main() {
           notes: isPassed ? null : 'يحتاج مراجعة',
         });
       }
-
-      const overallPassed = evaluation
-        ? totalScore >= evaluation.minimum_marks
-        : totalScore >= maxPossibleScore * 0.7; // 70% كحد أدنى افتراضي
+      x;
 
       // إنشاء جلسة التسميع
       const savingSession = await prisma.savingSession.create({
@@ -1046,7 +1043,6 @@ async function main() {
           duration: Math.floor(Math.random() * 30) + 15, // مدة من 15 إلى 45 دقيقة
           totalScore: totalScore,
           maxPossibleScore: maxPossibleScore,
-          overallPassed: overallPassed,
           created_at: new Date(2024, 0, j + 1),
         },
       });
@@ -1135,17 +1131,11 @@ async function main() {
       }
     }
 
-    // تحديث SavingSession بالنتائج الإجمالية الجديدة
-    const overallPassed = session.evaluation
-      ? sessionTotalScore >= session.evaluation.minimum_marks
-      : sessionTotalScore >= sessionMaxPossibleScore * 0.7;
-
     await prisma.savingSession.update({
       where: { id: session.id },
       data: {
         totalScore: sessionTotalScore,
         maxPossibleScore: sessionMaxPossibleScore,
-        overallPassed: overallPassed,
       },
     });
   }

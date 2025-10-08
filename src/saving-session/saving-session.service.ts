@@ -20,7 +20,6 @@ export class SavingSessionService {
       evaluation_id,
       totalScore,
       maxPossibleScore,
-      overallPassed,
       ...savingSessionData
     } = dto;
 
@@ -33,7 +32,6 @@ export class SavingSessionService {
         evaluation_id: evaluation_id,
         totalScore: totalScore,
         maxPossibleScore: maxPossibleScore,
-        overallPassed: overallPassed,
         session_surahs: {
           create: sessionSurahs.map((surah) => ({
             template_id: surah.templateId,

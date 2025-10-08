@@ -124,7 +124,8 @@ export class GroupsController {
   @ApiParam({ name: 'id', type: Number })
   @ApiResponse({
     status: 200,
-    description: 'Return the group with the given ID',
+    description:
+      'Return the group with the given ID, including current teacher full info and students data',
   })
   async findOne(@Param('id') id: number) {
     return this.groupService.findOne(Number(id));

@@ -335,19 +335,18 @@ model Evaluation {
 }
 
 model SavingSession {
-  id            Int      @id @default(autoincrement())
-  teacher_id    Int
-  student_id    Int
-  campaign_id   Int
-  evaluation_id Int?
-  start         Int       // start page (for reporting)
-  end           Int       // end page (for reporting)
-  rating        Int
-  duration      Int
-  totalScore       Float?   // Sum of weighted scores from completed templates
-  maxPossibleScore Float?   // Sum of weights * 100 for completed templates only
-  overallPassed    Boolean? // totalScore >= evaluation.minimum_marks
-  created_at    DateTime  @default(now())
+  id               Int      @id @default(autoincrement())
+  teacher_id       Int
+  student_id       Int
+  campaign_id      Int
+  evaluation_id    Int?
+  start            Int // start page (for reporting)
+  end              Int // end page (for reporting)
+  rating           Int
+  duration         Int
+  totalScore       Float? // Sum of weighted scores from completed templates
+  maxPossibleScore Float? // Sum of weights * 100 for completed templates only
+  created_at       DateTime @default(now())
 
   teacher        Teacher          @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   student        Student          @relation(fields: [student_id], references: [id], onDelete: Cascade)

@@ -1028,7 +1028,6 @@ async function main() {
           notes: isPassed ? null : 'يحتاج مراجعة',
         });
       }
-      x;
 
       // إنشاء جلسة التسميع
       const savingSession = await prisma.savingSession.create({

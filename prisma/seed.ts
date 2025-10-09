@@ -288,6 +288,12 @@ async function main() {
       university: 'جامعة دمشق',
       college: 'كلية الهندسة المعلوماتية',
     },
+    {
+      first_name: 'عبد الله',
+      last_name: 'نحلاوي',
+      university: 'جامعة دمشق',
+      college: 'كلية الشريعة',
+    },
   ];
 
   const teachers = [];
@@ -308,7 +314,10 @@ async function main() {
         mobile_phone_number:
           teacherData.first_name == 'ياسر'
             ? '0986365515'
-            : `09${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`,
+            : teacherData.first_name == 'عبد الله' &&
+                teacherData.last_name == 'نحلاوي'
+              ? '0992522041'
+              : `09${String(Math.floor(Math.random() * 100000000)).padStart(8, '0')}`,
         in_another_mosque: false,
         special_talent: ['تجويد', 'حفظ متقن', 'قراءات', 'تفسير'][
           Math.floor(Math.random() * 4)
@@ -323,7 +332,12 @@ async function main() {
         job_role: 'معلم قرآن',
         workplace_name: i < 2 ? 'مسجد النور' : 'مسجد الهداية',
         password: '123456',
-        role: teacherData.first_name == 'ياسر' ? 'SUPER_ADMIN' : 'TEACHER',
+        role:
+          teacherData.first_name == 'ياسر' ||
+          (teacherData.first_name == 'عبد الله' &&
+            teacherData.last_name == 'نحلاوي')
+            ? 'SUPER_ADMIN'
+            : 'TEACHER',
       },
     });
     teachers.push(teacher);
@@ -568,6 +582,8 @@ async function main() {
       { teacher_id: teachers[3].id, campaign_id: campaign2.id },
       { teacher_id: teachers[4].id, campaign_id: campaign1.id },
       { teacher_id: teachers[4].id, campaign_id: campaign2.id },
+      { teacher_id: teachers[5].id, campaign_id: campaign1.id }, // عبد الله نحلاوي
+      { teacher_id: teachers[5].id, campaign_id: campaign2.id }, // عبد الله نحلاوي
     ],
   });
 
@@ -663,6 +679,18 @@ async function main() {
       {
         teacher_id: teachers[4].id,
         group_id: group4.id,
+        campaign_id: campaign2.id,
+        role_id: adminRole2.id,
+      },
+      {
+        teacher_id: teachers[5].id, // عبد الله نحلاوي
+        group_id: null, // Admin role doesn't need specific group
+        campaign_id: campaign1.id,
+        role_id: adminRole1.id,
+      },
+      {
+        teacher_id: teachers[5].id, // عبد الله نحلاوي
+        group_id: null, // Admin role doesn't need specific group
         campaign_id: campaign2.id,
         role_id: adminRole2.id,
       },
@@ -1932,7 +1960,7 @@ async function main() {
 - مسجدان: ${mosque1.name} و ${mosque2.name}  
 - حملتان: حملة لكل مسجد
 - 4 مجموعات: مجموعتان لكل مسجد
-- 4 معلمين: معلمان لكل مسجد
+- 6 معلمين: معلمان لكل مسجد + معلم ياسر جمال الدين + معلم عبد الله نحلاوي (كلاهما بصلاحيات سوبر أدمن)
 - 16 طالباً: 4 طلاب لكل مجموعة
 - 6 أدوار: 3 أدوار لكل حملة (أدمن، أستاذ، مسمع)
 - 4 أخطاء: خطأان لكل حملة

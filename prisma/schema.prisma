@@ -587,6 +587,7 @@ model CurriculumLessonSession {
   is_finished             Boolean   @default(false)
   duration_minutes        Int?
   notes                   String?
+  is_late                 Boolean   @default(false) // NEW: Flag for lessons exceeding node span
   created_at              DateTime  @default(now())
   updated_at              DateTime  @updatedAt
   

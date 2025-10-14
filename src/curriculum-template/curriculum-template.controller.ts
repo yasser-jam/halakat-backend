@@ -8,7 +8,7 @@ import {
   Delete,
   ParseIntPipe,
   Query,
-  UseGuards,
+  // UseGuards,
 } from '@nestjs/common';
 import { ApiTags } from '@nestjs/swagger';
 import { CurriculumTemplateService } from './curriculum-template.service';
@@ -22,14 +22,14 @@ import {
   AssignTemplateToGroupDto,
   GroupCurriculumResponseDto,
 } from '../dto/curriculum-template.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
-import { RolesGuard } from '../auth/roles.guard';
+// import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+// import { RolesGuard } from '../auth/roles.guard';
 // import { Roles } from '../auth/roles.decorator';
 // import { Permission } from '../role/permissions.enum';
 
 @ApiTags('Curriculum Management')
 @Controller('curriculum-template')
-@UseGuards(JwtAuthGuard, RolesGuard)
+// @UseGuards(JwtAuthGuard, RolesGuard)
 export class CurriculumTemplateController {
   constructor(
     private readonly curriculumTemplateService: CurriculumTemplateService,
@@ -115,6 +115,14 @@ export class CurriculumTemplateController {
     @Param('templateId', ParseIntPipe) templateId: number,
   ): Promise<CurriculumTemplateNodeResponseDto[]> {
     return this.curriculumTemplateService.findNodesByTemplate(templateId);
+  }
+
+  @Get(':templateId/next-node')
+  // @Roles(Permission.CURRICULUM_MANAGEMENT)
+  async getNextNode(
+    @Param('templateId', ParseIntPipe) templateId: number,
+  ): Promise<CurriculumTemplateNodeResponseDto | null> {
+    return this.curriculumTemplateService.getNextNode(templateId);
   }
 
   @Get('node/:id')

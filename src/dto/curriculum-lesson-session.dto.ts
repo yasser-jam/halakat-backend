@@ -31,6 +31,10 @@ export class CreateCurriculumLessonSessionDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  is_late?: boolean;
 }
 
 export class UpdateCurriculumLessonSessionDto {
@@ -69,6 +73,10 @@ export class UpdateCurriculumLessonSessionDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  is_late?: boolean;
 }
 
 export class CurriculumLessonSessionResponseDto {
@@ -82,6 +90,7 @@ export class CurriculumLessonSessionResponseDto {
   is_finished: boolean;
   duration_minutes?: number;
   notes?: string;
+  is_late: boolean;
   created_at: Date;
   updated_at: Date;
   lesson_node?: {

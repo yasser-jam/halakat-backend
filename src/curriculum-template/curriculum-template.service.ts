@@ -418,6 +418,59 @@ export class CurriculumTemplateService {
     });
   }
 
+  async getNextNode(
+    templateId: number,
+  ): Promise<CurriculumTemplateNodeResponseDto | null> {
+    // Verify template exists
+    const template = await this.prisma.curriculumTemplate.findUnique({
+      where: { id: templateId },
+    });
+    if (!template) {
+      throw new BadRequestException('Template not found');
+    }
+
+    // First, look for any node with IN_PROGRESS status
+    const inProgressNode = await this.prisma.curriculumTemplateNode.findFirst({
+      where: {
+        template_id: templateId,
+        status: NodeStatus.IN_PROGRESS,
+      },
+      include: {
+        children: {
+          orderBy: { order_index: 'asc' },
+        },
+        parent: true,
+      },
+      orderBy: { order_index: 'asc' },
+    });
+
+    if (inProgressNode) {
+      return this.mapNodeToResponseDto(inProgressNode);
+    }
+
+    // If no IN_PROGRESS node found, get the first PLANNED node
+    const plannedNode = await this.prisma.curriculumTemplateNode.findFirst({
+      where: {
+        template_id: templateId,
+        status: NodeStatus.PLANNED,
+      },
+      include: {
+        children: {
+          orderBy: { order_index: 'asc' },
+        },
+        parent: true,
+      },
+      orderBy: { order_index: 'asc' },
+    });
+
+    if (plannedNode) {
+      return this.mapNodeToResponseDto(plannedNode);
+    }
+
+    // No next node found
+    return null;
+  }
+
   private mapTemplateToResponseDto(
     template: any,
   ): CurriculumTemplateResponseDto {

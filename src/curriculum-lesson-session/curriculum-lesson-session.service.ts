@@ -1,9 +1,13 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
-import { 
-  CreateCurriculumLessonSessionDto, 
-  UpdateCurriculumLessonSessionDto, 
-  CurriculumLessonSessionResponseDto 
+import {
+  CreateCurriculumLessonSessionDto,
+  UpdateCurriculumLessonSessionDto,
+  CurriculumLessonSessionResponseDto,
 } from '../dto/curriculum-lesson-session.dto';
 import { NodeStatus } from '@prisma/client';
 
@@ -11,7 +15,9 @@ import { NodeStatus } from '@prisma/client';
 export class CurriculumLessonSessionService {
   constructor(private prisma: PrismaService) {}
 
-  async create(createSessionDto: CreateCurriculumLessonSessionDto): Promise<CurriculumLessonSessionResponseDto> {
+  async create(
+    createSessionDto: CreateCurriculumLessonSessionDto,
+  ): Promise<CurriculumLessonSessionResponseDto> {
     // Verify lesson node exists and get its lesson_span
     const lessonNode = await this.prisma.curriculumTemplateNode.findUnique({
       where: { id: createSessionDto.node_id },
@@ -45,27 +51,35 @@ export class CurriculumLessonSessionService {
     }
 
     // Check if session with same node_id, group_id, and session_number already exists
-    const existingSession = await this.prisma.curriculumLessonSession.findUnique({
-      where: {
-        node_id_group_id_session_number: {
-          node_id: createSessionDto.node_id,
-          group_id: createSessionDto.group_id,
-          session_number: createSessionDto.session_number,
+    const existingSession =
+      await this.prisma.curriculumLessonSession.findUnique({
+        where: {
+          node_id_group_id_session_number: {
+            node_id: createSessionDto.node_id,
+            group_id: createSessionDto.group_id,
+            session_number: createSessionDto.session_number,
+          },
         },
-      },
-    });
+      });
 
     if (existingSession) {
-      throw new BadRequestException('Session with this number already exists for this node and group');
+      throw new BadRequestException(
+        'Session with this number already exists for this node and group',
+      );
     }
 
     // Determine if this lesson is late (exceeds node's lesson_span)
-    const isLate = lessonNode.lesson_span ? createSessionDto.session_number > lessonNode.lesson_span : false;
+    const isLate = lessonNode.lesson_span
+      ? createSessionDto.session_number > lessonNode.lesson_span
+      : false;
 
     const sessionData = {
       ...createSessionDto,
       date: createSessionDto.date ? new Date(createSessionDto.date) : null,
-      is_late: createSessionDto.is_late !== undefined ? createSessionDto.is_late : isLate,
+      is_late:
+        createSessionDto.is_late !== undefined
+          ? createSessionDto.is_late
+          : isLate,
     };
 
     const session = await this.prisma.curriculumLessonSession.create({
@@ -80,7 +94,10 @@ export class CurriculumLessonSessionService {
 
     // Update node status if this is the first late lesson
     if (isLate && lessonNode.status !== NodeStatus.LATE) {
-      await this.updateNodeStatusIfNeeded(createSessionDto.node_id, createSessionDto.group_id);
+      await this.updateNodeStatusIfNeeded(
+        createSessionDto.node_id,
+        createSessionDto.group_id,
+      );
     }
 
     return this.mapToResponseDto(session);
@@ -90,7 +107,7 @@ export class CurriculumLessonSessionService {
     campaignId?: number,
     groupId?: number,
     teacherId?: number,
-    nodeId?: number
+    nodeId?: number,
   ): Promise<CurriculumLessonSessionResponseDto[]> {
     const where: any = {};
     if (campaignId) where.campaign_id = campaignId;
@@ -106,13 +123,10 @@ export class CurriculumLessonSessionService {
         teacher: true,
         campaign: true,
       },
-      orderBy: [
-        { date: 'desc' },
-        { session_number: 'asc' },
-      ],
+      orderBy: [{ date: 'desc' }, { session_number: 'asc' }],
     });
 
-    return sessions.map(session => this.mapToResponseDto(session));
+    return sessions.map((session) => this.mapToResponseDto(session));
   }
 
   async findOne(id: number): Promise<CurriculumLessonSessionResponseDto> {
@@ -133,7 +147,10 @@ export class CurriculumLessonSessionService {
     return this.mapToResponseDto(session);
   }
 
-  async findByNodeAndGroup(nodeId: number, groupId: number): Promise<CurriculumLessonSessionResponseDto[]> {
+  async findByNodeAndGroup(
+    nodeId: number,
+    groupId: number,
+  ): Promise<CurriculumLessonSessionResponseDto[]> {
     const sessions = await this.prisma.curriculumLessonSession.findMany({
       where: {
         node_id: nodeId,
@@ -148,14 +165,18 @@ export class CurriculumLessonSessionService {
       orderBy: { session_number: 'asc' },
     });
 
-    return sessions.map(session => this.mapToResponseDto(session));
+    return sessions.map((session) => this.mapToResponseDto(session));
   }
 
-  async update(id: number, updateSessionDto: UpdateCurriculumLessonSessionDto): Promise<CurriculumLessonSessionResponseDto> {
-    const existingSession = await this.prisma.curriculumLessonSession.findUnique({
-      where: { id },
-      include: { lesson_node: true },
-    });
+  async update(
+    id: number,
+    updateSessionDto: UpdateCurriculumLessonSessionDto,
+  ): Promise<CurriculumLessonSessionResponseDto> {
+    const existingSession =
+      await this.prisma.curriculumLessonSession.findUnique({
+        where: { id },
+        include: { lesson_node: true },
+      });
 
     if (!existingSession) {
       throw new NotFoundException('Lesson session not found');
@@ -163,7 +184,10 @@ export class CurriculumLessonSessionService {
 
     // Verify lesson node exists if provided
     let lessonNode = existingSession.lesson_node;
-    if (updateSessionDto.node_id && updateSessionDto.node_id !== existingSession.node_id) {
+    if (
+      updateSessionDto.node_id &&
+      updateSessionDto.node_id !== existingSession.node_id
+    ) {
       lessonNode = await this.prisma.curriculumTemplateNode.findUnique({
         where: { id: updateSessionDto.node_id },
       });
@@ -203,23 +227,31 @@ export class CurriculumLessonSessionService {
     }
 
     // Check for unique constraint if key fields are being updated
-    if (updateSessionDto.node_id || updateSessionDto.group_id || updateSessionDto.session_number) {
+    if (
+      updateSessionDto.node_id ||
+      updateSessionDto.group_id ||
+      updateSessionDto.session_number
+    ) {
       const nodeId = updateSessionDto.node_id || existingSession.node_id;
       const groupId = updateSessionDto.group_id || existingSession.group_id;
-      const sessionNumber = updateSessionDto.session_number || existingSession.session_number;
+      const sessionNumber =
+        updateSessionDto.session_number || existingSession.session_number;
 
-      const conflictingSession = await this.prisma.curriculumLessonSession.findUnique({
-        where: {
-          node_id_group_id_session_number: {
-            node_id: nodeId,
-            group_id: groupId,
-            session_number: sessionNumber,
+      const conflictingSession =
+        await this.prisma.curriculumLessonSession.findUnique({
+          where: {
+            node_id_group_id_session_number: {
+              node_id: nodeId,
+              group_id: groupId,
+              session_number: sessionNumber,
+            },
           },
-        },
-      });
+        });
 
       if (conflictingSession && conflictingSession.id !== id) {
-        throw new BadRequestException('Session with this number already exists for this node and group');
+        throw new BadRequestException(
+          'Session with this number already exists for this node and group',
+        );
       }
 
       // Check if session becomes late due to updates
@@ -248,7 +280,12 @@ export class CurriculumLessonSessionService {
     });
 
     // Update node status if needed
-    if (updateSessionDto.is_late || (updateSessionDto.session_number && lessonNode?.lesson_span && updateSessionDto.session_number > lessonNode.lesson_span)) {
+    if (
+      updateSessionDto.is_late ||
+      (updateSessionDto.session_number &&
+        lessonNode?.lesson_span &&
+        updateSessionDto.session_number > lessonNode.lesson_span)
+    ) {
       await this.updateNodeStatusIfNeeded(session.node_id, session.group_id);
     }
 
@@ -269,7 +306,11 @@ export class CurriculumLessonSessionService {
     });
   }
 
-  async markAsFinished(id: number, duration_minutes?: number, notes?: string): Promise<CurriculumLessonSessionResponseDto> {
+  async markAsFinished(
+    id: number,
+    duration_minutes?: number,
+    notes?: string,
+  ): Promise<CurriculumLessonSessionResponseDto> {
     const session = await this.prisma.curriculumLessonSession.findUnique({
       where: { id },
     });
@@ -312,26 +353,34 @@ export class CurriculumLessonSessionService {
       is_late: session.is_late,
       created_at: session.created_at,
       updated_at: session.updated_at,
-      lesson_node: session.lesson_node ? {
-        id: session.lesson_node.id,
-        name: session.lesson_node.name,
-        description: session.lesson_node.description,
-        node_type: session.lesson_node.node_type,
-        status: session.lesson_node.status,
-      } : undefined,
-      group: session.group ? {
-        id: session.group.id,
-        title: session.group.title,
-      } : undefined,
-      teacher: session.teacher ? {
-        id: session.teacher.id,
-        first_name: session.teacher.first_name,
-        last_name: session.teacher.last_name,
-      } : undefined,
-      campaign: session.campaign ? {
-        id: session.campaign.id,
-        name: session.campaign.name,
-      } : undefined,
+      lesson_node: session.lesson_node
+        ? {
+            id: session.lesson_node.id,
+            name: session.lesson_node.name,
+            description: session.lesson_node.description,
+            node_type: session.lesson_node.node_type,
+            status: session.lesson_node.status,
+          }
+        : undefined,
+      group: session.group
+        ? {
+            id: session.group.id,
+            title: session.group.title,
+          }
+        : undefined,
+      teacher: session.teacher
+        ? {
+            id: session.teacher.id,
+            first_name: session.teacher.first_name,
+            last_name: session.teacher.last_name,
+          }
+        : undefined,
+      campaign: session.campaign
+        ? {
+            id: session.campaign.id,
+            name: session.campaign.name,
+          }
+        : undefined,
     };
   }
 
@@ -340,7 +389,10 @@ export class CurriculumLessonSessionService {
    * Sets status to LATE if any lessons exceed the span
    * Sets status to IN_PROGRESS if lessons exist but within span
    */
-  private async updateNodeStatusIfNeeded(nodeId: number, groupId: number): Promise<void> {
+  private async updateNodeStatusIfNeeded(
+    nodeId: number,
+    groupId: number,
+  ): Promise<void> {
     const node = await this.prisma.curriculumTemplateNode.findUnique({
       where: { id: nodeId },
     });
@@ -386,19 +438,23 @@ export class CurriculumLessonSessionService {
   /**
    * Get node information including lesson span
    */
-  async getNodeInfo(nodeId: number): Promise<{ lesson_span: number | null } | null> {
+  async getNodeInfo(
+    nodeId: number,
+  ): Promise<{ lesson_span: number | null } | null> {
     const node = await this.prisma.curriculumTemplateNode.findUnique({
       where: { id: nodeId },
       select: { lesson_span: true },
     });
-    
+
     return node;
   }
 
   /**
    * Get all lessons for a specific group across all nodes
    */
-  async findAllByGroup(groupId: number): Promise<CurriculumLessonSessionResponseDto[]> {
+  async findAllByGroup(
+    groupId: number,
+  ): Promise<CurriculumLessonSessionResponseDto[]> {
     const group = await this.prisma.group.findUnique({
       where: { id: groupId },
     });
@@ -424,7 +480,7 @@ export class CurriculumLessonSessionService {
       ],
     });
 
-    return sessions.map(session => this.mapToResponseDto(session));
+    return sessions.map((session) => this.mapToResponseDto(session));
   }
 
   /**
@@ -464,10 +520,7 @@ export class CurriculumLessonSessionService {
       include: {
         lesson_node: true,
       },
-      orderBy: [
-        { created_at: 'desc' },
-        { session_number: 'desc' },
-      ],
+      orderBy: [{ created_at: 'desc' }, { session_number: 'desc' }],
     });
 
     if (!latestSession) {
@@ -486,12 +539,18 @@ export class CurriculumLessonSessionService {
     });
 
     const totalLessons = nodeLessons.length;
-    const completedLessons = nodeLessons.filter(lesson => lesson.is_finished).length;
-    const lateLessons = nodeLessons.filter(lesson => lesson.is_late).length;
-    const isOverSpan = currentNode.lesson_span ? totalLessons > currentNode.lesson_span : false;
-    const lastLessonDate = nodeLessons.length > 0 ? 
-      nodeLessons[nodeLessons.length - 1].date || nodeLessons[nodeLessons.length - 1].created_at : 
-      undefined;
+    const completedLessons = nodeLessons.filter(
+      (lesson) => lesson.is_finished,
+    ).length;
+    const lateLessons = nodeLessons.filter((lesson) => lesson.is_late).length;
+    const isOverSpan = currentNode.lesson_span
+      ? totalLessons > currentNode.lesson_span
+      : false;
+    const lastLessonDate =
+      nodeLessons.length > 0
+        ? nodeLessons[nodeLessons.length - 1].date ||
+          nodeLessons[nodeLessons.length - 1].created_at
+        : undefined;
 
     return {
       node: {

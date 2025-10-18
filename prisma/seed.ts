@@ -1892,10 +1892,28 @@ async function main() {
   // سجلات دخول المعلمين
   for (const teacher of teachers) {
     for (let i = 0; i < 10; i++) {
+      // تحديد الحملة والمجموعة للمعلم
+      const teacherCampaigns = await prisma.teacherCampaign.findMany({
+        where: { teacher_id: teacher.id },
+        include: { campaign: true },
+      });
+      const teacherGroups = await prisma.teacherGroup.findMany({
+        where: { teacher_id: teacher.id },
+        include: { group: true },
+      });
+
+      const campaign =
+        teacherCampaigns[Math.floor(Math.random() * teacherCampaigns.length)];
+      const group =
+        teacherGroups[Math.floor(Math.random() * teacherGroups.length)];
+
       logData.push({
         event: 'TEACHER_LOGIN',
         timestamp: new Date(2024, 0, i + 1, 8 + Math.floor(Math.random() * 8)),
         teacher_id: teacher.id,
+        campaign_id: campaign?.campaign_id || campaign1.id,
+        group_id: group?.group_id || null,
+        notes: `تسجيل دخول المعلم ${teacher.first_name} ${teacher.last_name}`,
         metadata: {
           ip_address: `192.168.1.${Math.floor(Math.random() * 255)}`,
           user_agent:
@@ -1908,10 +1926,28 @@ async function main() {
   // سجلات دخول الطلاب
   for (const student of students) {
     for (let i = 0; i < 5; i++) {
+      // تحديد الحملة والمجموعة للطالب
+      const studentCampaigns = await prisma.studentCampaign.findMany({
+        where: { student_id: student.id },
+        include: { campaign: true },
+      });
+      const studentGroups = await prisma.studentGroup.findMany({
+        where: { student_id: student.id },
+        include: { group: true },
+      });
+
+      const campaign =
+        studentCampaigns[Math.floor(Math.random() * studentCampaigns.length)];
+      const group =
+        studentGroups[Math.floor(Math.random() * studentGroups.length)];
+
       logData.push({
         event: 'STUDENT_LOGIN',
         timestamp: new Date(2024, 0, i + 1, 16 + Math.floor(Math.random() * 4)),
         student_id: student.id,
+        campaign_id: campaign?.campaign_id || campaign1.id,
+        group_id: group?.group_id || null,
+        notes: `تسجيل دخول الطالب ${student.first_name} ${student.last_name}`,
         metadata: {
           ip_address: `192.168.1.${Math.floor(Math.random() * 255)}`,
           user_agent:
@@ -1923,18 +1959,136 @@ async function main() {
 
   // سجلات إنشاء جلسات التسميع
   for (const session of createdSessions) {
+    // الحصول على مجموعة الطالب من الجلسة
+    const studentGroup = await prisma.studentGroup.findFirst({
+      where: {
+        student_id: session.student_id,
+        campaign_id: session.campaign_id,
+      },
+      include: { group: true },
+    });
+
     logData.push({
       event: 'SAVING_SESSION_CREATED',
       timestamp: session.created_at,
       teacher_id: session.teacher_id,
       student_id: session.student_id,
+      campaign_id: session.campaign_id,
+      group_id: studentGroup?.group_id || null,
+      notes: `تم إنشاء جلسة تسميع جديدة للطالب من الصفحة ${session.start} إلى ${session.end}`,
       metadata: {
         session_id: session.id,
         duration: session.duration,
         rating: session.rating,
+        pages_covered: session.end - session.start + 1,
       },
     });
   }
+
+  // إضافة المزيد من سجلات النشاط لتوضيح الحقول الجديدة
+  // سجلات بدء المناهج
+  for (const group of groups) {
+    const groupCampaigns = await prisma.groupCampaigns.findMany({
+      where: { group_id: group.id },
+      include: { campaign: true },
+    });
+
+    for (const groupCampaign of groupCampaigns) {
+      logData.push({
+        event: 'CURRICULUM_STARTED',
+        timestamp: new Date(2024, 5, 15, 9, 0), // 15 يونيو 2024
+        teacher_id: group.current_teacher_id,
+        campaign_id: groupCampaign.campaign_id,
+        group_id: group.id,
+        notes: `تم بدء المنهج للمجموعة ${group.title} في الحملة ${groupCampaign.campaign.name}`,
+        metadata: {
+          curriculum_type: 'الفقه المنهجي',
+          start_date: '2024-06-15',
+        },
+      });
+    }
+  }
+
+  // سجلات تسجيل الحضور
+  for (let i = 0; i < 20; i++) {
+    const randomStudent = students[Math.floor(Math.random() * students.length)];
+    const studentGroup = await prisma.studentGroup.findFirst({
+      where: { student_id: randomStudent.id },
+      include: { group: true, campaign: true },
+    });
+
+    if (studentGroup) {
+      logData.push({
+        event: 'ATTENDANCE_MARKED',
+        timestamp: new Date(
+          2024,
+          5,
+          15 + i,
+          16,
+          Math.floor(Math.random() * 60),
+        ),
+        teacher_id: studentGroup.group.current_teacher_id,
+        student_id: randomStudent.id,
+        campaign_id: studentGroup.campaign_id,
+        group_id: studentGroup.group_id,
+        notes: `تم تسجيل حضور الطالب ${randomStudent.first_name} ${randomStudent.last_name} في المجموعة ${studentGroup.group.title}`,
+        metadata: {
+          attendance_status: Math.random() > 0.1 ? 'ATTEND' : 'MISS',
+          delay_minutes: Math.floor(Math.random() * 15),
+        },
+      });
+    }
+  }
+
+  // سجلات تعيين الأدوار
+  const teacherRoles = await prisma.teacherRole.findMany({
+    include: { teacher: true, group: true, campaign: true, role: true },
+  });
+
+  for (const teacherRole of teacherRoles) {
+    logData.push({
+      event: 'ROLE_ASSIGNED',
+      timestamp: new Date(2024, 5, 10, 10, 0),
+      teacher_id: teacherRole.teacher_id,
+      campaign_id: teacherRole.campaign_id,
+      group_id: teacherRole.group_id,
+      notes: `تم تعيين دور ${teacherRole.role.name} للمعلم ${teacherRole.teacher.first_name} ${teacherRole.teacher.last_name}`,
+      metadata: {
+        role_name: teacherRole.role.name,
+        role_description: teacherRole.role.description,
+        permissions: teacherRole.role.permissions,
+      },
+    });
+  }
+
+  // سجلات إنشاء الحملات
+  logData.push({
+    event: 'CAMPAIGN_CREATED',
+    timestamp: campaign1.created_at,
+    teacher_id: teachers[0].id,
+    campaign_id: campaign1.id,
+    notes: `تم إنشاء الحملة ${campaign1.name} في مسجد النور`,
+    metadata: {
+      campaign_name: campaign1.name,
+      start_date: campaign1.start_date,
+      end_date: campaign1.end_date,
+      mosque_id: campaign1.mosque_id,
+    },
+  });
+
+  logData.push({
+    event: 'CAMPAIGN_CREATED',
+    timestamp: campaign2.created_at,
+    teacher_id: teachers[2].id,
+    campaign_id: campaign2.id,
+    notes: `تم إنشاء الحملة ${campaign2.name} في مسجد الهداية`,
+    metadata: {
+      campaign_name: campaign2.name,
+      start_date: campaign2.start_date,
+      end_date: campaign2.end_date,
+      mosque_id: campaign2.mosque_id,
+    },
+  });
 
   await prisma.log.createMany({
     data: logData,
@@ -1957,7 +2111,7 @@ async function main() {
 - ${surahTemplates.length} قالب سورة وصفحة
 - ${students.length * 5} جلسة تسميع مع السور
 - ${attendanceData.length} سجل حضور
-- ${logData.length} سجل نشاط
+- ${logData.length} سجل نشاط (مع الحقول الجديدة: notes, group_id, campaign_id)
 
 ✅ جميع العلاقات تم ربطها بنجاح
 ✅ جميع الأسماء والبيانات باللغة العربية
@@ -1967,6 +2121,8 @@ async function main() {
 ✅ حساب النتائج الخام بعد خصم نقاط الأخطاء
 ✅ تتبع حالة الإكمال لكل سورة في الجلسة
 ✅ حساب النجاح الإجمالي للجلسة بناءً على التقييم المحدد
+✅ سجلات النشاط تشمل الحقول الجديدة: notes, group_id, campaign_id
+✅ ربط السجلات بالحملات والمجموعات المناسبة
   `);
 }
 

@@ -189,6 +189,7 @@ model Group {
   teacher_roles           TeacherRole[]
   CurriculumLessonSession CurriculumLessonSession[]
   GroupCurriculum         GroupCurriculum[]
+  logs                    Log[]
 
   @@index([mosque_id])
 }
@@ -231,6 +232,7 @@ model Campaign {
   CurriculumTemplate      CurriculumTemplate[]
   CurriculumLessonSession CurriculumLessonSession[]
   GroupCurriculum         GroupCurriculum[]
+  logs                    Log[]
 
   @@index([mosque_id])
   @@index([status])
@@ -464,19 +466,25 @@ model TeacherRole {
 }
 
 model Log {
-  id         Int      @id @default(autoincrement())
-  event      LogEvent
-  timestamp  DateTime @default(now())
-  teacher_id Int?
-  student_id Int?
-  metadata   Json?
-  created_at DateTime @default(now())
+  id          Int      @id @default(autoincrement())
+  event       LogEvent
+  timestamp   DateTime @default(now())
+  teacher_id  Int?
+  student_id  Int?
+  group_id    Int?
+  campaign_id Int
+  notes       String?
+  metadata    Json?
+  created_at  DateTime @default(now())
 
-  teacher Teacher? @relation(fields: [teacher_id], references: [id], onDelete: SetNull)
-  student Student? @relation(fields: [student_id], references: [id], onDelete: SetNull)
+  teacher  Teacher?  @relation(fields: [teacher_id], references: [id], onDelete: SetNull)
+  student  Student?  @relation(fields: [student_id], references: [id], onDelete: SetNull)
+  group    Group?    @relation(fields: [group_id], references: [id], onDelete: SetNull)
+  campaign Campaign  @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
 
   @@index([event])
   @@index([timestamp])
+  @@index([campaign_id])
 }
 
 // ============================================
@@ -667,6 +675,8 @@ enum LogEvent {
   TEACHER_LOGIN
   STUDENT_LOGIN
   SAVING_SESSION_CREATED
+  CURRICULUM_STARTED
+  CURRICULUM_END
   ATTENDANCE_MARKED
   MISTAKE_ASSERTED
   EVALUATION_ASSERTED

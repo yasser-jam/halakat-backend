@@ -55,6 +55,7 @@ import { CurriculumTemplateController } from './curriculum-template/curriculum-t
 import { CurriculumTemplateService } from './curriculum-template/curriculum-template.service';
 import { CurriculumLessonSessionController } from './curriculum-lesson-session/curriculum-lesson-session.controller';
 import { CurriculumLessonSessionService } from './curriculum-lesson-session/curriculum-lesson-session.service';
+import { LogModule } from './log/log.module';
 // import { AuthController } from './auth/auth.controller';
 // import { AuthService } from './auth/auth.service';
 
@@ -99,6 +100,6 @@ import { CurriculumLessonSessionService } from './curriculum-lesson-session/curr
     CurriculumTemplateService,
     CurriculumLessonSessionService,
   ],
-  imports: [AuthModule, SessionSurahModule],
+  imports: [AuthModule, SessionSurahModule, LogModule],
 })
 export class AppModule {}

@@ -4,6 +4,7 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { LogService } from '../log/log.service';
 import {
   CreateCurriculumLessonSessionDto,
   UpdateCurriculumLessonSessionDto,
@@ -13,7 +14,10 @@ import { NodeStatus } from '@prisma/client';
 
 @Injectable()
 export class CurriculumLessonSessionService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private logService: LogService,
+  ) {}
 
   async create(
     createSessionDto: CreateCurriculumLessonSessionDto,
@@ -334,6 +338,26 @@ export class CurriculumLessonSessionService {
         campaign: true,
       },
     });
+
+    // Create log entry for lesson completion
+    try {
+      await this.logService.create(
+        {
+          event: 'CURRICULUM_END',
+          teacher_id: session.teacher_id,
+          group_id: session.group_id,
+          notes: `تم إنهاء الدرس: ${updatedSession.lesson_node?.name || 'درس غير محدد'}`,
+          metadata: {
+            lesson_id: updatedSession.id,
+            group_id: session.group_id,
+          },
+        },
+        session.campaign_id,
+      );
+    } catch (error) {
+      console.error('Failed to create log for lesson completion:', error);
+      // Don't throw error to avoid breaking the main flow
+    }
 
     return this.mapToResponseDto(updatedSession);
   }

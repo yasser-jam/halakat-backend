@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { LogService } from '../log/log.service';
 
 import {
   CreateSavingSessionDto,
@@ -9,7 +10,10 @@ import { Prisma } from '@prisma/client';
 
 @Injectable()
 export class SavingSessionService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private logService: LogService,
+  ) {}
 
   async createSavingSession(dto: CreateSavingSessionDto) {
     const {
@@ -23,7 +27,7 @@ export class SavingSessionService {
       ...savingSessionData
     } = dto;
 
-    return this.prisma.savingSession.create({
+    const savingSession = await this.prisma.savingSession.create({
       data: {
         ...savingSessionData,
         teacher_id: teacherId,
@@ -67,6 +71,27 @@ export class SavingSessionService {
         campaign: true,
       },
     });
+
+    // Create log entry for saving session completion
+    try {
+      await this.logService.create(
+        {
+          event: 'SAVING_SESSION_CREATED',
+          teacher_id: teacherId,
+          student_id: studentId,
+          notes: `تم إنشاء جلسة تسميع جديدة للطالب من الصفحة ${savingSession.start} إلى ${savingSession.end}`,
+          metadata: {
+            saving_session_id: savingSession.id,
+          },
+        },
+        campaign_id,
+      );
+    } catch (error) {
+      console.error('Failed to create log for saving session:', error);
+      // Don't throw error to avoid breaking the main flow
+    }
+
+    return savingSession;
   }
 
   async getAll() {

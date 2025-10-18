@@ -1,11 +1,15 @@
 /* eslint-disable prettier/prettier */
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import { LogService } from '../log/log.service';
 import { BulkUpdateAttendanceDto, UpdateAttendanceDto } from './attendance.dto';
 
 @Injectable()
 export class AttendanceService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private logService: LogService,
+  ) {}
 
   async findAll(campaignId: number, groupId: number) {
     return await this.prisma.attendance.findMany({
@@ -202,6 +206,11 @@ export class AttendanceService {
 
   async batchUpdate(data: BulkUpdateAttendanceDto[]) {
     const results = [];
+    let groupId: number | null = null;
+    let teacherId: number | null = null;
+    let campaignId: number | null = null;
+    let groupTitle: string | null = null;
+    let updatedCount = 0;
 
     for (const record of data) {
       const attendance = await this.prisma.attendance.findFirst({
@@ -211,6 +220,21 @@ export class AttendanceService {
           taken_date: {
             gte: new Date(record.date + 'T00:00:00.000Z'),
             lt: new Date(record.date + 'T23:59:59.999Z'),
+          },
+        },
+        include: {
+          student: {
+            select: {
+              first_name: true,
+              last_name: true,
+            },
+          },
+          group: {
+            select: {
+              id: true,
+              title: true,
+              current_teacher_id: true,
+            },
           },
         },
       });
@@ -225,6 +249,14 @@ export class AttendanceService {
         continue;
       }
 
+      // Store group and teacher info for batch log (use first successful record)
+      if (groupId === null) {
+        groupId = attendance.group_id;
+        teacherId = attendance.group.current_teacher_id;
+        campaignId = record.campaign_id;
+        groupTitle = attendance.group.title;
+      }
+
       await this.prisma.attendance.update({
         where: { id: attendance.id },
         data: {
@@ -233,12 +265,36 @@ export class AttendanceService {
         },
       });
 
+      updatedCount++;
+
       results.push({
         student_id: record.student_id,
         campaign_id: record.campaign_id,
         date: record.date,
         data: record.status
       });
+    }
+
+    // Create single log entry for the entire batch update
+    if (updatedCount > 0 && groupId && teacherId && campaignId) {
+      try {
+        await this.logService.create(
+          {
+            event: 'ATTENDANCE_MARKED',
+            teacher_id: teacherId,
+            group_id: groupId,
+            notes: `تم تسجيل حضور ${updatedCount} طالب في المجموعة ${groupTitle}`,
+            metadata: {
+              group_id: groupId,
+              students_count: updatedCount,
+            },
+          },
+          campaignId,
+        );
+      } catch (error) {
+        console.error('Failed to create log for attendance batch update:', error);
+        // Don't throw error to avoid breaking the main flow
+      }
     }
 
     return results;

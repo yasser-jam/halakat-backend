@@ -137,8 +137,13 @@ export class AuthService {
       userType: 'TEACHER',
     };
 
+    // Remove sensitive fields from teacher info
+    const teacherInfo = { ...teacher };
+    delete teacherInfo.password;
+
     return {
       access_token: this.jwtService.sign(payload),
+      teacher: teacherInfo,
     };
   }
 

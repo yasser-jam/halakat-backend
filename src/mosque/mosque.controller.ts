@@ -6,6 +6,7 @@ import {
   Param,
   Put,
   Delete,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -13,6 +14,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiBody,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { MosqueService } from './mosque.service';
 import { CreateMosqueDto } from './mosque.dto';
@@ -33,8 +35,16 @@ export class MosqueController {
   @Get()
   @ApiOperation({ summary: 'Get all mosques' })
   @ApiResponse({ status: 200, description: 'List of mosques' })
-  findAll() {
-    return this.mosqueService.findAll();
+  @ApiQuery({
+    name: 'org_id',
+    required: false,
+    type: Number,
+    description: 'Filter mosques by organization ID',
+    example: 1,
+  })
+  findAll(@Query('org_id') orgId?: string) {
+    const orgIdNumber = orgId ? parseInt(orgId, 10) : undefined;
+    return this.mosqueService.findAll(orgIdNumber);
   }
 
   @Get(':id')

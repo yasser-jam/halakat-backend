@@ -11,8 +11,10 @@ export class MosqueService {
     return { message: 'Mosque created', data: mosque };
   }
 
-  async findAll() {
-    const mosques = await this.prisma.mosque.findMany();
+  async findAll(orgId?: number) {
+    const mosques = await this.prisma.mosque.findMany({
+      where: orgId ? { organization_id: orgId } : undefined,
+    });
     return { message: 'All mosques', data: mosques };
   }
 

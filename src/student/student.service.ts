@@ -7,7 +7,12 @@ import { UpdateStudentDto } from '../dto/student.dto';
 export class StudentService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(campaignId: string) {
+  async findAll() {
+    const students = await this.prisma.student.findMany();
+    return students;
+  }
+
+  async findAllCampaign(campaignId: string) {
     const students = await this.prisma.student.findMany({
       where: {
         campaign_enrollments: {

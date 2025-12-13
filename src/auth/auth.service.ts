@@ -257,20 +257,16 @@ export class AuthService {
     return { roles, permissions };
   }
 
-  async login({ mobile_phone_number, password }) {
+  async login({ mobile_phone_number }) {
     const teacher = await this.prisma.teacher.findUnique({
       where: { mobile_phone_number },
       include: {
-        // organization_management: {
-        //   where: { is_active: true },
-        //   include: {
-        //     organization: {
-        //       include: {
-        //         mosques: true,
-        //       },
-        //     },
-        //   },
-        // },
+        organization_management: {
+          where: { is_active: true },
+          include: {
+            organization: true,
+          },
+        },
         // mosque_management: {
         //   where: { is_active: true },
         //   include: {
@@ -311,9 +307,13 @@ export class AuthService {
       role: teacher.role,
     };
 
-    const { password: _, ...userInfo } = teacher;
+    const {
+      password: _password, // eslint-disable-line @typescript-eslint/no-unused-vars
+      organization_management,
+      ...userInfo
+    } = teacher;
 
-    return {
+    const response: any = {
       access_token: this.jwtService.sign(payload),
       user: {
         ...userInfo,
@@ -340,5 +340,15 @@ export class AuthService {
         // })),
       },
     };
+
+    // If role is ORGANIZATION_ADMIN, return assigned organization
+    if (
+      teacher.role === 'ORGANIZATION_ADMIN' &&
+      organization_management.length > 0
+    ) {
+      response.assigned_organization = organization_management[0].organization;
+    }
+
+    return response;
   }
 }

@@ -8,6 +8,7 @@ import {
   Delete,
   UseGuards,
   Request,
+  Headers,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -30,8 +31,8 @@ export class CampaignsController {
   @Get()
   @ApiOperation({ summary: 'Get all campaigns' })
   @ApiResponse({ status: 200, description: 'Return all campaigns' })
-  async findAll() {
-    return this.campaignService.findAll();
+  async findAll(@Headers('mosque_id') mosqueId?: string) {
+    return this.campaignService.findAll(Number(mosqueId));
   }
 
   @Post()
@@ -54,9 +55,17 @@ export class CampaignsController {
     summary: 'Get campaigns assigned to the authenticated teacher',
   })
   @ApiResponse({ status: 200, description: 'Return campaigns for the teacher' })
-  async findCampaignsByTeacher(@Request() req) {
+  async findCampaignsByTeacher(
+    @Request() req,
+    @Headers('mosque_id') mosqueId?: string,
+  ) {
     const teacherId = req.user.id;
-    return this.campaignService.findByTeacherId(teacherId);
+    const userRole = req.user.role;
+    return this.campaignService.findByTeacherId(
+      teacherId,
+      userRole,
+      mosqueId ? Number(mosqueId) : undefined,
+    );
   }
 
   @Get(':id')

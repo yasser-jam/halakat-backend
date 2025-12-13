@@ -10,7 +10,7 @@ export class StudentService {
   async findAll(filters?: { mosqueIds?: number[] }) {
     const whereClause: any = {};
 
-    // Filter by mosque IDs if provided
+    // Filter by home mosque IDs if provided
     if (filters?.mosqueIds && filters.mosqueIds.length > 0) {
       whereClause.mosque_id = {
         in: filters.mosqueIds,
@@ -19,6 +19,14 @@ export class StudentService {
 
     const students = await this.prisma.student.findMany({
       where: whereClause,
+      include: {
+        mosque: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
     });
     return students;
   }

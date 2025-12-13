@@ -6,7 +6,7 @@ import {
   Param,
   Put,
   Delete,
-  Query,
+  Headers,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -42,7 +42,7 @@ export class MosqueController {
     description: 'Filter mosques by organization ID',
     example: 1,
   })
-  findAll(@Query('org_id') orgId?: string) {
+  findAll(@Headers('organization_id') orgId?: string) {
     const orgIdNumber = orgId ? parseInt(orgId, 10) : undefined;
     return this.mosqueService.findAll(orgIdNumber);
   }

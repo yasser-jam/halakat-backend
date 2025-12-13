@@ -59,14 +59,16 @@ async function main() {
       },
     },
   });
-  console.log(`✅ Organization created: ${organization.name} (ID: ${organization.id})\n`);
+  console.log(
+    `✅ Organization created: ${organization.name} (ID: ${organization.id})\n`,
+  );
 
   // ============================================
   // 2. إنشاء مالك المؤسسة - Create Organization Owner
   // ============================================
   console.log('👤 Creating Organization Owner...');
   const hashedPassword = await bcrypt.hash('password123', 10);
-  
+
   const orgOwner = await prisma.teacher.create({
     data: {
       mobile_phone_number: '+966501234567',
@@ -87,7 +89,9 @@ async function main() {
       is_active: true,
     },
   });
-  console.log(`✅ Organization Owner created: ${orgOwner.first_name} ${orgOwner.last_name}`);
+  console.log(
+    `✅ Organization Owner created: ${orgOwner.first_name} ${orgOwner.last_name}`,
+  );
   console.log(`   Phone: ${orgOwner.mobile_phone_number}`);
   console.log(`   Password: password123`);
   console.log(`   Role: OWNER\n`);
@@ -156,7 +160,9 @@ async function main() {
       is_active: true,
     },
   });
-  console.log(`✅ Mosque Manager created: ${mosqueManager.first_name} ${mosqueManager.last_name}`);
+  console.log(
+    `✅ Mosque Manager created: ${mosqueManager.first_name} ${mosqueManager.last_name}`,
+  );
   console.log(`   Phone: ${mosqueManager.mobile_phone_number}`);
   console.log(`   Password: password123`);
   console.log(`   Manages: ${mosque1.name}`);
@@ -177,7 +183,9 @@ async function main() {
       is_mojaz: true,
     },
   });
-  console.log(`✅ Regular Teacher created: ${regularTeacher.first_name} ${regularTeacher.last_name}`);
+  console.log(
+    `✅ Regular Teacher created: ${regularTeacher.first_name} ${regularTeacher.last_name}`,
+  );
   console.log(`   Phone: ${regularTeacher.mobile_phone_number}`);
   console.log(`   Password: password123\n`);
 
@@ -187,6 +195,7 @@ async function main() {
   console.log('👦 Creating Student...');
   const student = await prisma.student.create({
     data: {
+      mosque_id: mosque1.id,
       student_mobile: '+966501234580',
       first_name: 'خالد',
       last_name: 'الطالب',
@@ -203,6 +212,7 @@ async function main() {
   });
   console.log(`✅ Student created: ${student.first_name} ${student.last_name}`);
   console.log(`   Phone: ${student.student_mobile}`);
+  console.log(`   Home Mosque: ${mosque1.name}`);
   console.log(`   Password: password123\n`);
 
   // ============================================
@@ -217,7 +227,13 @@ async function main() {
       end_date: new Date('2025-01-31'),
       status: true,
       is_campaign_continuous: false,
-      days: JSON.stringify(['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday']),
+      days: JSON.stringify([
+        'Sunday',
+        'Monday',
+        'Tuesday',
+        'Wednesday',
+        'Thursday',
+      ]),
       start_time: '16:00',
       end_time: '18:00',
     },
@@ -308,7 +324,7 @@ async function main() {
   console.log('═══════════════════════════════════════════════════════');
   console.log('✅ Seed completed successfully!');
   console.log('═══════════════════════════════════════════════════════\n');
-  
+
   console.log('📊 SUMMARY:');
   console.log('───────────────────────────────────────────────────────');
   console.log(`Organizations: 1`);
@@ -319,17 +335,23 @@ async function main() {
   console.log(`  - ${mosque2.name} (${mosque2.city})`);
   console.log('');
   console.log(`Users: 4`);
-  console.log(`  1. Organization Owner: ${orgOwner.first_name} ${orgOwner.last_name}`);
+  console.log(
+    `  1. Organization Owner: ${orgOwner.first_name} ${orgOwner.last_name}`,
+  );
   console.log(`     Phone: ${orgOwner.mobile_phone_number}`);
   console.log(`     Password: password123`);
   console.log(`     Manages: ${organization.name} (OWNER)`);
   console.log('');
-  console.log(`  2. Mosque Manager: ${mosqueManager.first_name} ${mosqueManager.last_name}`);
+  console.log(
+    `  2. Mosque Manager: ${mosqueManager.first_name} ${mosqueManager.last_name}`,
+  );
   console.log(`     Phone: ${mosqueManager.mobile_phone_number}`);
   console.log(`     Password: password123`);
   console.log(`     Manages: ${mosque1.name} (ADMIN)`);
   console.log('');
-  console.log(`  3. Regular Teacher: ${regularTeacher.first_name} ${regularTeacher.last_name}`);
+  console.log(
+    `  3. Regular Teacher: ${regularTeacher.first_name} ${regularTeacher.last_name}`,
+  );
   console.log(`     Phone: ${regularTeacher.mobile_phone_number}`);
   console.log(`     Password: password123`);
   console.log(`     Teaching: ${group.title} in ${campaign.name}`);
@@ -345,13 +367,19 @@ async function main() {
   console.log(`Groups: 1`);
   console.log(`  - ${group.title} (Teacher: ${regularTeacher.first_name})`);
   console.log('───────────────────────────────────────────────────────\n');
-  
+
   console.log('🔐 LOGIN CREDENTIALS:');
   console.log('───────────────────────────────────────────────────────');
   console.log('POST /auth/login (Unified login for all teachers)');
-  console.log(`  Organization Owner: ${orgOwner.mobile_phone_number} / password123`);
-  console.log(`  Mosque Manager: ${mosqueManager.mobile_phone_number} / password123`);
-  console.log(`  Regular Teacher: ${regularTeacher.mobile_phone_number} / password123`);
+  console.log(
+    `  Organization Owner: ${orgOwner.mobile_phone_number} / password123`,
+  );
+  console.log(
+    `  Mosque Manager: ${mosqueManager.mobile_phone_number} / password123`,
+  );
+  console.log(
+    `  Regular Teacher: ${regularTeacher.mobile_phone_number} / password123`,
+  );
   console.log('');
   console.log('POST /auth/login/student');
   console.log(`  Student: ${student.student_mobile} / password123`);

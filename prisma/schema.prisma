@@ -48,6 +48,7 @@ model Mosque {
   organization Organization    @relation(fields: [organization_id], references: [id], onDelete: Cascade)
   managers     MosqueManager[]
   campaigns    Campaign[]
+  students     Student[]
 
   @@index([organization_id])
   @@index([name])
@@ -94,6 +95,7 @@ model MosqueManager {
 // Global Student model - students can participate in multiple campaigns across different mosques
 model Student {
   id                                  Int       @id @default(autoincrement())
+  mosque_id                           Int?      // Primary/home mosque (optional)
   current_mosque_name                 String?
   educational_class                   Int?
   first_name                          String?
@@ -139,7 +141,8 @@ model Student {
   created_at                          DateTime  @default(now())
   updated_at                          DateTime? @updatedAt
 
-  // Relations - all through campaigns
+  // Relations
+  mosque               Mosque?            @relation(fields: [mosque_id], references: [id], onDelete: SetNull)
   campaign_enrollments StudentCampaign[]
   groups               StudentGroup[]
   attendance           Attendance[]
@@ -148,6 +151,7 @@ model Student {
 
   @@index([student_mobile])
   @@index([first_name, last_name])
+  @@index([mosque_id])
 }
 
 // Global Teacher model - teachers can work in multiple campaigns across different mosques

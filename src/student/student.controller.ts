@@ -8,6 +8,7 @@ import {
   Delete,
   Headers,
   BadRequestException,
+  Query,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -26,18 +27,18 @@ import { UpdateStudentDto } from '../dto/student.dto';
 export class StudentsController {
   constructor(private readonly studentService: StudentService) {}
 
-  @Get()
+  @Get('all')
   @ApiOperation({ summary: 'Get all students' })
   @ApiResponse({ status: 200, description: 'Return all students' })
-  async list() {
-    return this.studentService.findAll();
-  }
+  async findAll(@Query('mosqueIds') mosqueIds?: string) {
+    const filters: { mosqueIds?: number[] } = {};
 
-  @Get()
-  @ApiOperation({ summary: 'Get all students' })
-  @ApiResponse({ status: 200, description: 'Return all students' })
-  async findAll(@Headers('campaign_id') campaignId: string) {
-    return this.studentService.findAllCampaign(campaignId);
+    // Parse mosque IDs if provided
+    if (mosqueIds) {
+      filters.mosqueIds = mosqueIds.split(',').map((id) => Number(id));
+    }
+
+    return this.studentService.findAll(filters);
   }
 
   @Post()
@@ -58,17 +59,17 @@ export class StudentsController {
   }
 
   // List students for campaign
-  @Get('campaign')
+  @Get('')
   @ApiOperation({ summary: 'List students for campaign' })
   @ApiResponse({
     status: 200,
     description: 'List of students for the campaign',
   })
-  async listStudentsForCampaign(@Headers('campaign-id') campaignId: string) {
+  async listStudentsForCampaign(@Headers('campaign_id') campaignId: string) {
     if (!campaignId) {
       throw new BadRequestException('Campaign ID is required in headers');
     }
-    return this.studentService.listStudentsForCampaign(Number(campaignId));
+    return this.studentService.findAllCampaign(campaignId);
   }
 
   // List un assigned

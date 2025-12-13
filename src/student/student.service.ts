@@ -7,8 +7,19 @@ import { UpdateStudentDto } from '../dto/student.dto';
 export class StudentService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll() {
-    const students = await this.prisma.student.findMany();
+  async findAll(filters?: { mosqueIds?: number[] }) {
+    const whereClause: any = {};
+
+    // Filter by mosque IDs if provided
+    if (filters?.mosqueIds && filters.mosqueIds.length > 0) {
+      whereClause.mosque_id = {
+        in: filters.mosqueIds,
+      };
+    }
+
+    const students = await this.prisma.student.findMany({
+      where: whereClause,
+    });
     return students;
   }
 

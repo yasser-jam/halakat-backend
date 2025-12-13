@@ -116,17 +116,24 @@ export class AuthService {
   async loginTeacher({ mobile_phone_number }) {
     const teacher = await this.prisma.teacher.findUnique({
       where: { mobile_phone_number },
-      // include: {
-      //   teacher_roles: {
-      //     include: {
-      //       role: {
-      //         select: {
-      //           permissions: true,
-      //         },
-      //       },
-      //     },
-      //   },
-      // },
+      include: {
+        campaign_assignments: {
+          where: { is_active: true },
+          include: {
+            campaign: {
+              include: {
+                mosque: {
+                  include: {
+                    organization: true,
+                  },
+                },
+              },
+            },
+          },
+          take: 1,
+          orderBy: { assigned_date: 'desc' },
+        },
+      },
     });
     if (!teacher) {
       throw new UnauthorizedException();
@@ -137,14 +144,33 @@ export class AuthService {
       userType: 'TEACHER',
     };
 
-    // Remove sensitive fields from teacher info
+    // Remove sensitive fields and relations from teacher info
     const teacherInfo = { ...teacher };
     delete teacherInfo.password;
+    delete teacherInfo.campaign_assignments;
 
-    return {
+    const response: any = {
       access_token: this.jwtService.sign(payload),
       teacher: teacherInfo,
     };
+
+    // If role is ORGANIZATION_ADMIN, return assigned_org
+    if (teacher.role === 'ORGANIZATION_ADMIN') {
+      const campaignAssignment = teacher.campaign_assignments[0];
+      if (campaignAssignment?.campaign?.mosque?.organization) {
+        response.assigned_org = campaignAssignment.campaign.mosque.organization;
+      }
+    }
+
+    // If role is MOSQUE_ADMIN, return assigned_mosque
+    if (teacher.role === 'MOSQUE_ADMIN') {
+      const campaignAssignment = teacher.campaign_assignments[0];
+      if (campaignAssignment?.campaign?.mosque) {
+        response.assigned_mosque = campaignAssignment.campaign.mosque;
+      }
+    }
+
+    return response;
   }
 
   async loginStudent({ student_mobile, password }) {
@@ -229,5 +255,90 @@ export class AuthService {
       ),
     );
     return { roles, permissions };
+  }
+
+  async login({ mobile_phone_number, password }) {
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { mobile_phone_number },
+      include: {
+        // organization_management: {
+        //   where: { is_active: true },
+        //   include: {
+        //     organization: {
+        //       include: {
+        //         mosques: true,
+        //       },
+        //     },
+        //   },
+        // },
+        // mosque_management: {
+        //   where: { is_active: true },
+        //   include: {
+        //     mosque: {
+        //       include: {
+        //         organization: true,
+        //         campaigns: { where: { status: true } },
+        //       },
+        //     },
+        //   },
+        // },
+        // campaign_assignments: {
+        //   where: { is_active: true },
+        //   include: {
+        //     campaign: {
+        //       include: {
+        //         mosque: { include: { organization: true } },
+        //       },
+        //     },
+        //   },
+        // },
+        // groups: {
+        //   include: {
+        //     group: true,
+        //     campaign: true,
+        //   },
+        // },
+      },
+    });
+
+    if (!teacher) {
+      throw new UnauthorizedException('Invalid credentials');
+    }
+
+    const payload = {
+      sub: teacher.id,
+      userType: 'TEACHER',
+      role: teacher.role,
+    };
+
+    const { password: _, ...userInfo } = teacher;
+
+    return {
+      access_token: this.jwtService.sign(payload),
+      user: {
+        ...userInfo,
+        // managedOrganizations: teacher.organization_management.map((om) => ({
+        //   id: om.organization.id,
+        //   name: om.organization.name,
+        //   role: om.role,
+        //   organization: om.organization,
+        // })),
+        // managedMosques: teacher.mosque_management.map((mm) => ({
+        //   id: mm.mosque.id,
+        //   name: mm.mosque.name,
+        //   role: mm.role,
+        //   mosque: mm.mosque,
+        // })),
+        // teachingCampaigns: teacher.campaign_assignments.map((ca) => ({
+        //   id: ca.campaign.id,
+        //   name: ca.campaign.name,
+        //   campaign: ca.campaign,
+        // })),
+        // teachingGroups: teacher.groups.map((tg) => ({
+        //   group: tg.group,
+        //   campaign: tg.campaign,
+        // })),
+      },
+    };
   }
 }

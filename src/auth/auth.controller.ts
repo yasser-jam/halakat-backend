@@ -4,6 +4,7 @@ import {
   ApiOperation,
   ApiBearerAuth,
   ApiHeader,
+  ApiResponse,
 } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
@@ -38,6 +39,17 @@ export class AuthController {
   @ApiOperation({ summary: 'Login as Student' })
   loginStudent(@Body() dto: LoginStudentDto) {
     return this.authService.loginStudent(dto);
+  }
+
+  @Post('login')
+  @ApiOperation({
+    summary:
+      'Unified login - returns teacher with all management and teaching context',
+  })
+  @ApiResponse({ status: 200, description: 'Login successful' })
+  @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  login(@Body() dto: LoginTeacherDto) {
+    return this.authService.login(dto);
   }
 
   @ApiBearerAuth('access-token')

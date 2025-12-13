@@ -1,15 +1,54 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
+import * as bcrypt from 'bcryptjs';
 
 @Injectable()
 export class OrganizationService {
   constructor(private prisma: PrismaService) {}
 
   async create(createOrganizationDto: any) {
-    const org = await this.prisma.organization.create({
-      data: createOrganizationDto,
+    const {
+      owner_phone,
+      owner_first_name,
+      owner_last_name,
+      owner_password,
+      ...orgData
+    } = createOrganizationDto;
+
+    return this.prisma.$transaction(async (tx) => {
+      // Create the organization
+      const org = await tx.organization.create({
+        data: orgData,
+      });
+
+      // If owner information is provided, create the owner
+      if (owner_phone) {
+        const hashedPassword = await bcrypt.hash(owner_password, 10);
+
+        const owner = await tx.teacher.create({
+          data: {
+            mobile_phone_number: owner_phone,
+            first_name: owner_first_name,
+            last_name: owner_last_name,
+            password: hashedPassword,
+            role: 'TEACHER',
+          },
+        });
+
+        await tx.organizationManager.create({
+          data: {
+            teacher_id: owner.id,
+            organization_id: org.id,
+            role: 'OWNER',
+            is_active: true,
+          },
+        });
+
+        return { message: 'Organization created', data: { org, owner } };
+      }
+
+      return { message: 'Organization created', data: { org } };
     });
-    return { message: 'Organization created', data: org };
   }
 
   async findAll() {

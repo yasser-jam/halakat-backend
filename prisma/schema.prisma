@@ -21,8 +21,8 @@ model Organization {
   metadata      Json?
 
   // Relations
-  mosques    Mosque[]
-  users      OrganizationUser[]
+  mosques  Mosque[]
+  managers OrganizationManager[]
   Curriculum Curriculum[]
   Category   Category[]
 
@@ -45,30 +45,50 @@ model Mosque {
   metadata        Json?
 
   // Relations
-  organization Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  organization Organization    @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  managers     MosqueManager[]
   campaigns    Campaign[]
 
   @@index([organization_id])
   @@index([name])
 }
 
-// Organization users for managing access across organizations
-model OrganizationUser {
+// Junction: Teacher manages Organizations (M-M)
+model OrganizationManager {
   id              Int      @id @default(autoincrement())
+  teacher_id      Int
   organization_id Int
-  email           String
-  first_name      String?
-  last_name       String?
   role            OrgRole  @default(ADMIN)
   is_active       Boolean  @default(true)
+  assigned_date   DateTime @default(now())
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
-  password        String?
 
+  teacher      Teacher      @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
   organization Organization @relation(fields: [organization_id], references: [id], onDelete: Cascade)
 
-  @@unique([organization_id, email])
-  @@index([email])
+  @@unique([teacher_id, organization_id])
+  @@index([organization_id])
+  @@index([teacher_id])
+}
+
+// Junction: Teacher manages Mosques (M-M)
+model MosqueManager {
+  id            Int        @id @default(autoincrement())
+  teacher_id    Int
+  mosque_id     Int
+  role          MosqueRole @default(ADMIN)
+  is_active     Boolean    @default(true)
+  assigned_date DateTime   @default(now())
+  created_at    DateTime   @default(now())
+  updated_at    DateTime   @updatedAt
+
+  teacher Teacher @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  mosque  Mosque  @relation(fields: [mosque_id], references: [id], onDelete: Cascade)
+
+  @@unique([teacher_id, mosque_id])
+  @@index([mosque_id])
+  @@index([teacher_id])
 }
 
 // Global Student model - students can participate in multiple campaigns across different mosques
@@ -159,7 +179,11 @@ model Teacher {
   created_at                         DateTime  @default(now())
   updated_at                         DateTime? @updatedAt
 
-  // Relations - all through campaigns
+  // Management Relations (M-M)
+  organization_management OrganizationManager[]
+  mosque_management       MosqueManager[]
+
+  // Teaching Relations (M-M through campaigns)
   campaign_assignments    TeacherCampaign[]
   groups                  TeacherGroup[]
   saving_sessions         SavingSession[]
@@ -657,6 +681,11 @@ enum Role {
 
 enum OrgRole {
   OWNER
+  ADMIN
+  MANAGER
+}
+
+enum MosqueRole {
   ADMIN
   MANAGER
 }

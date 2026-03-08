@@ -17,7 +17,11 @@ import {
   ApiBody,
 } from '@nestjs/swagger';
 import { AttendanceService } from './attendance.service';
-import { BulkUpdateAttendanceDto, UpdateAttendanceDto } from './attendance.dto';
+import {
+  BulkUpdateAttendanceDto,
+  UpdateAttendanceDto,
+  CreateOrUpdateAttendanceRecordDto,
+} from './attendance.dto';
 
 @ApiTags('attendance')
 @Controller('attendance')
@@ -157,5 +161,32 @@ export class AttendanceController {
   @Get(':id')
   async getAttendanceById(@Param('id') id: number) {
     return this.attendanceService.getAttendanceById(id);
+  }
+
+  @ApiOperation({
+    summary: 'Get all attendances by campaign (simple)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns all attendance records for a campaign',
+  })
+  @Get('campaign/simple')
+  async getAttendancesByCampaign(@Headers('campaign_id') campaignId: number) {
+    return this.attendanceService.getAttendancesByCampaign(campaignId);
+  }
+
+  @ApiOperation({
+    summary: 'Create or update a single attendance record',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Attendance record created or updated',
+  })
+  @ApiBody({ type: CreateOrUpdateAttendanceRecordDto })
+  @Post('record')
+  async createOrUpdateAttendance(
+    @Body() data: CreateOrUpdateAttendanceRecordDto,
+  ) {
+    return this.attendanceService.createOrUpdateAttendance(data);
   }
 }

@@ -3,7 +3,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { LogService } from '../log/log.service';
 import { BulkUpdateAttendanceDto, UpdateAttendanceDto } from './attendance.dto';
-
+// 
 @Injectable()
 export class AttendanceService {
   constructor(
@@ -92,7 +92,7 @@ export class AttendanceService {
       });
     }
   }
-  r;
+
   async update(id: number, updateAttendanceDto: UpdateAttendanceDto) {
     const attendance = await this.prisma.attendance.findUnique({
       where: { id: Number(id) },
@@ -367,6 +367,7 @@ export class AttendanceService {
       const groupInfo = (attendances as any[])[0]?.group;
       
       return {
+        groupId: groupInfo?.id,
         groupKey,
         groupTitle: groupInfo?.title || '',
         groupTeachers: groupInfo?.teachers || [],
@@ -430,5 +431,111 @@ export class AttendanceService {
     };
 
     return mappedAttendance;
+  }
+
+  // Simple API to get all attendances by campaign
+  async getAttendancesByCampaign(campaignId: number) {
+    return await this.prisma.attendance.findMany({
+      where: {
+        campaign_id: Number(campaignId),
+      },
+      include: {
+        student: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            educational_class: true
+          }
+        },
+        group: {
+          select: {
+            id: true,
+            title: true
+          }
+        }
+      },
+      orderBy: [
+        { taken_date: 'desc' }
+      ]
+    });
+  }
+
+  // Simple API to create or update a single attendance record
+  async createOrUpdateAttendance(data: {
+    student_id: number;
+    group_id: number;
+    campaign_id: number;
+    taken_date: string;
+    status: string;
+    delay_time?: number;
+  }) {
+    // Check if attendance record already exists
+    const existingAttendance = await this.prisma.attendance.findFirst({
+      where: {
+        student_id: Number(data.student_id),
+        group_id: Number(data.group_id),
+        campaign_id: Number(data.campaign_id),
+        taken_date: {
+          gte: new Date(data.taken_date + 'T00:00:00.000Z'),
+          lt: new Date(data.taken_date + 'T23:59:59.999Z'),
+        },
+      },
+    });
+
+    if (existingAttendance) {
+      // Update existing record
+      return await this.prisma.attendance.update({
+        where: { id: existingAttendance.id },
+        data: {
+          status: data.status,
+          delay_time: data.delay_time ?? -1,
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              educational_class: true
+            }
+          },
+          group: {
+            select: {
+              id: true,
+              title: true
+            }
+          }
+        }
+      });
+    } else {
+      // Create new record
+      return await this.prisma.attendance.create({
+        data: {
+          student_id: Number(data.student_id),
+          group_id: Number(data.group_id),
+          campaign_id: Number(data.campaign_id),
+          taken_date: new Date(data.taken_date).toISOString(),
+          status: data.status,
+          delay_time: data.delay_time ?? -1,
+        },
+        include: {
+          student: {
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              educational_class: true
+            }
+          },
+          group: {
+            select: {
+              id: true,
+              title: true
+            }
+          }
+        }
+      });
+    }
   }
 }

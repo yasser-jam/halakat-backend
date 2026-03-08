@@ -6,8 +6,9 @@ import {
   IsInt,
   Min,
   IsISO8601,
+  IsOptional,
 } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateAttendanceDto {
   @ApiProperty()
@@ -59,3 +60,30 @@ export class BulkUpdateAttendanceDto {
 }
 
 export class UpdateAttendanceDto extends CreateAttendanceDto {}
+
+export class CreateOrUpdateAttendanceRecordDto {
+  @ApiProperty({ description: 'Student ID' })
+  @IsNumber()
+  student_id: number;
+
+  @ApiProperty({ description: 'Group ID' })
+  @IsNumber()
+  group_id: number;
+
+  @ApiProperty({ description: 'Campaign ID' })
+  @IsNumber()
+  campaign_id: number;
+
+  @ApiProperty({ description: 'Date of attendance (ISO 8601 format)', example: '2025-12-14' })
+  @IsDateString()
+  taken_date: string;
+
+  @ApiProperty({ description: 'Attendance status', enum: ['NOT_TAKEN', 'ATTEND', 'DELAY', 'MISSED'] })
+  @IsString()
+  status: string;
+
+  @ApiPropertyOptional({ description: 'Delay time in minutes (optional)' })
+  @IsOptional()
+  @IsNumber()
+  delay_time?: number;
+}

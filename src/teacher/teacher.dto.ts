@@ -64,9 +64,24 @@ export class CreateTeacherDto {
   @ApiProperty({ example: 'Al-Noor School', required: false })
   workplace_name?: string;
 
-  @ApiProperty({ example: 'password123' })
-  password: string;
+  @ApiProperty({ example: 'password123', required: false })
+  password?: string;
 
   @ApiProperty({ example: 'TEACHER', required: false })
   role?: string;
+
+  @ApiProperty({ example: 'Teacher notes', required: false })
+  notes?: string;
+}
+
+export class AssignTeacherCampaignDto {
+  @ApiProperty({ example: 1, description: 'Campaign ID to assign the teacher to' })
+  campaign_id: number;
+
+  @ApiProperty({
+    example: 1,
+    required: false,
+    description: 'Role ID to assign (defaults to 1)',
+  })
+  role_id?: number;
 }

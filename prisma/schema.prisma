@@ -138,6 +138,7 @@ model Student {
   parts_tested_by_the_endowments      String?
   image_url                           String?
   password                            String?
+  notes                               String?
   created_at                          DateTime  @default(now())
   updated_at                          DateTime? @updatedAt
 
@@ -180,6 +181,7 @@ model Teacher {
   workplace_name                     String?
   password                           String
   role                               Role      @default(TEACHER)
+  notes                              String?
   created_at                         DateTime  @default(now())
   updated_at                         DateTime? @updatedAt
 

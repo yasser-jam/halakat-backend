@@ -232,6 +232,11 @@ export class CreateStudentDto {
   @IsOptional()
   @IsString()
   image_url?: string;
+
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }
 
 export class UpdateStudentDto extends CreateStudentDto {}

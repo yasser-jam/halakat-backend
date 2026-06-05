@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateTeacherDto } from './teacher.dto';
 import * as bcrypt from 'bcryptjs';
@@ -51,39 +55,80 @@ export class TeacherService {
     return res;
   }
 
-  async create(createTeacherDto: CreateTeacherDto, campaignId: number) {
-    // Prepare data for Prisma, ensuring role is of enum type if present
-    const { role, ...rest } = createTeacherDto as any;
+  async create(createTeacherDto: CreateTeacherDto, campaignId?: number) {
+    const { role, password, ...rest } = createTeacherDto as any;
     const data: any = {
       ...rest,
-      password: await bcrypt.hash('password', 10),
+      password: await bcrypt.hash(password || 'password', 10),
     };
     if (role) {
       data.role = role;
     }
 
-    const newTeacher = await this.prisma.teacher.create({
-      data,
-    });
+    const newTeacher = await this.prisma.teacher.create({ data });
 
-    // Assign teacher to campaign
-    await this.prisma.teacherCampaign.create({
-      data: {
-        teacher_id: newTeacher.id,
-        campaign_id: campaignId,
-      },
-    });
-
-    // Assign default role (role_id = 3) to the teacher for this campaign
-    await this.prisma.teacherRole.create({
-      data: {
-        teacher_id: newTeacher.id,
-        role_id: 1, // default role
-        campaign_id: campaignId,
-      },
-    });
+    if (campaignId) {
+      await this.assignToCampaign(newTeacher.id, campaignId);
+    }
 
     return { message: 'Teacher created', data: newTeacher };
+  }
+
+  async assignToCampaign(
+    teacherId: number,
+    campaignId: number,
+    roleId: number = 1,
+  ) {
+    const teacher = await this.prisma.teacher.findUnique({
+      where: { id: teacherId },
+    });
+
+    if (!teacher) {
+      throw new NotFoundException(`Teacher with ID ${teacherId} not found`);
+    }
+
+    const campaign = await this.prisma.campaign.findUnique({
+      where: { id: campaignId },
+    });
+
+    if (!campaign) {
+      throw new NotFoundException(`Campaign with ID ${campaignId} not found`);
+    }
+
+    const existing = await this.prisma.teacherCampaign.findUnique({
+      where: {
+        teacher_id_campaign_id: {
+          teacher_id: teacherId,
+          campaign_id: campaignId,
+        },
+      },
+    });
+
+    if (existing) {
+      throw new ConflictException(
+        `Teacher ${teacherId} is already assigned to campaign ${campaignId}`,
+      );
+    }
+
+    await this.prisma.teacherCampaign.create({
+      data: {
+        teacher_id: teacherId,
+        campaign_id: campaignId,
+      },
+    });
+
+    await this.prisma.teacherRole.create({
+      data: {
+        teacher_id: teacherId,
+        role_id: roleId,
+        campaign_id: campaignId,
+      },
+    });
+
+    return {
+      message: 'Teacher assigned to campaign',
+      data: { teacher_id: teacherId, campaign_id: campaignId, role_id: roleId },
+    };
   }
 
   async findOne(id: number, campaign_id: string) {

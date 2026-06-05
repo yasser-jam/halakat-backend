@@ -151,6 +151,11 @@ export class CreateTeacherDto {
   @IsString()
   workplace_name?: string;
 
+  @ApiProperty({ required: false })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => TeacherRole)

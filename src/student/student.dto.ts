@@ -133,4 +133,35 @@ export class CreateStudentDto {
 
   @ApiProperty({ example: 'password123', required: false })
   password?: string;
+
+  @ApiProperty({ example: 'Student notes', required: false })
+  notes?: string;
+}
+
+export class ListStudentsQueryDto {
+  @ApiProperty({ example: 1, required: false, default: 1 })
+  page?: number;
+
+  @ApiProperty({ example: 20, required: false, default: 20 })
+  limit?: number;
+
+  @ApiProperty({
+    example: 'Ahmed',
+    required: false,
+    description: 'Search by first name, last name, or mobile',
+  })
+  search?: string;
+
+  @ApiProperty({
+    example: '1,2,3',
+    required: false,
+    description: 'Comma-separated mosque IDs',
+  })
+  mosqueIds?: string;
+
+  @ApiProperty({ example: 5, required: false })
+  educational_class?: number;
+
+  @ApiProperty({ example: false, required: false })
+  in_another_mosque?: boolean;
 }

@@ -18,7 +18,7 @@ import {
   ApiHeader,
 } from '@nestjs/swagger';
 import { TeacherService } from './teacher.service';
-import { CreateTeacherDto } from './teacher.dto';
+import { CreateTeacherDto, AssignTeacherCampaignDto } from './teacher.dto';
 
 @ApiTags('teachers')
 @Controller('teachers')
@@ -33,7 +33,11 @@ export class TeachersController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create a new teacher' })
+  @ApiOperation({
+    summary: 'Create a new teacher',
+    description:
+      'Creates a teacher without requiring a campaign. Optionally pass campaign_id header to also assign the teacher to a campaign.',
+  })
   @ApiResponse({
     status: 201,
     description: 'The teacher has been successfully created.',
@@ -41,14 +45,36 @@ export class TeachersController {
   @ApiBody({ type: CreateTeacherDto })
   @ApiHeader({
     name: 'campaign_id',
-    description: 'Campaign ID to filter permissions',
-    required: true,
+    description:
+      'Optional campaign ID — if provided, the teacher is also assigned to this campaign',
+    required: false,
   })
   async create(
     @Body() createTeacherDto: CreateTeacherDto,
-    @Headers('campaign_id') campaignId: string,
+    @Headers('campaign_id') campaignId?: string,
   ) {
-    return this.teacherService.create(createTeacherDto, Number(campaignId));
+    const parsedCampaignId = campaignId ? Number(campaignId) : undefined;
+    return this.teacherService.create(createTeacherDto, parsedCampaignId);
+  }
+
+  @Post(':id/assign-campaign')
+  @ApiOperation({ summary: 'Assign an existing teacher to a campaign' })
+  @ApiParam({ name: 'id', type: Number, description: 'Teacher ID' })
+  @ApiBody({ type: AssignTeacherCampaignDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Teacher assigned to campaign successfully.',
+  })
+  @ApiResponse({ status: 409, description: 'Teacher already assigned to campaign' })
+  async assignToCampaign(
+    @Param('id') id: number,
+    @Body() dto: AssignTeacherCampaignDto,
+  ) {
+    return this.teacherService.assignToCampaign(
+      Number(id),
+      dto.campaign_id,
+      dto.role_id,
+    );
   }
 
   @Get('unassigned')

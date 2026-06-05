@@ -7,28 +7,65 @@ import { UpdateStudentDto } from '../dto/student.dto';
 export class StudentService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(filters?: { mosqueIds?: number[] }) {
+  async findAll(filters?: {
+    mosqueIds?: number[];
+    search?: string;
+    educational_class?: number;
+    in_another_mosque?: boolean;
+    page?: number;
+    limit?: number;
+  }) {
     const whereClause: any = {};
 
-    // Filter by home mosque IDs if provided
     if (filters?.mosqueIds && filters.mosqueIds.length > 0) {
-      whereClause.mosque_id = {
-        in: filters.mosqueIds,
-      };
+      whereClause.mosque_id = { in: filters.mosqueIds };
     }
 
-    const students = await this.prisma.student.findMany({
-      where: whereClause,
-      include: {
-        mosque: {
-          select: {
-            id: true,
-            name: true,
+    if (filters?.educational_class !== undefined) {
+      whereClause.educational_class = filters.educational_class;
+    }
+
+    if (filters?.in_another_mosque !== undefined) {
+      whereClause.in_another_mosque = filters.in_another_mosque;
+    }
+
+    if (filters?.search) {
+      whereClause.OR = [
+        { first_name: { contains: filters.search, mode: 'insensitive' } },
+        { last_name: { contains: filters.search, mode: 'insensitive' } },
+        { student_mobile: { contains: filters.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const page = filters?.page && filters.page > 0 ? filters.page : 1;
+    const limit = filters?.limit && filters.limit > 0 ? filters.limit : 20;
+    const skip = (page - 1) * limit;
+
+    const [students, total] = await Promise.all([
+      this.prisma.student.findMany({
+        where: whereClause,
+        include: {
+          mosque: {
+            select: {
+              id: true,
+              name: true,
+            },
           },
         },
-      },
-    });
-    return students;
+        skip,
+        take: limit,
+        orderBy: { created_at: 'desc' },
+      }),
+      this.prisma.student.count({ where: whereClause }),
+    ]);
+
+    return {
+      data: students,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findAllCampaign(campaignId: string) {

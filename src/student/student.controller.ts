@@ -17,9 +17,10 @@ import {
   ApiParam,
   ApiBody,
   ApiHeader,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { StudentService } from './student.service';
-import { CreateStudentDto } from './student.dto';
+import { CreateStudentDto, ListStudentsQueryDto } from './student.dto';
 import { UpdateStudentDto } from '../dto/student.dto';
 
 @ApiTags('students')
@@ -28,14 +29,57 @@ export class StudentsController {
   constructor(private readonly studentService: StudentService) {}
 
   @Get('all')
-  @ApiOperation({ summary: 'Get all students' })
-  @ApiResponse({ status: 200, description: 'Return all students' })
-  async findAll(@Query('mosqueIds') mosqueIds?: string) {
-    const filters: { mosqueIds?: number[] } = {};
+  @ApiOperation({
+    summary: 'Get all students (paginated, all mosques)',
+    description:
+      'Returns all students across all mosques with pagination, search, and filters',
+  })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search by first name, last name, or mobile',
+  })
+  @ApiQuery({
+    name: 'mosqueIds',
+    required: false,
+    type: String,
+    description: 'Comma-separated mosque IDs',
+  })
+  @ApiQuery({ name: 'educational_class', required: false, type: Number })
+  @ApiQuery({ name: 'in_another_mosque', required: false, type: Boolean })
+  @ApiResponse({ status: 200, description: 'Paginated list of all students' })
+  async findAll(@Query() query: ListStudentsQueryDto) {
+    const filters: {
+      mosqueIds?: number[];
+      search?: string;
+      educational_class?: number;
+      in_another_mosque?: boolean;
+      page?: number;
+      limit?: number;
+    } = {
+      page: query.page ? Number(query.page) : 1,
+      limit: query.limit ? Number(query.limit) : 20,
+    };
 
-    // Parse mosque IDs if provided
-    if (mosqueIds) {
-      filters.mosqueIds = mosqueIds.split(',').map((id) => Number(id));
+    if (query.mosqueIds) {
+      filters.mosqueIds = query.mosqueIds.split(',').map((id) => Number(id));
+    }
+
+    if (query.search) {
+      filters.search = query.search;
+    }
+
+    if (query.educational_class !== undefined) {
+      filters.educational_class = Number(query.educational_class);
+    }
+
+    if (query.in_another_mosque !== undefined) {
+      filters.in_another_mosque =
+        query.in_another_mosque === true ||
+        String(query.in_another_mosque) === 'true';
     }
 
     return this.studentService.findAll(filters);

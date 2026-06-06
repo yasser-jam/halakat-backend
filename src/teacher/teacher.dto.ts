@@ -74,6 +74,14 @@ export class CreateTeacherDto {
   notes?: string;
 }
 
+export class ListTeachersQueryDto {
+  @ApiProperty({ example: 1, required: false, default: 1 })
+  page?: number;
+
+  @ApiProperty({ example: 20, required: false, default: 20 })
+  limit?: number;
+}
+
 export class AssignTeacherCampaignDto {
   @ApiProperty({ example: 1, description: 'Campaign ID to assign the teacher to' })
   campaign_id: number;

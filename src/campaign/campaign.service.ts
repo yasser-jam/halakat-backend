@@ -8,8 +8,15 @@ export class CampaignService {
   constructor(private prisma: PrismaService) {}
 
   async findAll(mosqueId?: number) {
+    const where: any = {};
+    if (mosqueId) {
+      where.mosque_id = mosqueId;
+    }
     const campaigns = await this.prisma.campaign.findMany({
-      where: { mosque_id: mosqueId },
+      where,
+      include: {
+        mosque: true,
+      },
     });
     return { message: 'All campaigns', data: campaigns };
   }
@@ -74,54 +81,23 @@ export class CampaignService {
     return false;
   }
 
-  async findByTeacherId(
-    teacherId: number,
-    userRole: string,
-    mosqueId?: number,
-  ) {
-    // If user is ORGANIZATION_ADMIN
+  async findByTeacherId(teacherId: number, userRole: string) {
+    const whereClause: any = {};
+
     if (userRole === 'ORGANIZATION_ADMIN') {
-      // If no mosque_id provided, return empty array
-      if (!mosqueId) {
-        return [];
-      }
-
-      // Return all campaigns for the specified mosque
-      const campaigns = await this.prisma.campaign.findMany({
-        where: {
-          mosque_id: mosqueId,
-        },
-        select: {
-          id: true,
-          days: true,
-          name: true,
-          mosque: true,
-        },
-      });
-
-      return campaigns;
-    }
-
-    // For other roles, return campaigns the teacher is assigned to
-    const whereClause: any = {
-      teacher_assignments: {
+      // Return all campaigns for admins
+    } else {
+      // For other roles, return campaigns the teacher is assigned to
+      whereClause.teacher_assignments = {
         some: {
           teacher_id: teacherId,
         },
-      },
-    };
-
-    // Optionally filter by mosque_id if provided
-    if (mosqueId) {
-      whereClause.mosque_id = mosqueId;
+      };
     }
 
     const campaigns = await this.prisma.campaign.findMany({
       where: whereClause,
-      select: {
-        id: true,
-        days: true,
-        name: true,
+      include: {
         mosque: true,
       },
     });

@@ -12,4 +12,7 @@ export class CreateGroupDto {
 
   @ApiProperty({ example: 1, required: false })
   currentTeacherId?: number;
+
+  @ApiProperty({ example: 1, required: false })
+  current_teacher_id?: number;
 }

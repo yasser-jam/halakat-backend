@@ -12,11 +12,6 @@ export class GroupService {
         id: true,
         title: true,
         class: true,
-        teachers: {
-          include: {
-            teacher: true,
-          },
-        },
         current_teacher_id: true,
         students: {
           include: {
@@ -35,10 +30,23 @@ export class GroupService {
         : {},
     });
 
+    const teacherIds = groups
+      .map((g) => g.current_teacher_id)
+      .filter((id): id is number => id != null);
+
+    const teachers = teacherIds.length
+      ? await this.prisma.teacher.findMany({
+          where: { id: { in: teacherIds } },
+        })
+      : [];
+
+    const teacherMap = new Map(teachers.map((t) => [t.id, t]));
+
     const result = groups.map((group) => ({
       ...group,
-      currentTeacher: group.teachers[0]?.teacher,
-      teachers: undefined,
+      currentTeacher: group.current_teacher_id
+        ? teacherMap.get(group.current_teacher_id) ?? null
+        : null,
       students: group.students.map((stud) => stud.student),
     }));
 
@@ -46,7 +54,9 @@ export class GroupService {
   }
 
   async create(createDto: CreateGroupDto, campaignId: string) {
-    const { title, currentTeacherId, mosque_id } = createDto;
+    const { title, currentTeacherId, current_teacher_id, mosque_id } =
+      createDto;
+    const teacherId = currentTeacherId ?? current_teacher_id;
 
     // Create the group first with the specified title
     const group = await this.prisma.group.create({
@@ -54,7 +64,7 @@ export class GroupService {
         title,
         class: createDto.class,
         mosque_id,
-        current_teacher_id: currentTeacherId,
+        current_teacher_id: teacherId,
       },
     });
 
@@ -67,10 +77,10 @@ export class GroupService {
     });
 
     // Connect the group to the specified current teacher via TeacherGroup pivot table
-    if (currentTeacherId) {
+    if (teacherId) {
       await this.prisma.teacherGroup.create({
         data: {
-          teacher_id: currentTeacherId,
+          teacher_id: teacherId,
           group_id: group.id,
           campaign_id: Number(campaignId),
         },
@@ -332,11 +342,6 @@ export class GroupService {
       include: {
         group: {
           include: {
-            teachers: {
-              include: {
-                teacher: true,
-              },
-            },
             students: {
               include: {
                 student: true,
@@ -347,10 +352,23 @@ export class GroupService {
       },
     });
 
+    const teacherIds = teacherGroups
+      .map((tg) => tg.group.current_teacher_id)
+      .filter((id): id is number => id != null);
+
+    const teachers = teacherIds.length
+      ? await this.prisma.teacher.findMany({
+          where: { id: { in: teacherIds } },
+        })
+      : [];
+
+    const teacherMap = new Map(teachers.map((t) => [t.id, t]));
+
     const result = teacherGroups.map((tg) => ({
       ...tg.group,
-      currentTeacher: tg.group.teachers[0]?.teacher,
-      teachers: undefined,
+      currentTeacher: tg.group.current_teacher_id
+        ? teacherMap.get(tg.group.current_teacher_id) ?? null
+        : null,
       students: tg.group.students.map((stud) => stud.student),
     }));
 

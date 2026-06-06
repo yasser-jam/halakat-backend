@@ -16,9 +16,14 @@ import {
   ApiParam,
   ApiBody,
   ApiHeader,
+  ApiQuery,
 } from '@nestjs/swagger';
 import { TeacherService } from './teacher.service';
-import { CreateTeacherDto, AssignTeacherCampaignDto } from './teacher.dto';
+import {
+  CreateTeacherDto,
+  AssignTeacherCampaignDto,
+  ListTeachersQueryDto,
+} from './teacher.dto';
 
 @ApiTags('teachers')
 @Controller('teachers')
@@ -26,10 +31,15 @@ export class TeachersController {
   constructor(private readonly teacherService: TeacherService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Get all teachers' })
+  @ApiOperation({ summary: 'Get all teachers (paginated)' })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
   @ApiResponse({ status: 200, description: 'Return all teachers' })
-  async findAll(@Headers('campaign_id') campaignId: string) {
-    return this.teacherService.findAll(Number(campaignId));
+  async findAll(@Query() query: ListTeachersQueryDto) {
+    return this.teacherService.findAll({
+      page: query.page ? Number(query.page) : 1,
+      limit: query.limit ? Number(query.limit) : 20,
+    });
   }
 
   @Post()
@@ -93,16 +103,12 @@ export class TeachersController {
   @Get(':id')
   @ApiOperation({ summary: 'Get a teacher by ID' })
   @ApiParam({ name: 'id', type: Number })
-  @ApiHeader({ name: 'campaign_id' })
   @ApiResponse({
     status: 200,
     description: 'Return the teacher with the given ID',
   })
-  async findOne(
-    @Param('id') id: number,
-    @Headers('campaign_id') campaign_id: string,
-  ) {
-    return this.teacherService.findOne(Number(id), campaign_id);
+  async findOne(@Param('id') id: number) {
+    return this.teacherService.findOne(Number(id));
   }
 
   @Get('mobile/:id')

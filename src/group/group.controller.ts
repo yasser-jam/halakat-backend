@@ -95,28 +95,15 @@ export class GroupsController {
   @UseGuards(JwtAuthGuard)
   @Get('/my-groups')
   @ApiOperation({
-    summary:
-      'List all groups for the authenticated teacher in the specified campaign',
-  })
-  @ApiHeader({
-    name: 'campaign-id',
-    description: 'Campaign ID',
-    required: true,
+    summary: 'List all groups for the authenticated teacher across all campaigns',
   })
   @ApiResponse({
     status: 200,
-    description:
-      'Return all groups for the authenticated teacher in the given campaign',
+    description: 'Return all groups for the authenticated teacher',
   })
-  async findByTeacherAndCampaign(
-    @Request() req,
-    @Headers('campaign-id') campaignId: string,
-  ) {
+  async findMyGroups(@Request() req) {
     const teacherId = req.user.id;
-    return this.groupService.findByTeacherAndCampaign(
-      Number(teacherId),
-      Number(campaignId),
-    );
+    return this.groupService.findByTeacher(Number(teacherId));
   }
 
   @Get(':id')

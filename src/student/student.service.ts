@@ -68,15 +68,15 @@ export class StudentService {
     };
   }
 
-  async findAllCampaign(campaignId: string) {
+  async findAllCampaign(campaignId?: string) {
     const students = await this.prisma.student.findMany({
-      where: {
-        campaign_enrollments: {
-          some: {
-            campaign_id: Number(campaignId),
-          },
-        },
-      },
+      // where: {
+      //   campaign_enrollments: {
+      //     some: {
+      //       campaign_id: Number(campaignId),
+      //     },
+      //   },
+      // },
       include: {
         groups: {
           where: {
@@ -100,19 +100,26 @@ export class StudentService {
     }));
   }
 
-  async create(createStudentDto: CreateStudentDto, campaignId: number) {
+  async create(createStudentDto: CreateStudentDto, campaignId?: number) {
     const student = await this.prisma.student.create({
       data: createStudentDto,
     });
-    // Assign student to campaign
-    await this.prisma.studentCampaign.create({
-      data: {
-        student_id: student.id,
-        campaign_id: campaignId,
-      },
-    });
+
+    if (campaignId) {
+      await this.prisma.studentCampaign.create({
+        data: {
+          student_id: student.id,
+          campaign_id: campaignId,
+        },
+      });
+      return {
+        message: 'Student created and assigned to campaign',
+        data: student,
+      };
+    }
+
     return {
-      message: 'Student created and assigned to campaign',
+      message: 'Student created',
       data: student,
     };
   }

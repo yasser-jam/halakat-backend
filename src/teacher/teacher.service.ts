@@ -11,48 +11,40 @@ import * as bcrypt from 'bcryptjs';
 export class TeacherService {
   constructor(private prisma: PrismaService) {}
 
-  async findAll(campaignId?: number) {
-    let res: any = await this.prisma.teacher.findMany({
-      where: {
-        role: 'TEACHER',
-        campaign_assignments: {
-          some: {
-            campaign_id: Number(campaignId),
-          },
-        },
-      },
-      include: {
-        teacher_roles: {
-          where: {
-            campaign_id: Number(campaignId),
-          },
-          include: {
-            role: true,
-            campaign: true,
-            group: true,
-          },
-        },
-      },
-      orderBy: {
-        first_name: 'asc',
-      },
-    });
+  async findAll({
+    page = 1,
+    limit = 20,
+  }: {
+    page?: number;
+    limit?: number;
+  }) {
+    const skip = (page - 1) * limit;
 
-    res = res.map((item) => ({
-      id: item.id,
-      birth_date: item.birth_date,
-      image_url: item.image_url,
-      first_name: item.first_name,
-      last_name: item.last_name,
-      teacher_roles: undefined,
-      mobile_phone_number: item.mobile_phone_number,
-      is_mojaz: item.is_mojaz,
-      // Todo: handle this in better shape from DB
-      role: item.teacher_roles?.[0]?.role.name || '',
-      permissions: item.teacher_roles?.[0]?.role.permissions || [],
-    }));
+    const [data, total] = await Promise.all([
+      this.prisma.teacher.findMany({
+        where: {
+          role: 'TEACHER',
+        },
+        orderBy: {
+          first_name: 'asc',
+        },
+        skip,
+        take: limit,
+      }),
+      this.prisma.teacher.count({
+        where: {
+          role: 'TEACHER',
+        },
+      }),
+    ]);
 
-    return res;
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async create(createTeacherDto: CreateTeacherDto, campaignId?: number) {
@@ -131,14 +123,11 @@ export class TeacherService {
     };
   }
 
-  async findOne(id: number, campaign_id: string) {
+  async findOne(id: number) {
     const teacher = await this.prisma.teacher.findUnique({
       where: { id: Number(id) },
       include: {
         groups: {
-          where: {
-            campaign_id: Number(campaign_id),
-          },
           include: {
             group: true,
           },
@@ -157,15 +146,13 @@ export class TeacherService {
       throw new NotFoundException(`Teacher with ID ${id} not found`);
     }
 
-    const group = teacher.groups?.[0]?.group;
-
     const result = {
       ...teacher,
       teacher_roles: undefined,
       roles: teacher.teacher_roles.map((tr) => ({
         role: tr.role.name,
         campaign: tr.campaign.name,
-        group: group,
+        group: tr.group,
       })),
     };
 

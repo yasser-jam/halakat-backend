@@ -55,17 +55,10 @@ export class CampaignsController {
     summary: 'Get campaigns assigned to the authenticated teacher',
   })
   @ApiResponse({ status: 200, description: 'Return campaigns for the teacher' })
-  async findCampaignsByTeacher(
-    @Request() req,
-    @Headers('mosque_id') mosqueId?: string,
-  ) {
+  async findCampaignsByTeacher(@Request() req) {
     const teacherId = req.user.id;
     const userRole = req.user.role;
-    return this.campaignService.findByTeacherId(
-      teacherId,
-      userRole,
-      mosqueId ? Number(mosqueId) : undefined,
-    );
+    return this.campaignService.findByTeacherId(teacherId, userRole);
   }
 
   @Get(':id')

@@ -538,4 +538,82 @@ export class AttendanceService {
       });
     }
   }
+
+  async upsertAttendance(
+    dto: {
+      student_id: number;
+      group_id: number;
+      campaign_id: number;
+      taken_date: string;
+      status: string;
+      duration: number;
+    },
+    teacherId: number,
+  ) {
+    const startOfDay = new Date(dto.taken_date);
+    startOfDay.setUTCHours(0, 0, 0, 0);
+    const endOfDay = new Date(dto.taken_date);
+    endOfDay.setUTCHours(23, 59, 59, 999);
+
+    const existing = await this.prisma.attendance.findFirst({
+      where: {
+        student_id: dto.student_id,
+        campaign_id: dto.campaign_id,
+        taken_date: { gte: startOfDay, lte: endOfDay },
+      },
+    });
+
+    const statusMap = {
+      attend: 'ATTEND',
+      missed: 'MISSED',
+      delay: 'DELAY',
+    };
+
+    let record;
+
+    if (existing) {
+      record = await this.prisma.attendance.update({
+        where: { id: existing.id },
+        data: {
+          status: statusMap[dto.status] || dto.status,
+          duration: dto.duration,
+          group_id: dto.group_id,
+        },
+      });
+    } else {
+      record = await this.prisma.attendance.create({
+        data: {
+          student_id: dto.student_id,
+          group_id: dto.group_id,
+          campaign_id: dto.campaign_id,
+          taken_date: new Date(dto.taken_date),
+          status: statusMap[dto.status] || dto.status,
+          duration: dto.duration,
+          delay_time: dto.status === 'delay' ? dto.duration : -1,
+        },
+      });
+    }
+
+    try {
+      await this.logService.create(
+        {
+          event: 'ATTENDANCE_MARKED',
+          teacher_id: teacherId,
+          group_id: dto.group_id,
+          notes: `تم تسجيل حضور للطالب ${dto.student_id} في المجموعة`,
+          metadata: {
+            student_id: dto.student_id,
+            status: dto.status,
+            duration: dto.duration,
+            attendance_id: record.id,
+          },
+        },
+        dto.campaign_id,
+      );
+    } catch (e) {
+      console.error('Failed to log attendance:', e);
+    }
+
+    return record;
+  }
 }

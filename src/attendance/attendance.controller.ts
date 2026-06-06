@@ -7,6 +7,8 @@ import {
   Post,
   Query,
   Headers,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,12 +23,30 @@ import {
   BulkUpdateAttendanceDto,
   UpdateAttendanceDto,
   CreateOrUpdateAttendanceRecordDto,
+  CreateAttendanceDto,
 } from './attendance.dto';
+import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 
 @ApiTags('attendance')
 @Controller('attendance')
 export class AttendanceController {
   constructor(private readonly attendanceService: AttendanceService) {}
+
+  @ApiBearerAuth('access-token')
+  @UseGuards(JwtAuthGuard)
+  @Post()
+  @ApiOperation({ summary: 'Create or update attendance record' })
+  @ApiResponse({
+    status: 201,
+    description: 'Attendance record created or updated',
+  })
+  @ApiBody({ type: CreateAttendanceDto })
+  async createAttendance(
+    @Body() dto: CreateAttendanceDto,
+    @Request() req,
+  ) {
+    return this.attendanceService.upsertAttendance(dto, req.user.id);
+  }
 
   @ApiOperation({
     summary: 'Get all attendance records for group and campaign',

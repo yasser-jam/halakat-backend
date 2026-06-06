@@ -346,8 +346,9 @@ model Attendance {
   group_id    Int
   campaign_id Int
   taken_date  DateTime @default(now())
-  delay_time  Int
   status      String
+  duration    Int      @default(0)
+  delay_time  Int
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 

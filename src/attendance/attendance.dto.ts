@@ -10,7 +10,50 @@ import {
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
+export enum AttendanceStatus {
+  ATTEND = 'attend',
+  MISSED = 'missed',
+  DELAY = 'delay',
+}
+
 export class CreateAttendanceDto {
+  @ApiProperty({ description: 'Student ID', example: 1 })
+  @IsNumber()
+  student_id: number;
+
+  @ApiProperty({ description: 'Group ID', example: 1 })
+  @IsNumber()
+  group_id: number;
+
+  @ApiProperty({ description: 'Campaign ID', example: 1 })
+  @IsNumber()
+  campaign_id: number;
+
+  @ApiProperty({
+    description: 'Attendance date in ISO 8601 format',
+    example: '2025-12-14T08:00:00.000Z',
+  })
+  @IsDateString()
+  taken_date: string;
+
+  @ApiProperty({
+    description: 'Attendance status',
+    enum: AttendanceStatus,
+    example: 'attend',
+  })
+  @IsEnum(AttendanceStatus)
+  status: AttendanceStatus;
+
+  @ApiProperty({
+    description: 'Duration in minutes',
+    example: 60,
+  })
+  @IsInt()
+  @Min(0)
+  duration: number;
+}
+
+export class OldCreateAttendanceDto {
   @ApiProperty()
   @IsNumber()
   campaign_id: number;
@@ -59,7 +102,7 @@ export class BulkUpdateAttendanceDto {
   date: string;
 }
 
-export class UpdateAttendanceDto extends CreateAttendanceDto {}
+export class UpdateAttendanceDto extends OldCreateAttendanceDto {}
 
 export class CreateOrUpdateAttendanceRecordDto {
   @ApiProperty({ description: 'Student ID' })

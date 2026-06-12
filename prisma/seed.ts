@@ -1,394 +1,197 @@
 import { PrismaClient } from '@prisma/client';
-import * as bcrypt from 'bcryptjs';
 
 const prisma = new PrismaClient();
 
+const surahWeights: Record<number, number> = {
+  78: 1, 79: 1, 80: 1, 81: 1, 82: 1, 83: 1, 84: 1, 85: 1,
+  86: 2, 87: 2, 88: 1, 89: 1, 90: 1,
+  91: 2, 92: 2, 93: 2, 94: 2, 95: 2, 96: 2, 97: 2, 98: 2, 99: 2,
+  100: 2, 101: 2, 102: 2,
+  103: 3, 104: 3, 105: 3, 106: 3, 107: 3, 108: 3, 109: 3, 110: 3,
+  111: 3, 112: 3, 113: 3, 114: 3,
+};
+
+const surahs = [
+  { number: 1, name: 'الفاتحة', startPage: 1, endPage: 1 },
+  { number: 2, name: 'البقرة', startPage: 2, endPage: 49 },
+  { number: 3, name: 'آل عمران', startPage: 50, endPage: 76 },
+  { number: 4, name: 'النساء', startPage: 77, endPage: 106 },
+  { number: 5, name: 'المائدة', startPage: 106, endPage: 127 },
+  { number: 6, name: 'الأنعام', startPage: 128, endPage: 150 },
+  { number: 7, name: 'الأعراف', startPage: 151, endPage: 176 },
+  { number: 8, name: 'الأنفال', startPage: 177, endPage: 186 },
+  { number: 9, name: 'التوبة', startPage: 187, endPage: 207 },
+  { number: 10, name: 'يونس', startPage: 208, endPage: 221 },
+  { number: 11, name: 'هود', startPage: 221, endPage: 235 },
+  { number: 12, name: 'يوسف', startPage: 235, endPage: 248 },
+  { number: 13, name: 'الرعد', startPage: 249, endPage: 255 },
+  { number: 14, name: 'إبراهيم', startPage: 255, endPage: 261 },
+  { number: 15, name: 'الحجر', startPage: 262, endPage: 267 },
+  { number: 16, name: 'النحل', startPage: 267, endPage: 281 },
+  { number: 17, name: 'الإسراء', startPage: 282, endPage: 293 },
+  { number: 18, name: 'الكهف', startPage: 293, endPage: 304 },
+  { number: 19, name: 'مريم', startPage: 305, endPage: 312 },
+  { number: 20, name: 'طه', startPage: 312, endPage: 321 },
+  { number: 21, name: 'الأنبياء', startPage: 322, endPage: 331 },
+  { number: 22, name: 'الحج', startPage: 332, endPage: 341 },
+  { number: 23, name: 'المؤمنون', startPage: 342, endPage: 351 },
+  { number: 24, name: 'النور', startPage: 351, endPage: 366 },
+  { number: 25, name: 'الفرقان', startPage: 366, endPage: 376 },
+  { number: 26, name: 'الشعراء', startPage: 376, endPage: 396 },
+  { number: 27, name: 'النمل', startPage: 396, endPage: 404 },
+  { number: 28, name: 'القصص', startPage: 404, endPage: 414 },
+  { number: 29, name: 'العنكبوت', startPage: 414, endPage: 422 },
+  { number: 30, name: 'الروم', startPage: 422, endPage: 427 },
+  { number: 31, name: 'لقمان', startPage: 428, endPage: 433 },
+  { number: 32, name: 'السجدة', startPage: 433, endPage: 435 },
+  { number: 33, name: 'الأحزاب', startPage: 435, endPage: 445 },
+  { number: 34, name: 'سبأ', startPage: 445, endPage: 452 },
+  { number: 35, name: 'فاطر', startPage: 452, endPage: 457 },
+  { number: 36, name: 'يس', startPage: 457, endPage: 464 },
+  { number: 37, name: 'الصافات', startPage: 465, endPage: 476 },
+  { number: 38, name: 'ص', startPage: 476, endPage: 482 },
+  { number: 39, name: 'الزمر', startPage: 482, endPage: 495 },
+  { number: 40, name: 'غافر', startPage: 495, endPage: 504 },
+  { number: 41, name: 'فصلت', startPage: 504, endPage: 511 },
+  { number: 42, name: 'الشورى', startPage: 511, endPage: 517 },
+  { number: 43, name: 'الزخرف', startPage: 518, endPage: 525 },
+  { number: 44, name: 'الدخان', startPage: 525, endPage: 528 },
+  { number: 45, name: 'الجاثية', startPage: 528, endPage: 531 },
+  { number: 46, name: 'الأحقاف', startPage: 531, endPage: 534 },
+  { number: 47, name: 'محمد', startPage: 535, endPage: 537 },
+  { number: 48, name: 'الفتح', startPage: 538, endPage: 541 },
+  { number: 49, name: 'الحجرات', startPage: 542, endPage: 544 },
+  { number: 50, name: 'ق', startPage: 545, endPage: 548 },
+  { number: 51, name: 'الذاريات', startPage: 548, endPage: 550 },
+  { number: 52, name: 'الطور', startPage: 550, endPage: 552 },
+  { number: 53, name: 'النجم', startPage: 552, endPage: 555 },
+  { number: 54, name: 'القمر', startPage: 555, endPage: 557 },
+  { number: 55, name: 'الرحمن', startPage: 558, endPage: 560 },
+  { number: 56, name: 'الواقعة', startPage: 560, endPage: 562 },
+  { number: 57, name: 'الحديد', startPage: 562, endPage: 567 },
+  { number: 58, name: 'المجادلة', startPage: 568, endPage: 571 },
+  { number: 59, name: 'الحشر', startPage: 571, endPage: 573 },
+  { number: 60, name: 'الممتحنة', startPage: 574, endPage: 576 },
+  { number: 61, name: 'الصف', startPage: 577, endPage: 578 },
+  { number: 62, name: 'الجمعة', startPage: 578, endPage: 579 },
+  { number: 63, name: 'المنافقون', startPage: 579, endPage: 581 },
+  { number: 64, name: 'التغابن', startPage: 581, endPage: 583 },
+  { number: 65, name: 'الطلاق', startPage: 583, endPage: 585 },
+  { number: 66, name: 'التحريم', startPage: 585, endPage: 587 },
+  { number: 67, name: 'الملك', startPage: 588, endPage: 590 },
+  { number: 68, name: 'القلم', startPage: 590, endPage: 592 },
+  { number: 69, name: 'الحاقة', startPage: 592, endPage: 594 },
+  { number: 70, name: 'المعارج', startPage: 595, endPage: 596 },
+  { number: 71, name: 'نوح', startPage: 596, endPage: 598 },
+  { number: 72, name: 'الجن', startPage: 598, endPage: 600 },
+  { number: 73, name: 'المزمل', startPage: 601, endPage: 602 },
+  { number: 74, name: 'المدثر', startPage: 602, endPage: 604 },
+  { number: 75, name: 'القيامة', startPage: 604, endPage: 605 },
+  { number: 76, name: 'الإنسان', startPage: 605, endPage: 607 },
+  { number: 77, name: 'المرسلات', startPage: 607, endPage: 608 },
+  { number: 78, name: 'النبأ', startPage: 608, endPage: 609 },
+  { number: 79, name: 'النازعات', startPage: 610, endPage: 611 },
+  { number: 80, name: 'عبس', startPage: 611, endPage: 612 },
+  { number: 81, name: 'التكوير', startPage: 612, endPage: 613 },
+  { number: 82, name: 'الانفطار', startPage: 613, endPage: 614 },
+  { number: 83, name: 'المطففين', startPage: 614, endPage: 615 },
+  { number: 84, name: 'الانشقاق', startPage: 615, endPage: 616 },
+  { number: 85, name: 'البروج', startPage: 616, endPage: 617 },
+  { number: 86, name: 'الطارق', startPage: 617, endPage: 618 },
+  { number: 87, name: 'الأعلى', startPage: 618, endPage: 618 },
+  { number: 88, name: 'الغاشية', startPage: 619, endPage: 619 },
+  { number: 89, name: 'الفجر', startPage: 619, endPage: 621 },
+  { number: 90, name: 'البلد', startPage: 621, endPage: 622 },
+  { number: 91, name: 'الشمس', startPage: 622, endPage: 622 },
+  { number: 92, name: 'الليل', startPage: 623, endPage: 623 },
+  { number: 93, name: 'الضحى', startPage: 624, endPage: 624 },
+  { number: 94, name: 'الشرح', startPage: 624, endPage: 624 },
+  { number: 95, name: 'التين', startPage: 625, endPage: 625 },
+  { number: 96, name: 'العلق', startPage: 625, endPage: 626 },
+  { number: 97, name: 'القدر', startPage: 626, endPage: 626 },
+  { number: 98, name: 'البينة', startPage: 626, endPage: 627 },
+  { number: 99, name: 'الزلزلة', startPage: 627, endPage: 628 },
+  { number: 100, name: 'العاديات', startPage: 628, endPage: 628 },
+  { number: 101, name: 'القارعة', startPage: 629, endPage: 629 },
+  { number: 102, name: 'التكاثر', startPage: 629, endPage: 629 },
+  { number: 103, name: 'العصر', startPage: 630, endPage: 630 },
+  { number: 104, name: 'الهمزة', startPage: 630, endPage: 630 },
+  { number: 105, name: 'الفيل', startPage: 631, endPage: 631 },
+  { number: 106, name: 'قريش', startPage: 631, endPage: 631 },
+  { number: 107, name: 'الماعون', startPage: 632, endPage: 632 },
+  { number: 108, name: 'الكوثر', startPage: 632, endPage: 632 },
+  { number: 109, name: 'الكافرون', startPage: 633, endPage: 633 },
+  { number: 110, name: 'النصر', startPage: 633, endPage: 633 },
+  { number: 111, name: 'المسد', startPage: 634, endPage: 634 },
+  { number: 112, name: 'الإخلاص', startPage: 634, endPage: 634 },
+  { number: 113, name: 'الفلق', startPage: 634, endPage: 634 },
+  { number: 114, name: 'الناس', startPage: 634, endPage: 634 },
+];
+
+function generateTemplates() {
+  const templates = [];
+  for (const surah of surahs) {
+    const weight = surahWeights[surah.number] ?? 1;
+    for (let page = surah.startPage; page <= surah.endPage; page++) {
+      templates.push({
+        surahNumber: surah.number,
+        surahName: surah.name,
+        pageNumber: page,
+        weight,
+      });
+    }
+  }
+  return templates;
+}
+
+async function updateWeights() {
+  const byWeight = new Map<number, number[]>();
+  for (const [sn, w] of Object.entries(surahWeights)) {
+    const list = byWeight.get(w) || [];
+    list.push(Number(sn));
+    byWeight.set(w, list);
+  }
+  let total = 0;
+  for (const [weight, surahNumbers] of byWeight) {
+    const result = await prisma.sessionSurahTemplate.updateMany({
+      where: { surahNumber: { in: surahNumbers }, weight: { not: weight } },
+      data: { weight },
+    });
+    total += result.count;
+  }
+  if (total > 0) {
+    console.log(`📝 تم تحديث ${total} سجل بقيم الوزن الجديدة`);
+  }
+}
+
 async function main() {
-  console.log('بدء عملية إنشاء البيانات الأولية للنظام الجديد...');
-  console.log('Starting seed with new auth system...\n');
+  console.log('🌙 بدء بذر بيانات سور القرآن الكريم...\n');
 
-  // تنظيف البيانات الموجودة - Clean existing data
-  console.log('🗑️  Cleaning existing data...');
-  await prisma.log.deleteMany();
-  await prisma.curriculumLessonSession.deleteMany();
-  await prisma.groupCurriculum.deleteMany();
-  await prisma.curriculumTemplateNode.deleteMany();
-  await prisma.curriculumTemplate.deleteMany();
-  await prisma.curriculumCategory.deleteMany();
-  await prisma.curriculum.deleteMany();
-  await prisma.category.deleteMany();
-  await prisma.mistakeInSession.deleteMany();
-  await prisma.sessionSurah.deleteMany();
-  await prisma.sessionSurahTemplate.deleteMany();
-  await prisma.mistake.deleteMany();
-  await prisma.savingSession.deleteMany();
-  await prisma.evaluation.deleteMany();
-  await prisma.attendance.deleteMany();
-  await prisma.teacherRole.deleteMany();
-  await prisma.appRole.deleteMany();
-  await prisma.teacherGroup.deleteMany();
-  await prisma.studentGroup.deleteMany();
-  await prisma.groupCampaigns.deleteMany();
-  await prisma.teacherCampaign.deleteMany();
-  await prisma.studentCampaign.deleteMany();
-  await prisma.campaign.deleteMany();
-  await prisma.group.deleteMany();
-  await prisma.mosqueManager.deleteMany();
-  await prisma.organizationManager.deleteMany();
-  await prisma.teacher.deleteMany();
-  await prisma.student.deleteMany();
-  await prisma.mosque.deleteMany();
-  await prisma.organization.deleteMany();
-  console.log('✅ Data cleaned\n');
+  const existingCount = await prisma.sessionSurahTemplate.count();
+  if (existingCount > 0) {
+    console.log(`⚠️  يوجد بالفعل ${existingCount} سجل في جدول القوالب.`);
+    console.log('📝 جاري تحديث الأوزان للسور 78-114...');
+    await updateWeights();
+    console.log('✅ تم تحديث الأوزان بنجاح.\n');
+    return;
+  }
 
-  // ============================================
-  // 1. إنشاء المؤسسة - Create Organization
-  // ============================================
-  console.log('📋 Creating Organization...');
-  const organization = await prisma.organization.create({
-    data: {
-      name: 'مؤسسة تحفيظ القرآن الكريم',
-      description: 'مؤسسة تعليمية متخصصة في تحفيظ القرآن الكريم',
-      contact_email: 'info@tahfiz.org',
-      contact_phone: '+966501234567',
-      address: 'الرياض، المملكة العربية السعودية',
-      is_active: true,
-      metadata: {
-        established_year: 2010,
-        license_number: 'TH-2010-001',
-      },
-    },
-  });
-  console.log(
-    `✅ Organization created: ${organization.name} (ID: ${organization.id})\n`,
-  );
+  const templates = generateTemplates();
+  console.log(`📝 جاري إنشاء ${templates.length} قالب للصفحات...`);
 
-  // ============================================
-  // 2. إنشاء مالك المؤسسة - Create Organization Owner
-  // ============================================
-  console.log('👤 Creating Organization Owner...');
-  const hashedPassword = await bcrypt.hash('password123', 10);
-
-  const orgOwner = await prisma.teacher.create({
-    data: {
-      mobile_phone_number: '+966501234567',
-      first_name: 'أحمد',
-      last_name: 'المدير',
-      password: hashedPassword,
-      role: 'TEACHER',
-      educational_level: 'بكالوريوس شريعة',
-      university_name: 'جامعة الإمام محمد بن سعود الإسلامية',
-    },
+  await prisma.sessionSurahTemplate.createMany({
+    data: templates,
+    skipDuplicates: true,
   });
 
-  await prisma.organizationManager.create({
-    data: {
-      teacher_id: orgOwner.id,
-      organization_id: organization.id,
-      role: 'OWNER',
-      is_active: true,
-    },
-  });
-  console.log(
-    `✅ Organization Owner created: ${orgOwner.first_name} ${orgOwner.last_name}`,
-  );
-  console.log(`   Phone: ${orgOwner.mobile_phone_number}`);
-  console.log(`   Password: password123`);
-  console.log(`   Role: OWNER\n`);
-
-  // ============================================
-  // 3. إنشاء المساجد - Create Mosques
-  // ============================================
-  console.log('🕌 Creating Mosques...');
-  const mosque1 = await prisma.mosque.create({
-    data: {
-      organization_id: organization.id,
-      name: 'مسجد النور',
-      city: 'الرياض',
-      address_area: 'حي الملز',
-      address_details: 'شارع الملك فهد، بجوار مجمع الملز',
-      contact_phone: '+966501234568',
-      contact_email: 'noor@tahfiz.org',
-      is_active: true,
-      metadata: {
-        capacity: 200,
-        established: 2015,
-      },
-    },
-  });
-  console.log(`✅ Mosque created: ${mosque1.name} (ID: ${mosque1.id})`);
-
-  const mosque2 = await prisma.mosque.create({
-    data: {
-      organization_id: organization.id,
-      name: 'مسجد الهداية',
-      city: 'الرياض',
-      address_area: 'حي العليا',
-      address_details: 'شارع العليا العام، قرب مستشفى الملك فيصل',
-      contact_phone: '+966501234569',
-      contact_email: 'hidaya@tahfiz.org',
-      is_active: true,
-      metadata: {
-        capacity: 150,
-        established: 2018,
-      },
-    },
-  });
-  console.log(`✅ Mosque created: ${mosque2.name} (ID: ${mosque2.id})\n`);
-
-  // ============================================
-  // 4. إنشاء مدير المسجد - Create Mosque Manager
-  // ============================================
-  console.log('👤 Creating Mosque Manager...');
-  const mosqueManager = await prisma.teacher.create({
-    data: {
-      mobile_phone_number: '+966501234570',
-      first_name: 'محمد',
-      last_name: 'مدير المسجد',
-      password: hashedPassword,
-      role: 'TEACHER',
-      educational_level: 'بكالوريوس تربية إسلامية',
-      university_name: 'جامعة الملك سعود',
-    },
-  });
-
-  await prisma.mosqueManager.create({
-    data: {
-      teacher_id: mosqueManager.id,
-      mosque_id: mosque1.id,
-      role: 'ADMIN',
-      is_active: true,
-    },
-  });
-  console.log(
-    `✅ Mosque Manager created: ${mosqueManager.first_name} ${mosqueManager.last_name}`,
-  );
-  console.log(`   Phone: ${mosqueManager.mobile_phone_number}`);
-  console.log(`   Password: password123`);
-  console.log(`   Manages: ${mosque1.name}`);
-  console.log(`   Role: ADMIN\n`);
-
-  // ============================================
-  // 5. إنشاء معلم عادي - Create Regular Teacher
-  // ============================================
-  console.log('👨‍🏫 Creating Regular Teacher...');
-  const regularTeacher = await prisma.teacher.create({
-    data: {
-      mobile_phone_number: '+966501234571',
-      first_name: 'عبدالله',
-      last_name: 'المعلم',
-      password: hashedPassword,
-      role: 'TEACHER',
-      educational_level: 'دبلوم تحفيظ',
-      is_mojaz: true,
-    },
-  });
-  console.log(
-    `✅ Regular Teacher created: ${regularTeacher.first_name} ${regularTeacher.last_name}`,
-  );
-  console.log(`   Phone: ${regularTeacher.mobile_phone_number}`);
-  console.log(`   Password: password123\n`);
-
-  // ============================================
-  // 6. إنشاء طالب - Create Student
-  // ============================================
-  console.log('👦 Creating Student...');
-  const student = await prisma.student.create({
-    data: {
-      mosque_id: mosque1.id,
-      student_mobile: '+966501234580',
-      first_name: 'خالد',
-      last_name: 'الطالب',
-      password: hashedPassword,
-      birth_date: new Date('2010-01-15'),
-      educational_class: 5,
-      current_mosque_name: mosque1.name,
-      school: 'مدرسة الملك فهد الابتدائية',
-      father_name: 'محمد الطالب',
-      father_phone_number: '+966501234581',
-      mother_name: 'فاطمة',
-      mother_phone_number: '+966501234582',
-    },
-  });
-  console.log(`✅ Student created: ${student.first_name} ${student.last_name}`);
-  console.log(`   Phone: ${student.student_mobile}`);
-  console.log(`   Home Mosque: ${mosque1.name}`);
-  console.log(`   Password: password123\n`);
-
-  // ============================================
-  // 7. إنشاء حملة - Create Campaign
-  // ============================================
-  console.log('📅 Creating Campaign...');
-  const campaign = await prisma.campaign.create({
-    data: {
-      mosque_id: mosque1.id,
-      name: 'الفصل الدراسي الأول 1446',
-      start_date: new Date('2024-09-01'),
-      end_date: new Date('2025-01-31'),
-      status: true,
-      is_campaign_continuous: false,
-      days: JSON.stringify([
-        'Sunday',
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-      ]),
-      start_time: '16:00',
-      end_time: '18:00',
-    },
-  });
-  console.log(`✅ Campaign created: ${campaign.name} (ID: ${campaign.id})\n`);
-
-  // ============================================
-  // 8. تعيين المعلم في الحملة - Assign Teacher to Campaign
-  // ============================================
-  console.log('🔗 Assigning Teacher to Campaign...');
-  await prisma.teacherCampaign.create({
-    data: {
-      teacher_id: regularTeacher.id,
-      campaign_id: campaign.id,
-      is_active: true,
-    },
-  });
-  console.log(`✅ Teacher assigned to campaign\n`);
-
-  // ============================================
-  // 9. إنشاء مجموعة - Create Group
-  // ============================================
-  console.log('👥 Creating Group...');
-  const group = await prisma.group.create({
-    data: {
-      mosque_id: mosque1.id,
-      title: 'مجموعة المبتدئين',
-      class: 1,
-      current_teacher_id: regularTeacher.id,
-    },
-  });
-  console.log(`✅ Group created: ${group.title} (ID: ${group.id})\n`);
-
-  // ============================================
-  // 10. ربط المجموعة بالحملة - Link Group to Campaign
-  // ============================================
-  console.log('🔗 Linking Group to Campaign...');
-  await prisma.groupCampaigns.create({
-    data: {
-      group_id: group.id,
-      campaign_id: campaign.id,
-    },
-  });
-  console.log(`✅ Group linked to campaign\n`);
-
-  // ============================================
-  // 11. تعيين المعلم في المجموعة - Assign Teacher to Group
-  // ============================================
-  console.log('🔗 Assigning Teacher to Group...');
-  await prisma.teacherGroup.create({
-    data: {
-      teacher_id: regularTeacher.id,
-      group_id: group.id,
-      campaign_id: campaign.id,
-    },
-  });
-  console.log(`✅ Teacher assigned to group\n`);
-
-  // ============================================
-  // 12. تسجيل الطالب في الحملة - Enroll Student in Campaign
-  // ============================================
-  console.log('🔗 Enrolling Student in Campaign...');
-  await prisma.studentCampaign.create({
-    data: {
-      student_id: student.id,
-      campaign_id: campaign.id,
-      is_active: true,
-    },
-  });
-  console.log(`✅ Student enrolled in campaign\n`);
-
-  // ============================================
-  // 13. إضافة الطالب إلى المجموعة - Add Student to Group
-  // ============================================
-  console.log('🔗 Adding Student to Group...');
-  await prisma.studentGroup.create({
-    data: {
-      student_id: student.id,
-      group_id: group.id,
-      campaign_id: campaign.id,
-    },
-  });
-  console.log(`✅ Student added to group\n`);
-
-  // ============================================
-  // Summary
-  // ============================================
-  console.log('═══════════════════════════════════════════════════════');
-  console.log('✅ Seed completed successfully!');
-  console.log('═══════════════════════════════════════════════════════\n');
-
-  console.log('📊 SUMMARY:');
-  console.log('───────────────────────────────────────────────────────');
-  console.log(`Organizations: 1`);
-  console.log(`  - ${organization.name}`);
-  console.log('');
-  console.log(`Mosques: 2`);
-  console.log(`  - ${mosque1.name} (${mosque1.city})`);
-  console.log(`  - ${mosque2.name} (${mosque2.city})`);
-  console.log('');
-  console.log(`Users: 4`);
-  console.log(
-    `  1. Organization Owner: ${orgOwner.first_name} ${orgOwner.last_name}`,
-  );
-  console.log(`     Phone: ${orgOwner.mobile_phone_number}`);
-  console.log(`     Password: password123`);
-  console.log(`     Manages: ${organization.name} (OWNER)`);
-  console.log('');
-  console.log(
-    `  2. Mosque Manager: ${mosqueManager.first_name} ${mosqueManager.last_name}`,
-  );
-  console.log(`     Phone: ${mosqueManager.mobile_phone_number}`);
-  console.log(`     Password: password123`);
-  console.log(`     Manages: ${mosque1.name} (ADMIN)`);
-  console.log('');
-  console.log(
-    `  3. Regular Teacher: ${regularTeacher.first_name} ${regularTeacher.last_name}`,
-  );
-  console.log(`     Phone: ${regularTeacher.mobile_phone_number}`);
-  console.log(`     Password: password123`);
-  console.log(`     Teaching: ${group.title} in ${campaign.name}`);
-  console.log('');
-  console.log(`  4. Student: ${student.first_name} ${student.last_name}`);
-  console.log(`     Phone: ${student.student_mobile}`);
-  console.log(`     Password: password123`);
-  console.log(`     Enrolled: ${group.title} in ${campaign.name}`);
-  console.log('');
-  console.log(`Campaigns: 1`);
-  console.log(`  - ${campaign.name} (${mosque1.name})`);
-  console.log('');
-  console.log(`Groups: 1`);
-  console.log(`  - ${group.title} (Teacher: ${regularTeacher.first_name})`);
-  console.log('───────────────────────────────────────────────────────\n');
-
-  console.log('🔐 LOGIN CREDENTIALS:');
-  console.log('───────────────────────────────────────────────────────');
-  console.log('POST /auth/login (Unified login for all teachers)');
-  console.log(
-    `  Organization Owner: ${orgOwner.mobile_phone_number} / password123`,
-  );
-  console.log(
-    `  Mosque Manager: ${mosqueManager.mobile_phone_number} / password123`,
-  );
-  console.log(
-    `  Regular Teacher: ${regularTeacher.mobile_phone_number} / password123`,
-  );
-  console.log('');
-  console.log('POST /auth/login/student');
-  console.log(`  Student: ${student.student_mobile} / password123`);
-  console.log('═══════════════════════════════════════════════════════\n');
+  console.log(`✅ تم إنشاء ${templates.length} قالب بنجاح`);
+  console.log('📊 تشمل جميع سور القرآن الـ 114');
+  console.log(`📄 إجمالي الصفحات: 604 صفحة (مصحف المدينة النبوية)\n`);
 }
 
 main()
   .catch((e) => {
-    console.error('❌ Error during seed:', e);
+    console.error('❌ خطأ في البذر:', e);
     process.exit(1);
   })
   .finally(async () => {

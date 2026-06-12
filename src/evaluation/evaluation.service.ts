@@ -17,11 +17,11 @@ export class EvaluationService {
       },
       include: {
         sessions: true,
-        session_surahs: true,
+        portions: true,
         _count: {
           select: {
             sessions: true,
-            session_surahs: true,
+            portions: true,
           },
         },
       },
@@ -30,11 +30,11 @@ export class EvaluationService {
     return evaluations.map((el) => ({
       ...el,
       sessions: undefined,
-      session_surahs: undefined,
+      portions: undefined,
       _count: undefined,
-      is_related: !!el.sessions?.length || !!el.session_surahs?.length,
+      is_related: !!el.sessions?.length || !!el.portions?.length,
       sessions_count: el._count.sessions,
-      session_surahs_count: el._count.session_surahs,
+      session_portions_count: el._count.portions,
     }));
   }
 
@@ -45,7 +45,7 @@ export class EvaluationService {
         _count: {
           select: {
             sessions: true,
-            session_surahs: true,
+            portions: true,
           },
         },
       },
@@ -70,7 +70,8 @@ export class EvaluationService {
         if (
           current?.title !== item.title ||
           current?.points !== item.points ||
-          current?.minimum_marks !== item.minimum_marks
+          current?.minimum_marks !== item.minimum_marks ||
+          current?.is_passed !== item.is_passed
         ) {
           await this.prisma.evaluation.update({
             where: { id: item.id },
@@ -78,6 +79,7 @@ export class EvaluationService {
               title: item.title,
               points: item.points,
               minimum_marks: item.minimum_marks,
+              is_passed: item.is_passed,
             },
           });
         }
@@ -88,6 +90,7 @@ export class EvaluationService {
             title: item.title,
             points: item.points,
             minimum_marks: item.minimum_marks,
+            is_passed: item.is_passed ?? true,
           },
         });
       }
@@ -96,14 +99,13 @@ export class EvaluationService {
     // 3. Delete evaluations not in incoming list (only if they're not being used)
     const toDelete = existing.filter((e) => !incomingIds.has(e.id));
     for (const e of toDelete) {
-      // Check if evaluation is being used
       const usage = await this.prisma.evaluation.findUnique({
         where: { id: e.id },
         include: {
           _count: {
             select: {
               sessions: true,
-              session_surahs: true,
+              portions: true,
             },
           },
         },
@@ -111,10 +113,10 @@ export class EvaluationService {
 
       if (
         usage &&
-        (usage._count.sessions > 0 || usage._count.session_surahs > 0)
+        (usage._count.sessions > 0 || usage._count.portions > 0)
       ) {
         throw new Error(
-          `Cannot delete evaluation "${e.title}" as it is being used in ${usage._count.sessions} sessions and ${usage._count.session_surahs} session surahs.`,
+          `Cannot delete evaluation "${e.title}" as it is being used in ${usage._count.sessions} sessions and ${usage._count.portions} portions.`,
         );
       }
 
@@ -137,7 +139,7 @@ export class EvaluationService {
         _count: {
           select: {
             sessions: true,
-            session_surahs: true,
+            portions: true,
           },
         },
       },
@@ -152,14 +154,13 @@ export class EvaluationService {
   }
 
   async delete(id: number) {
-    // Check if evaluation is being used
     const evaluation = await this.prisma.evaluation.findUnique({
       where: { id },
       include: {
         _count: {
           select: {
             sessions: true,
-            session_surahs: true,
+            portions: true,
           },
         },
       },
@@ -171,10 +172,10 @@ export class EvaluationService {
 
     if (
       evaluation._count.sessions > 0 ||
-      evaluation._count.session_surahs > 0
+      evaluation._count.portions > 0
     ) {
       throw new Error(
-        `Cannot delete evaluation "${evaluation.title}" as it is being used in ${evaluation._count.sessions} sessions and ${evaluation._count.session_surahs} session surahs.`,
+        `Cannot delete evaluation "${evaluation.title}" as it is being used in ${evaluation._count.sessions} sessions and ${evaluation._count.portions} portions.`,
       );
     }
 
@@ -190,7 +191,7 @@ export class EvaluationService {
         _count: {
           select: {
             sessions: true,
-            session_surahs: true,
+            portions: true,
           },
         },
       },
@@ -198,14 +199,14 @@ export class EvaluationService {
 
     const totalEvaluations = evaluations.length;
     const usedEvaluations = evaluations.filter(
-      (e) => e._count.sessions > 0 || e._count.session_surahs > 0,
+      (e) => e._count.sessions > 0 || e._count.portions > 0,
     ).length;
     const totalSessions = evaluations.reduce(
       (sum, e) => sum + e._count.sessions,
       0,
     );
-    const totalSessionSurahs = evaluations.reduce(
-      (sum, e) => sum + e._count.session_surahs,
+    const totalPortions = evaluations.reduce(
+      (sum, e) => sum + e._count.portions,
       0,
     );
 
@@ -214,15 +215,16 @@ export class EvaluationService {
       usedEvaluations,
       unusedEvaluations: totalEvaluations - usedEvaluations,
       totalSessions,
-      totalSessionSurahs,
+      totalPortions,
       evaluations: evaluations.map((e) => ({
         id: e.id,
         title: e.title,
         points: e.points,
         minimum_marks: e.minimum_marks,
+        is_passed: e.is_passed,
         sessions_count: e._count.sessions,
-        session_surahs_count: e._count.session_surahs,
-        is_used: e._count.sessions > 0 || e._count.session_surahs > 0,
+        session_portions_count: e._count.portions,
+        is_used: e._count.sessions > 0 || e._count.portions > 0,
       })),
     };
   }

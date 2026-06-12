@@ -141,33 +141,21 @@ export class ReportService {
     startDate: Date,
     endDate: Date,
   ) {
-    const savingSessions = await this.prisma.savingSession.findMany({
+    const sessions = await this.prisma.recitationSession.findMany({
       where: {
         campaign_id: Number(campaignId),
         created_at: { gte: startDate, lte: endDate },
       },
-      include: {
-        session_surahs: {
-          select: {
-            isPassed: true,
-          },
-        },
+      select: {
+        status: true,
       },
     });
 
     let passed = 0;
     let notPassed = 0;
 
-    savingSessions.forEach((session) => {
-      if (session.session_surahs.length === 0) {
-        notPassed++;
-        return;
-      }
-
-      const allPassed = session.session_surahs.every(
-        (surah) => surah.isPassed === true,
-      );
-      if (allPassed) {
+    sessions.forEach((session) => {
+      if (session.status === 'PASSED') {
         passed++;
       } else {
         notPassed++;
@@ -175,7 +163,7 @@ export class ReportService {
     });
 
     return {
-      total: savingSessions.length,
+      total: sessions.length,
       passed,
       notPassed,
     };

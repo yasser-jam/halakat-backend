@@ -26,14 +26,16 @@ export class MistakeService {
         campaign_id: Number(campaignId),
       },
       include: {
-        mistakes: true,
+        _count: {
+          select: { errors: true },
+        },
       },
     });
 
     return mistakes.map((el) => ({
       ...el,
-      mistakes: undefined,
-      is_related: !!el.mistakes?.length,
+      _count: undefined,
+      is_related: el._count.errors > 0,
     }));
   }
 

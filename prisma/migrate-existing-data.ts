@@ -95,53 +95,9 @@ async function migrateExistingData() {
 
     // 3. ترحيل جلسات التسميع الموجودة
     console.log('🔄 ترحيل جلسات التسميع الموجودة...');
-    
-    const existingSessions = await prisma.savingSession.findMany({
-      include: {
-        session_surahs: {
-          include: {
-            template: true,
-            mistakes: {
-              include: { mistake: true }
-            }
-          }
-        }
-      }
-    });
-
-    const surahTemplates = await prisma.sessionSurahTemplate.findMany();
-
-    for (const session of existingSessions) {
-      console.log(`🔄 ترحيل الجلسة ${session.id}...`);
-
-      // إنشاء سور الجلسة بناءً على الصفحات
-      const sessionTemplates = surahTemplates.filter(
-        template => template.pageNumber >= session.start && template.pageNumber <= session.end
-      );
-
-      for (const template of sessionTemplates) {
-        // تحديد ما إذا كانت السورة نجحت بناءً على التقييم العام
-        const isPassed = session.rating >= 7; // افتراض أن التقييم 7+ يعني النجاح
-        const score = session.rating * 10; // تحويل التقييم إلى درجة
-
-        const sessionSurah = await prisma.sessionSurah.create({
-          data: {
-            saving_session_id: session.id,
-            template_id: template.id,
-            evaluation_id: defaultEvaluation.id,
-            isPassed: isPassed,
-            score: score,
-            notes: isPassed ? null : 'يحتاج مراجعة',
-          },
-        });
-
-        // ترحيل الأخطاء المرتبطة بهذه الصفحة
-        // Note: In the new schema, mistakes are already linked to session_surahs
-        // This migration step is no longer needed as the data structure has changed
-      }
-    }
-
-    console.log('✅ تم ترحيل جميع جلسات التسميع');
+    console.log('⚠️  تم تغيير هيكل البيانات: تم إزالة SavingSession, SessionSurah, MistakeInSession');
+    console.log('⚠️  لم تعد هناك حاجة لترحيل البيانات - تم استبدالها بـ RecitationSession, SessionPortion, SessionError');
+    console.log('✅ تم تخطي ترحيل جلسات التسميع');
 
     // 4. حذف البيانات القديمة (اختياري - يمكن تعليق هذا الجزء للاحتفاظ بالبيانات القديمة)
     console.log('🗑️ حذف البيانات القديمة...');

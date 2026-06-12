@@ -15,11 +15,18 @@ export class CreateEvaluationDto {
 
   @ApiProperty({
     example: 90,
-    description: 'Minimum marks required to achieve this evaluation',
+    description: 'Minimum marks required to pass (score >= minimum_marks = pass)',
   })
   @IsInt()
   @Min(0)
   minimum_marks: number;
+
+  @ApiProperty({
+    example: true,
+    description: 'Whether this evaluation is considered a passing grade',
+  })
+  @IsOptional()
+  is_passed?: boolean;
 
   @ApiProperty({
     example: 1,
@@ -48,11 +55,18 @@ export class UpdateEvaluationDto {
 
   @ApiProperty({
     example: 90,
-    description: 'Minimum marks required to achieve this evaluation',
+    description: 'Minimum marks required to pass',
   })
   @IsInt()
   @Min(0)
   minimum_marks: number;
+
+  @ApiProperty({
+    example: true,
+    description: 'Whether this evaluation is considered a passing grade',
+  })
+  @IsOptional()
+  is_passed?: boolean;
 }
 
 export class EvaluationResponseDto {
@@ -67,6 +81,9 @@ export class EvaluationResponseDto {
 
   @ApiProperty()
   minimum_marks: number;
+
+  @ApiProperty({ example: true })
+  is_passed: boolean;
 
   @ApiProperty()
   campaign_id: number;
@@ -83,10 +100,10 @@ export class EvaluationResponseDto {
   sessions_count?: number;
 
   @ApiProperty({
-    description: 'Number of session surahs using this evaluation',
+    description: 'Number of session portions using this evaluation',
     required: false,
   })
-  session_surahs_count?: number;
+  session_portions_count?: number;
 }
 
 export class AssertEvaluationsDto {

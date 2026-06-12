@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Put,
-  Delete,
-  Body,
-  Param,
-  Query,
-} from '@nestjs/common';
+import { Controller, Get, Param, Query } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -22,7 +13,7 @@ import { SessionSurahService } from './session-surah.service';
 export class SessionSurahController {
   constructor(private readonly sessionSurahService: SessionSurahService) {}
 
-  @ApiOperation({ summary: 'Get all surah templates' })
+  @ApiOperation({ summary: 'Get all surah templates (Quran metadata)' })
   @ApiResponse({
     status: 200,
     description: 'Returns all surah templates.',
@@ -33,6 +24,10 @@ export class SessionSurahController {
   }
 
   @ApiOperation({ summary: 'Get surah templates by surah number' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns surah templates for the specified surah.',
+  })
   @ApiParam({
     name: 'surahNumber',
     required: true,
@@ -45,6 +40,10 @@ export class SessionSurahController {
   }
 
   @ApiOperation({ summary: 'Get surah templates by page range' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns surah templates within the specified page range.',
+  })
   @ApiQuery({ name: 'startPage', required: true, type: Number })
   @ApiQuery({ name: 'endPage', required: true, type: Number })
   @Get('templates/pages')
@@ -58,86 +57,22 @@ export class SessionSurahController {
     );
   }
 
-  @ApiOperation({ summary: 'Get session surahs by session ID' })
-  @ApiParam({
-    name: 'sessionId',
-    required: true,
-    type: Number,
-    description: 'The session ID',
+  @ApiOperation({ summary: 'Look up a surah template by surah number + page number' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns the matching surah template or null.',
   })
-  @Get('session/:sessionId')
-  async getSessionSurahsBySession(@Param('sessionId') sessionId: number) {
-    return this.sessionSurahService.getSessionSurahsBySession(
-      Number(sessionId),
-    );
-  }
-
-  @ApiOperation({ summary: 'Update session surah' })
-  @ApiParam({
-    name: 'id',
-    required: true,
-    type: Number,
-    description: 'The session surah ID',
-  })
-  @Put(':id')
-  async updateSessionSurah(
-    @Param('id') id: number,
-    @Body()
-    data: {
-      isPassed?: boolean;
-      score?: number;
-      notes?: string;
-    },
+  @ApiQuery({ name: 'surahNumber', required: true, type: Number })
+  @ApiQuery({ name: 'pageNumber', required: true, type: Number })
+  @Get('templates/query')
+  async queryTemplate(
+    @Query('surahNumber') surahNumber: number,
+    @Query('pageNumber') pageNumber: number,
   ) {
-    return this.sessionSurahService.updateSessionSurah(Number(id), data);
-  }
-
-  @ApiOperation({ summary: 'Add mistake to session surah' })
-  @ApiParam({
-    name: 'id',
-    required: true,
-    type: Number,
-    description: 'The session surah ID',
-  })
-  @Post(':id/mistakes')
-  async addMistakeToSessionSurah(
-    @Param('id') id: number,
-    @Body() data: { mistakeId: number },
-  ) {
-    return this.sessionSurahService.addMistakeToSessionSurah(
-      Number(id),
-      data.mistakeId,
+    return this.sessionSurahService.queryTemplate(
+      Number(surahNumber),
+      Number(pageNumber),
     );
-  }
-
-  @ApiOperation({ summary: 'Remove mistake from session surah' })
-  @ApiParam({
-    name: 'id',
-    required: true,
-    type: Number,
-    description: 'The session surah ID',
-  })
-  @Delete(':id/mistakes/:mistakeId')
-  async removeMistakeFromSessionSurah(
-    @Param('id') id: number,
-    @Param('mistakeId') mistakeId: number,
-  ) {
-    return this.sessionSurahService.removeMistakeFromSessionSurah(
-      Number(id),
-      Number(mistakeId),
-    );
-  }
-
-  @ApiOperation({ summary: 'Get session surah statistics' })
-  @ApiParam({
-    name: 'sessionId',
-    required: true,
-    type: Number,
-    description: 'The session ID',
-  })
-  @Get('stats/:sessionId')
-  async getSessionSurahStats(@Param('sessionId') sessionId: number) {
-    return this.sessionSurahService.getSessionSurahStats(Number(sessionId));
   }
 
   @ApiOperation({ summary: 'Get list of all surahs with names and numbers' })

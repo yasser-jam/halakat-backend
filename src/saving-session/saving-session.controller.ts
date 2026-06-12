@@ -16,9 +16,9 @@ import {
 } from '@nestjs/swagger';
 import { SavingSessionService } from './saving-session.service';
 import {
-  CreateSavingSessionDto,
+  CreateRecitationSessionDto,
   FilterSavingSessionDto,
-  SavingSessionDto,
+  RecitationSessionDto,
 } from '../dto/saving.dto';
 
 @ApiTags('saving-sessions')
@@ -26,30 +26,33 @@ import {
 export class SavingSessionController {
   constructor(private readonly savingSessionService: SavingSessionService) {}
 
-  @ApiOperation({ summary: 'Create a new saving session' })
+  @ApiOperation({ summary: 'Create a new recitation session with dynamic portion splitting' })
   @ApiResponse({
     status: 201,
-    description: 'The saving session has been successfully created.',
-    type: SavingSessionDto,
+    description: 'The recitation session has been successfully created.',
+    type: RecitationSessionDto,
   })
   @Post()
-  async create(@Body() createSavingSessionDto: CreateSavingSessionDto) {
-    return this.savingSessionService.createSavingSession(
-      createSavingSessionDto,
-    );
+  async create(@Body() dto: CreateRecitationSessionDto) {
+    return this.savingSessionService.create(dto);
   }
 
-  @ApiOperation({ summary: 'Get all saving sessions' })
+  @ApiOperation({ summary: 'Get all recitation sessions' })
   @ApiResponse({
     status: 200,
-    description: 'Returns a list of all saving sessions.',
-    type: [SavingSessionDto],
+    description: 'Returns a list of all recitation sessions.',
+    type: [RecitationSessionDto],
   })
   @Get()
   async findAll() {
     return this.savingSessionService.getAll();
   }
 
+  @ApiOperation({ summary: 'Filter recitation sessions' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns filtered recitation sessions.',
+  })
   @Get('filter')
   @ApiQuery({ name: 'studentId', required: false, type: Number })
   @ApiQuery({ name: 'teacherId', required: false, type: Number })
@@ -72,24 +75,24 @@ export class SavingSessionController {
     return this.savingSessionService.filter(query);
   }
 
-  @ApiOperation({ summary: 'Get saving session by ID' })
+  @ApiOperation({ summary: 'Get recitation session by ID' })
   @ApiResponse({
     status: 200,
-    description: 'Returns a saving session by its ID.',
-    type: SavingSessionDto,
+    description: 'Returns a recitation session by its ID.',
+    type: RecitationSessionDto,
   })
   @ApiParam({
     name: 'id',
     required: true,
     type: Number,
-    description: 'The ID of the saving session',
+    description: 'The ID of the recitation session',
   })
   @Get(':id')
   async findOne(@Param('id') id: number) {
     return this.savingSessionService.getById(id);
   }
 
-  @ApiOperation({ summary: 'Delete Saving Session' })
+  @ApiOperation({ summary: 'Delete Recitation Session' })
   @ApiResponse({
     status: 200,
     description: 'Deleted Successfully',
@@ -98,7 +101,7 @@ export class SavingSessionController {
     name: 'id',
     required: true,
     type: Number,
-    description: 'The ID of the saving session',
+    description: 'The ID of the recitation session',
   })
   @Delete(':id')
   async remove(@Param('id') id: number) {

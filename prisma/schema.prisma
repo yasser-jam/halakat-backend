@@ -147,7 +147,7 @@ model Student {
   campaign_enrollments StudentCampaign[]
   groups               StudentGroup[]
   attendance           Attendance[]
-  saving_sessions      SavingSession[]
+  recitation_sessions  RecitationSession[]
   logs                 Log[]
 
   @@index([student_mobile])
@@ -170,7 +170,6 @@ model Teacher {
   special_talent                     String?
   father_name                        String?
   current_residence_address_area     String?
-  current_residence_address_street   String?
   current_residence_address_building String?
   preserved_parts                    Json?
   parts_tested_by_the_endowments     Json?
@@ -192,7 +191,7 @@ model Teacher {
   // Teaching Relations (M-M through campaigns)
   campaign_assignments    TeacherCampaign[]
   groups                  TeacherGroup[]
-  saving_sessions         SavingSession[]
+  recitation_sessions     RecitationSession[]
   teacher_roles           TeacherRole[]
   logs                    Log[]
   CurriculumLessonSession CurriculumLessonSession[]
@@ -253,7 +252,7 @@ model Campaign {
   teacher_assignments     TeacherCampaign[]
   student_groups          StudentGroup[]
   attendance              Attendance[]
-  saving_sessions         SavingSession[]
+  recitation_sessions     RecitationSession[]
   mistakes                Mistake[]
   evaluations             Evaluation[]
   teacher_roles           TeacherRole[]
@@ -366,34 +365,34 @@ model Evaluation {
   title         String
   points        Int
   minimum_marks Int
+  is_passed     Boolean @default(true)
   campaign_id   Int
 
-  campaign       Campaign        @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
-  sessions       SavingSession[]
-  session_surahs SessionSurah[]
+  campaign Campaign          @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  sessions RecitationSession[]
+  portions SessionPortion[]
 
   @@index([campaign_id])
 }
 
-model SavingSession {
-  id               Int      @id @default(autoincrement())
-  teacher_id       Int
-  student_id       Int
-  campaign_id      Int
-  evaluation_id    Int?
-  start            Int // start page (for reporting)
-  end              Int // end page (for reporting)
-  rating           Int
-  duration         Int
-  totalScore       Float? // Sum of weighted scores from completed templates
-  maxPossibleScore Float? // Sum of weights * 100 for completed templates only
-  created_at       DateTime @default(now())
+model RecitationSession {
+  id            Int           @id @default(autoincrement())
+  teacher_id    Int
+  student_id    Int
+  campaign_id   Int
+  evaluation_id Int?
+  rating        Int
+  duration      Int
+  total_score   Float?
+  status        SessionStatus
+  notes         String?
+  created_at    DateTime      @default(now())
 
-  teacher        Teacher        @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
-  student        Student        @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  campaign       Campaign       @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
-  evaluation     Evaluation?    @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
-  session_surahs SessionSurah[]
+  teacher    Teacher          @relation(fields: [teacher_id], references: [id], onDelete: Cascade)
+  student    Student          @relation(fields: [student_id], references: [id], onDelete: Cascade)
+  campaign   Campaign         @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  evaluation Evaluation?      @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
+  portions   SessionPortion[]
 
   @@index([teacher_id])
   @@index([student_id])
@@ -408,36 +407,13 @@ model SessionSurahTemplate {
   pageNumber  Int
   startLine   Int?
   endLine     Int?
-  weight      Float // 1.0 full page, <1.0 partial
+  weight      Float
 
-  session_surahs SessionSurah[]
+  portions SessionPortion[]
 
   @@unique([surahNumber, pageNumber])
   @@index([surahNumber])
   @@index([pageNumber])
-}
-
-model SessionSurah {
-  id                Int      @id @default(autoincrement())
-  saving_session_id Int
-  template_id       Int
-  evaluation_id     Int
-  isPassed          Boolean?
-  score             Int?
-  notes             String?
-
-  rawScore      Int? // 100 - Σ(mistake.reduced_marks), min 0
-  weightedScore Float? // rawScore * template.weight
-  isCompleted   Boolean @default(false) // Track if template was finished
-
-  saving_session SavingSession        @relation(fields: [saving_session_id], references: [id], onDelete: Cascade)
-  template       SessionSurahTemplate @relation(fields: [template_id], references: [id], onDelete: Restrict)
-  evaluation     Evaluation           @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
-  mistakes       MistakeInSession[]
-
-  @@index([saving_session_id])
-  @@index([template_id])
-  @@index([evaluation_id])
 }
 
 model Mistake {
@@ -446,21 +422,44 @@ model Mistake {
   title         String
   reduced_marks Int
 
-  campaign Campaign           @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
-  mistakes MistakeInSession[]
+  campaign Campaign      @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+  errors   SessionError[]
 
   @@index([campaign_id])
 }
 
-model MistakeInSession {
-  id               Int @id @default(autoincrement())
-  session_surah_id Int
-  mistake_id       Int
+model SessionPortion {
+  id            Int           @id @default(autoincrement())
+  session_id    Int
+  portion_type  PortionType
+  surah_id      Int?
+  start_page    Int
+  end_page      Int
+  portion_score Float?
+  status        PortionStatus
+  evaluation_id Int?
+  notes         String?
+  created_at    DateTime      @default(now())
 
-  session_surah SessionSurah @relation(fields: [session_surah_id], references: [id], onDelete: Cascade)
-  mistake       Mistake      @relation(fields: [mistake_id], references: [id], onDelete: Restrict)
+  session    RecitationSession    @relation(fields: [session_id], references: [id], onDelete: Cascade)
+  surah      SessionSurahTemplate? @relation(fields: [surah_id], references: [id], onDelete: Restrict)
+  evaluation Evaluation?          @relation(fields: [evaluation_id], references: [id], onDelete: Restrict)
+  errors     SessionError[]
 
-  @@index([session_surah_id])
+  @@index([session_id])
+}
+
+model SessionError {
+  id          Int      @id @default(autoincrement())
+  portion_id  Int
+  mistake_id  Int
+  page_number Int
+  created_at  DateTime @default(now())
+
+  portion SessionPortion @relation(fields: [portion_id], references: [id], onDelete: Cascade)
+  mistake Mistake        @relation(fields: [mistake_id], references: [id], onDelete: Restrict)
+
+  @@index([portion_id])
   @@index([mistake_id])
 }
 
@@ -723,10 +722,27 @@ enum LogEvent {
 }
 
 enum NodeStatus {
-  PLANNED       // Not started yet
-  IN_PROGRESS   // Started but not completed
-  COMPLETED     // Finished within span
-  LATE          // Exceeded lesson_span without completion
-  SKIPPED       // Intentionally skipped
-  CANCELLED     // Cancelled/removed from plan
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  LATE
+  SKIPPED
+  CANCELLED
+}
+
+enum SessionStatus {
+  PASSED
+  FAILED
+  PARTIALLY_PASSED
+}
+
+enum PortionType {
+  FULL_PAGE
+  HALF_PAGE
+  SURAH
+}
+
+enum PortionStatus {
+  PASSED
+  FAILED
 }

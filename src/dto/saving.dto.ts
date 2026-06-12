@@ -8,74 +8,40 @@ import {
   ValidateNested,
   Min,
   Max,
+  IsString,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 
-export class MistakeInSessionDto {
-  @ApiProperty({ example: 1, description: 'ID of the mistake' })
+export class CreatePagePortionDto {
+  @ApiProperty({ example: 1, description: 'Surah number (1-114)' })
   @IsInt()
   @IsNotEmpty()
-  mistakeId: number;
-}
+  surah_number: number;
 
-export class SessionSurahDto {
-  @ApiProperty({ example: 1, description: 'Template ID for the surah' })
+  @ApiProperty({ example: 2, description: 'Page number within the surah' })
   @IsInt()
   @IsNotEmpty()
-  templateId: number;
-
-  @ApiProperty({ example: 1, description: 'Evaluation ID for the surah' })
-  @IsInt()
-  @IsNotEmpty()
-  evaluationId: number;
-
-  @ApiProperty({ example: true, description: 'Whether the surah was passed' })
-  @IsOptional()
-  isPassed?: boolean;
-
-  @ApiProperty({ example: 85, description: 'Score for the surah' })
-  @IsOptional()
-  @IsInt()
-  score?: number;
-
-  @ApiProperty({ example: 90, description: 'Raw score before applying weight' })
-  @IsOptional()
-  @IsInt()
-  rawScore?: number;
+  page_number: number;
 
   @ApiProperty({
-    example: 90.5,
-    description: 'Weighted score after applying template weight',
+    example: [1, 3],
+    description: 'IDs of mistakes made on this page',
   })
-  @IsOptional()
-  weightedScore?: number;
-
-  @ApiProperty({
-    example: true,
-    description: 'Whether this template was completed',
-  })
-  @IsOptional()
-  isCompleted?: boolean;
-
-  @ApiProperty({
-    example: 'Good recitation',
-    description: 'Notes about the surah',
-  })
-  @IsOptional()
-  notes?: string;
-
-  @ApiProperty({
-    type: [MistakeInSessionDto],
-    description: 'Mistakes made in this surah',
-  })
-  @IsOptional()
   @IsArray()
-  @ValidateNested({ each: true })
-  @Type(() => MistakeInSessionDto)
-  mistakes?: MistakeInSessionDto[];
+  @IsInt({ each: true })
+  mistake_ids: number[];
+
+  @ApiProperty({
+    example: 1,
+    required: false,
+    description: 'Evaluation ID for this portion (falls back to session-level evaluation)',
+  })
+  @IsOptional()
+  @IsInt()
+  evaluation_id?: number;
 }
 
-export class CreateSavingSessionDto {
+export class CreateRecitationSessionDto {
   @ApiProperty({ example: 1, description: 'ID of the teacher' })
   @IsInt()
   @IsNotEmpty()
@@ -91,20 +57,13 @@ export class CreateSavingSessionDto {
   @IsNotEmpty()
   campaign_id: number;
 
-  @ApiProperty({ example: 1, description: 'ID of the evaluation (optional)' })
-  @IsOptional()
-  @IsInt()
-  evaluation_id?: number;
-
-  @ApiProperty({ example: 1, description: 'Start page number' })
+  @ApiProperty({
+    example: 1,
+    description: 'ID of the evaluation (provides minimum_marks threshold, fallback for portions without their own)',
+  })
   @IsInt()
   @IsNotEmpty()
-  start: number;
-
-  @ApiProperty({ example: 5, description: 'End page number' })
-  @IsInt()
-  @IsNotEmpty()
-  end: number;
+  evaluation_id: number;
 
   @ApiProperty({ example: 4, description: 'Rating (1-5)' })
   @IsInt()
@@ -117,35 +76,80 @@ export class CreateSavingSessionDto {
   @IsNotEmpty()
   duration: number;
 
-  @ApiProperty({
-    example: 85.5,
-    description: 'Total score from all completed templates',
-  })
+  @ApiProperty({ example: 'Good session', description: 'Optional notes' })
   @IsOptional()
-  totalScore?: number;
+  @IsString()
+  notes?: string;
 
   @ApiProperty({
-    example: 100.0,
-    description: 'Maximum possible score for completed templates',
-  })
-  @IsOptional()
-  maxPossibleScore?: number;
-
-  @ApiProperty({
-    example: true,
-    description: 'Whether the overall session passed',
-  })
-  @ApiProperty({
-    type: [SessionSurahDto],
-    description: 'List of surahs recited in this session',
+    type: [CreatePagePortionDto],
+    description: 'List of pages with their surah, page numbers, and mistakes',
   })
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => SessionSurahDto)
-  sessionSurahs: SessionSurahDto[];
+  @Type(() => CreatePagePortionDto)
+  pages: CreatePagePortionDto[];
 }
 
-export class SavingSessionDto {
+export class SessionErrorDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  mistakeId: number;
+
+  @ApiProperty()
+  pageNumber: number;
+
+  @ApiProperty({ required: false })
+  title?: string;
+
+  @ApiProperty({ required: false })
+  reducedMarks?: number;
+}
+
+export class SessionPortionDto {
+  @ApiProperty()
+  id: number;
+
+  @ApiProperty()
+  portionType: string;
+
+  @ApiProperty({ required: false })
+  surahId?: number;
+
+  @ApiProperty({ required: false })
+  surahNumber?: number;
+
+  @ApiProperty({ required: false })
+  surahName?: string;
+
+  @ApiProperty({ required: false })
+  surahWeight?: number;
+
+  @ApiProperty()
+  startPage: number;
+
+  @ApiProperty()
+  endPage: number;
+
+  @ApiProperty({ required: false })
+  portionScore?: number;
+
+  @ApiProperty()
+  status: string;
+
+  @ApiProperty({ required: false })
+  evaluationId?: number;
+
+  @ApiProperty({ required: false })
+  notes?: string;
+
+  @ApiProperty({ type: [SessionErrorDto] })
+  errors: SessionErrorDto[];
+}
+
+export class RecitationSessionDto {
   @ApiProperty()
   id: number;
 
@@ -162,12 +166,6 @@ export class SavingSessionDto {
   evaluationId?: number;
 
   @ApiProperty()
-  start: number;
-
-  @ApiProperty()
-  end: number;
-
-  @ApiProperty()
   rating: number;
 
   @ApiProperty()
@@ -176,44 +174,51 @@ export class SavingSessionDto {
   @ApiProperty({ required: false })
   totalScore?: number;
 
+  @ApiProperty()
+  status: string;
+
   @ApiProperty({ required: false })
-  maxPossibleScore?: number;
+  notes?: string;
 
   @ApiProperty()
   created_at: Date;
 
-  @ApiProperty({
-    description: 'List of surahs recited in this session',
-    type: [SessionSurahDto],
-  })
-  sessionSurahs: SessionSurahDto[];
+  @ApiProperty({ type: [SessionPortionDto] })
+  portions: SessionPortionDto[];
 }
 
 export class FilterSavingSessionDto {
+  @ApiProperty({ required: false, description: 'Student ID' })
   @IsOptional()
   @IsInt()
   studentId?: number;
 
+  @ApiProperty({ required: false, description: 'Teacher ID' })
   @IsOptional()
   @IsInt()
   teacherId?: number;
 
+  @ApiProperty({ required: false, description: 'Mistake ID' })
   @IsOptional()
   @IsInt()
   mistakeId?: number;
 
+  @ApiProperty({ required: false, description: 'Campaign ID' })
   @IsOptional()
   @IsInt()
   campaign_id?: number;
 
+  @ApiProperty({ required: false, description: 'Evaluation ID' })
   @IsOptional()
   @IsInt()
   evaluationId?: number;
 
+  @ApiProperty({ required: false, description: 'Start date (YYYY-MM-DD)' })
   @IsOptional()
   @IsDateString()
   dateFrom?: string;
 
+  @ApiProperty({ required: false, description: 'End date (YYYY-MM-DD)' })
   @IsOptional()
   @IsDateString()
   dateTo?: string;

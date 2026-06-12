@@ -1,8 +1,10 @@
-# Evaluation & Saving Sessions Workflow
+# Evaluation & Recitation Sessions Workflow
 
 ## Overview
 
-The evaluation system tracks student memorization (saving) sessions, with configurable evaluation criteria, surah templates, and mistake tracking with score calculation.
+The evaluation system tracks student memorization (recitation) sessions with **dynamic portion splitting**. Pages are evaluated one-by-one against an evaluation's `minimum_marks` threshold, and the session stops when a page fails.
+
+---
 
 ## Architecture
 
@@ -13,99 +15,159 @@ The evaluation system tracks student memorization (saving) sessions, with config
 │  title        │     │  title       │     │ surahNumber      │
 │  points       │     │  reduced_    │     │ pageNumber       │
 │  minimum_marks│     │  marks       │     │ weight           │
-│  campaign_id  │     │  campaign_id │     │                  │
-└──────┬───────┘     └──────┬───────┘     └────────┬─────────┘
+│  is_passed    │     │  campaign_id │     │                  │
+│  campaign_id  │     └──────┬───────┘     └────────┬─────────┘
+└──────┬───────┘            │                       │
        │                    │                       │
        └──────┬─────────────┴───────────┬───────────┘
               │                         │
-     ┌────────▼────────┐     ┌──────────▼──────────┐
-     │  SavingSession   │     │  SessionSurah        │
-     │  teacher_id      │     │  saving_session_id   │
-     │  student_id      │     │  template_id          │
-     │  campaign_id     │     │  evaluation_id        │
-     │  evaluation_id   │     │  isPassed             │
-     │  start / end     │     │  rawScore (100 - Σ)   │
-     │  rating          │     │  weightedScore        │
-     │  duration        │     │  isCompleted          │
-     │  totalScore      │     │  mistakes[]           │
-     │  maxPossibleScore│     │                       │
-     └────────┬────────┘     └──────────┬──────────────┘
-              │                         │
-              │              ┌──────────▼──────────┐
-              │              │  MistakeInSession    │
-              │              │  session_surah_id    │
-              └──────────────│  mistake_id          │
-                             └─────────────────────┘
+     ┌────────▼────────┐      ┌─────────▼─────────┐
+     │ RecitationSession │      │  SessionPortion    │
+     │  teacher_id       │      │  session_id        │
+     │  student_id       │      │  portion_type      │
+     │  campaign_id      │      │  start_page        │
+     │  evaluation_id    │      │  end_page          │
+     │  rating           │      │  portion_score     │
+     │  duration         │      │  status (PASS/FAIL)│
+     │  total_score      │      │  evaluation_id     │
+     │  status (PASS/FAIL│      │  errors[]          │
+     │   /PARTIAL)       │      └────────┬───────────┘
+     │  notes            │               │
+     └────────┬──────────┘     ┌─────────▼──────────┐
+              │               │  SessionError       │
+              └───────────────│  portion_id         │
+                              │  mistake_id         │
+                              │  page_number        │
+                              └─────────────────────┘
 ```
 
+---
+
 ## Data Model
+
+### Evaluation
 
 ```prisma
 model Evaluation {
   id            Int    @id @default(autoincrement())
   title         String
   points        Int
-  minimum_marks Int      // Minimum score to pass
+  minimum_marks Int      // Minimum score to pass a portion
+  is_passed     Boolean  @default(true) // Admin classification
   campaign_id   Int
-  sessions       SavingSession[]
-  session_surahs SessionSurah[]
+  sessions       RecitationSession[]
+  portions       SessionPortion[]
 }
+```
 
+### Mistake (Unchanged)
+
+```prisma
 model Mistake {
   id            Int    @id @default(autoincrement())
   campaign_id   Int
   title         String    // e.g., "Mistake in elongation"
-  reduced_marks Int       // Points deducted
-  mistakes      MistakeInSession[]
+  reduced_marks Int       // Points deducted when this error occurs
+  errors        SessionError[]
 }
+```
 
+### RecitationSession (Replaces SavingSession)
+
+```prisma
+model RecitationSession {
+  id            Int           @id @default(autoincrement())
+  teacher_id    Int
+  student_id    Int
+  campaign_id   Int
+  evaluation_id Int?
+  rating        Int
+  duration      Int
+  total_score   Float?
+  status        SessionStatus  // PASSED / FAILED / PARTIALLY_PASSED
+  notes         String?
+  created_at    DateTime       @default(now())
+  portions      SessionPortion[]
+}
+```
+
+### SessionPortion (Replaces SessionSurah)
+
+```prisma
+model SessionPortion {
+  id            Int           @id @default(autoincrement())
+  session_id    Int
+  portion_type  PortionType   // FULL_PAGE / HALF_PAGE / SURAH
+  surah_id      Int?          // FK to SessionSurahTemplate
+  start_page    Int
+  end_page      Int
+  portion_score Float?        // 100 - Σ(deductions for this page)
+  status        PortionStatus // PASSED / FAILED
+  evaluation_id Int?
+  notes         String?
+  created_at    DateTime      @default(now())
+  errors        SessionError[]
+}
+```
+
+### SessionError (Replaces MistakeInSession)
+
+```prisma
+model SessionError {
+  id          Int      @id @default(autoincrement())
+  portion_id  Int
+  mistake_id  Int
+  page_number Int    // Which page the error occurred on
+  created_at  DateTime @default(now())
+}
+```
+
+### SessionSurahTemplate (Unchanged — Quran Metadata)
+
+```prisma
 model SessionSurahTemplate {
   id          Int    @id @default(autoincrement())
   surahNumber Int
-  surahName   String     // Arabic name
+  surahName   String
   pageNumber  Int
   startLine   Int?
   endLine     Int?
-  weight      Float      // 1.0 = full page, < 1.0 = partial
-  @@unique([surahNumber, pageNumber])
-}
-
-model SavingSession {
-  id               Int      @id @default(autoincrement())
-  teacher_id       Int
-  student_id       Int
-  campaign_id      Int
-  evaluation_id    Int?
-  start            Int         // Start page
-  end              Int         // End page
-  rating           Int
-  duration         Int         // Minutes
-  totalScore       Float?
-  maxPossibleScore Float?
-  created_at       DateTime @default(now())
-  session_surahs   SessionSurah[]
-}
-
-model SessionSurah {
-  id                Int      @id @default(autoincrement())
-  saving_session_id Int
-  template_id       Int
-  evaluation_id     Int
-  isPassed          Boolean?
-  score             Int?
-  rawScore          Int?        // 100 - Σ(mistake.reduced_marks), min 0
-  weightedScore     Float?      // rawScore * template.weight
-  isCompleted       Boolean     @default(false)
-  notes             String?
-  mistakes          MistakeInSession[]
-}
-
-model MistakeInSession {
-  id               Int @id @default(autoincrement())
-  session_surah_id Int
-  mistake_id       Int
+  weight      Float
 }
 ```
+
+---
+
+## Scoring Logic
+
+### Per-Page Score
+
+```
+page_score = max(0, 100 - SUM(mistake.reduced_marks on this page))
+```
+
+### Pass/Fail Decision
+
+| Condition | Result |
+|-----------|--------|
+| `page_score >= evaluation.minimum_marks` | Portion = **PASSED** → Continue |
+| `page_score < evaluation.minimum_marks` | Portion = **FAILED** → Stop session |
+
+### Total Session Score
+
+```
+total_score = max(0, 100 - SUM(all deductions across all pages))
+```
+
+### Session Status
+
+| Condition | Status |
+|-----------|--------|
+| All portions PASSED | `PASSED` |
+| Some PASSED + one FAILED (stopped mid-session) | `PARTIALLY_PASSED` |
+| First page FAILED (no PASSED portions) | `FAILED` |
+
+---
 
 ## Workflows
 
@@ -122,7 +184,7 @@ POST /mistakes/assert     →  Sync mistakes (bulk update/create/delete)
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| `POST` | `/evaluations` | Create evaluation (title, points, minimum_marks, campaign_id) |
+| `POST` | `/evaluations` | Create evaluation (title, points, minimum_marks, is_passed, campaign_id) |
 | `POST` | `/evaluations/assert` | Bulk sync (update existing, create new, delete missing) |
 | `GET` | `/evaluations` | List (headers: campaign_id) with usage flags |
 | `GET` | `/evaluations/campaign/:campaignId` | By campaign |
@@ -131,7 +193,7 @@ POST /mistakes/assert     →  Sync mistakes (bulk update/create/delete)
 | `PUT` | `/evaluations/:id` | Update |
 | `DELETE` | `/evaluations/:id` | Delete (blocked if in use) |
 
-**Mistake Endpoints**:
+**Mistake Endpoints** (unchanged):
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
@@ -145,66 +207,50 @@ POST /mistakes/assert     →  Sync mistakes (bulk update/create/delete)
 
 ---
 
-### 2. Saving Session Creation
+### 2. Recitation Session Creation (with Dynamic Splitting)
 
 ```
-POST /saving-sessions  →  Create session with surahs and mistakes
+POST /saving-sessions  →  Create session — server dynamically splits pages into portions
 ```
 
-**Request Body** (`CreateSavingSessionDto`):
-```typescript
+**Request Body**:
+
+```json
 {
-  teacherId: number;
-  studentId: number;
-  campaign_id: number;
-  evaluation_id?: number;
-  start: number;       // Start page
-  end: number;         // End page
-  rating: number;
-  duration: number;
-  totalScore?: number;
-  maxPossibleScore?: number;
-  sessionSurahs: {
-    templateId: number;
-    evaluationId: number;
-    isPassed?: boolean;
-    score?: number;
-    rawScore?: number;        // 100 - sum of mistake deductions
-    weightedScore?: number;   // rawScore * template.weight
-    isCompleted?: boolean;
-    notes?: string;
-    mistakes?: { mistakeId: number }[];
-  }[];
+  "teacherId": 1,
+  "studentId": 2,
+  "campaign_id": 3,
+  "evaluation_id": 1,
+  "rating": 4,
+  "duration": 1200,
+  "notes": "جلسة اليوم جيدة",
+  "pages": [
+    { "page_number": 2, "mistake_ids": [1, 3] },
+    { "page_number": 3, "mistake_ids": [] },
+    { "page_number": 4, "mistake_ids": [5] }
+  ]
 }
 ```
 
-**Flow**:
-1. Create `SavingSession` with basic data
-2. Create nested `SessionSurah` records with templates
-3. Create nested `MistakeInSession` for each surah
-4. Create activity log entry
+**Processing Flow**:
 
-**Log Entry**: `تم إنشاء جلسة تسميع جديدة للطالب من الصفحة {start} إلى {end}`
+1. Fetch Evaluation → get `minimum_marks` threshold
+2. Create `RecitationSession` (basic info)
+3. **For each page** (in order of `page_number`):
+   - Fetch mistakes → sum `reduced_marks`
+   - `portion_score = max(0, 100 - sum_deductions)`
+   - If `portion_score >= evaluation.minimum_marks` → create PASSED portion
+   - Else → create FAILED portion → **stop** (skip remaining pages)
+4. Calculate `total_score = max(0, 100 - SUM(all deductions))`
+5. Determine session `status` (PASSED / FAILED / PARTIALLY_PASSED)
+6. Update session with final values
+7. Create audit log
 
-**Response**: Full session with nested surahs, templates, evaluations, mistakes
+**Log Entry**: `تم إنشاء جلسة تسميع جديدة للطالب - التقييم: {title} - الحالة: {status}`
 
 ---
 
-### 3. Session Surah Management
-
-After a session is created, individual surahs can be managed:
-
-**Session Surah Endpoints**:
-
-| Method | Endpoint | Purpose |
-|--------|----------|---------|
-| `GET` | `/session-surahs/session/:sessionId` | Get surahs for a session |
-| `PUT` | `/session-surahs/:id` | Update surah (isPassed, score, notes) |
-| `POST` | `/session-surahs/:id/mistakes` | Add mistake to surah |
-| `DELETE` | `/session-surahs/:id/mistakes/:mistakeId` | Remove mistake from surah |
-| `GET` | `/session-surahs/stats/:sessionId` | Session statistics |
-
-**Surah Template Endpoints**:
+### 3. Quran Templates (SessionSurahTemplate — unchanged)
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
@@ -231,96 +277,24 @@ GET /saving-sessions/filter?studentId=&teacherId=&campaignId=&evaluationId=&date
 
 ---
 
-### 5. Score Calculation
-
-```
-rawScore = 100 - Σ(mistake.reduced_marks)   // minimum 0
-weightedScore = rawScore * template.weight   // template.weight ≤ 1.0
-```
-
-**Pass/Fail**: A surah passes if `score >= evaluation.minimum_marks`
-
-**Session Stats** (`GET /session-surahs/stats/:sessionId`):
-```typescript
-{
-  totalSurahs: number;
-  passedSurahs: number;
-  failedSurahs: number;
-  totalMistakes: number;
-  averageScore: number;
-  passRate: number;    // percentage
-}
-```
-
-## Audit Integration
-
-```typescript
-// In saving-session.service.ts:createSavingSession()
-await this.logService.create({
-  event: 'SAVING_SESSION_CREATED',
-  teacher_id: teacherId,
-  student_id: studentId,
-  notes: `تم إنشاء جلسة تسميع جديدة للطالب من الصفحة ${start} إلى ${end}`,
-  metadata: { saving_session_id: session.id }
-}, campaign_id);
-```
-
-## Getting Sessions
+### 5. Getting Sessions
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | `GET` | `/saving-sessions` | All sessions with full relations |
-| `GET` | `/saving-sessions/filter` | Filtered sessions (key filters) |
+| `GET` | `/saving-sessions/filter` | Filtered sessions |
 | `GET` | `/saving-sessions/:id` | By ID |
-| `DELETE` | `/saving-sessions/:id` | Delete (cascades to surahs, mistakes) |
+| `DELETE` | `/saving-sessions/:id` | Delete (cascades to portions, errors) |
 
-## Key Service Methods
+---
 
-### EvaluationService (`src/evaluation/evaluation.service.ts`)
+## Key Design Changes
 
-| Method | Purpose |
-|--------|---------|
-| `create(dto)` | Create evaluation |
-| `assert(campaignId, evaluations[])` | Sync: create/update/delete with usage check |
-| `findAll(campaignId)` | List with usage flags |
-| `findByCampaign(campaignId)` | Raw list |
-| `getEvaluationStats(campaignId)` | Usage statistics |
-| `findById(id)` | By ID with usage |
-| `update(id, dto)` | Update |
-| `delete(id)` | Delete (blocked if in use) |
-
-### SavingSessionService (`src/saving-session/saving-session.service.ts`)
-
-| Method | Purpose |
-|--------|---------|
-| `createSavingSession(dto)` | Create with nested surahs + mistakes + log |
-| `getAll()` | All with full relations |
-| `getById(id)` | By ID |
-| `filter(dto)` | Filtered search |
-| `remove(id)` | Delete session |
-
-### SessionSurahService (`src/session-surah/session-surah.service.ts`)
-
-| Method | Purpose |
-|--------|---------|
-| `getTemplates()` | All surah templates |
-| `getTemplatesBySurah(surahNumber)` | By surah |
-| `getTemplatesByPageRange(start, end)` | By page range |
-| `getSessionSurahsBySession(sessionId)` | Surahs for session |
-| `updateSessionSurah(id, data)` | Update score/pass |
-| `addMistakeToSessionSurah(...)` | Add mistake |
-| `removeMistakeFromSessionSurah(...)` | Remove mistake |
-| `getSessionSurahStats(sessionId)` | Statistics |
-| `getSurahsList()` | Distinct surah list |
-
-### MistakeService (`src/mistake/mistake.service.ts`)
-
-| Method | Purpose |
-|--------|---------|
-| `create(dto)` | Create mistake |
-| `assertCampaignMistakes(campaignId, mistakes[])` | Sync batch |
-| `findAll(campaignId)` | List with usage |
-| `findByCampaign(campaignId)` | Raw list |
-| `findOne(params)` | By ID |
-| `update(params, dto)` | Update |
-| `delete(params)` | Delete |
+| What Changed | Old | New |
+|-------------|-----|-----|
+| Main table | `SavingSession` (start/end pages, maxPossibleScore) | `RecitationSession` (total_score, status, notes) |
+| Sub-items | `SessionSurah` (template, weight, raw/weighted score) | `SessionPortion` (page range, portion_score, PASS/FAIL) |
+| Errors | `MistakeInSession` → Mistake | `SessionError` → Mistake (adds page_number) |
+| Evaluation | `minimum_marks` for per-surah pass | `minimum_marks` for **threshold**, `is_passed` for admin label |
+| Splitting | Client submits pre-calculated scores | **Server** dynamically splits pages into portions |
+| Session status | No status field | `PASSED` / `FAILED` / `PARTIALLY_PASSED` |

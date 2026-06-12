@@ -6,6 +6,7 @@ import {
   Param,
   Query,
   Delete,
+  Headers,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -13,6 +14,7 @@ import {
   ApiResponse,
   ApiParam,
   ApiQuery,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { SavingSessionService } from './saving-session.service';
 import {
@@ -73,6 +75,33 @@ export class SavingSessionController {
   })
   filter(@Query() query: FilterSavingSessionDto) {
     return this.savingSessionService.filter(query);
+  }
+
+  @ApiOperation({ summary: 'Get all saving sessions for a student in a campaign' })
+  @ApiResponse({
+    status: 200,
+    description: 'Returns saving sessions for the student.',
+  })
+  @ApiParam({
+    name: 'studentId',
+    required: true,
+    type: Number,
+    description: 'The ID of the student',
+  })
+  @ApiHeader({
+    name: 'campaign-id',
+    required: true,
+    description: 'Campaign ID (passed as header)',
+  })
+  @Get('student/:studentId')
+  async findByStudent(
+    @Param('studentId') studentId: number,
+    @Headers('campaign-id') campaignId: string,
+  ) {
+    return this.savingSessionService.getByStudent(
+      Number(studentId),
+      Number(campaignId),
+    );
   }
 
   @ApiOperation({ summary: 'Get recitation session by ID' })

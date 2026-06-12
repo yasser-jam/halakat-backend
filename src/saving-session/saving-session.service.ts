@@ -259,6 +259,26 @@ export class SavingSessionService {
     return this.transformSession(updatedSession);
   }
 
+  async getByStudent(studentId: number, campaignId: number) {
+    const raw = await this.prisma.recitationSession.findMany({
+      where: { student_id: studentId, campaign_id: campaignId },
+      include: {
+        portions: {
+          include: {
+            errors: { include: { mistake: true } },
+            surah: true,
+            evaluation: { select: { id: true, title: true } },
+          },
+        },
+        evaluation: { select: { id: true, title: true } },
+        student: { select: { id: true, first_name: true, last_name: true } },
+        teacher: { select: { id: true, first_name: true, last_name: true } },
+        campaign: { select: { id: true, name: true } },
+      },
+    });
+    return raw.map((r) => this.transformSession(r));
+  }
+
   async getAll() {
     const rows = await this.prisma.recitationSession.findMany({
       include: {

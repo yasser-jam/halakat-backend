@@ -14,8 +14,15 @@ export class GroupService {
         class: true,
         current_teacher_id: true,
         students: {
-          include: {
-            student: true,
+          select: {
+            student: {
+              select: {
+                id: true,
+                first_name: true,
+                last_name: true,
+                educational_class: true,
+              },
+            },
           },
         },
       },
@@ -34,9 +41,11 @@ export class GroupService {
       .map((g) => g.current_teacher_id)
       .filter((id): id is number => id != null);
 
-    const teachers = teacherIds.length
+    const uniqueTeacherIds = [...new Set(teacherIds)];
+
+    const teachers = uniqueTeacherIds.length
       ? await this.prisma.teacher.findMany({
-          where: { id: { in: teacherIds } },
+          where: { id: { in: uniqueTeacherIds } },
         })
       : [];
 
@@ -50,7 +59,17 @@ export class GroupService {
       students: group.students.map((stud) => stud.student),
     }));
 
-    return result;
+    const studentsCount = result.reduce(
+      (sum, g) => sum + g.students.length,
+      0,
+    );
+    const teachersCount = uniqueTeacherIds.length;
+
+    return {
+      students_count: studentsCount,
+      teachers_count: teachersCount,
+      groups: result,
+    };
   }
 
   async create(createDto: CreateGroupDto, campaignId: string) {

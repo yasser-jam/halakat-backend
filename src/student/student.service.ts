@@ -70,13 +70,14 @@ export class StudentService {
 
   async findAllCampaign(campaignId?: string) {
     const students = await this.prisma.student.findMany({
-      // where: {
-      //   campaign_enrollments: {
-      //     some: {
-      //       campaign_id: Number(campaignId),
-      //     },
-      //   },
-      // },
+      where: {
+        campaign_enrollments: {
+          some: {
+            campaign_id: Number(campaignId),
+            is_active: true,
+          },
+        },
+      },
       include: {
         groups: {
           where: {
@@ -85,7 +86,9 @@ export class StudentService {
           include: {
             group: {
               select: {
+                id: true,
                 title: true,
+                class: true,
               },
             },
           },
@@ -96,7 +99,7 @@ export class StudentService {
     return students.map((el) => ({
       ...el,
       groups: undefined,
-      group_title: el.groups?.[0]?.group?.title,
+      group: el.groups?.[0]?.group ?? null,
     }));
   }
 

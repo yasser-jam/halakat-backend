@@ -20,12 +20,12 @@ import {
 } from '@nestjs/swagger';
 import { LogService } from './log.service';
 import { CreateLogDto } from './log.dto';
-import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+// import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 
 @ApiTags('logs')
 @Controller('logs')
 @ApiBearerAuth('access-token')
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 export class LogController {
   constructor(private readonly logService: LogService) {}
 

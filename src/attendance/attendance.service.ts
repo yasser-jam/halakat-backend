@@ -98,7 +98,6 @@ export class AttendanceService {
           event: 'TAKE_ATTENDANCE',
           student_id: Number(studentId),
           group_id: Number(groupId),
-          notes: `تم إنشاء سجلات حضور للطالب في المجموعة`,
           metadata: { campaign_id: Number(campaignId), group_id: Number(groupId), student_id: Number(studentId), days_count: attendDays.length },
         },
         Number(campaignId),
@@ -298,7 +297,6 @@ export class AttendanceService {
             event: 'TAKE_ATTENDANCE',
             teacher_id: teacherId,
             group_id: groupId,
-            notes: `تم تسجيل حضور ${updatedCount} طالب في المجموعة ${groupTitle}`,
             metadata: {
               group_id: groupId,
               students_count: updatedCount,
@@ -559,7 +557,6 @@ export class AttendanceService {
           event: 'TAKE_ATTENDANCE',
           student_id: Number(data.student_id),
           group_id: Number(data.group_id),
-          notes: `تم تسجيل حضور للطالب ${data.student_id}`,
           metadata: {
             student_id: Number(data.student_id),
             status: data.status,
@@ -637,7 +634,6 @@ export class AttendanceService {
           teacher_id: teacherId,
           student_id: dto.student_id,
           group_id: dto.group_id,
-          notes: `تم تسجيل حضور للطالب ${dto.student_id} في المجموعة`,
           metadata: {
             student_id: dto.student_id,
             status: dto.status,

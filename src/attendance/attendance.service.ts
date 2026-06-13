@@ -91,6 +91,21 @@ export class AttendanceService {
         },
       });
     }
+
+    try {
+      await this.logService.create(
+        {
+          event: 'TAKE_ATTENDANCE',
+          student_id: Number(studentId),
+          group_id: Number(groupId),
+          notes: `تم إنشاء سجلات حضور للطالب في المجموعة`,
+          metadata: { campaign_id: Number(campaignId), group_id: Number(groupId), student_id: Number(studentId), days_count: attendDays.length },
+        },
+        Number(campaignId),
+      );
+    } catch (e) {
+      console.error('Failed to log createAll attendance:', e);
+    }
   }
 
   async update(id: number, updateAttendanceDto: UpdateAttendanceDto) {
@@ -280,7 +295,7 @@ export class AttendanceService {
       try {
         await this.logService.create(
           {
-            event: 'ATTENDANCE_MARKED',
+            event: 'TAKE_ATTENDANCE',
             teacher_id: teacherId,
             group_id: groupId,
             notes: `تم تسجيل حضور ${updatedCount} طالب في المجموعة ${groupTitle}`,
@@ -483,9 +498,10 @@ export class AttendanceService {
       },
     });
 
+    let record;
+
     if (existingAttendance) {
-      // Update existing record
-      return await this.prisma.attendance.update({
+      record = await this.prisma.attendance.update({
         where: { id: existingAttendance.id },
         data: {
           status: data.status,
@@ -509,8 +525,7 @@ export class AttendanceService {
         }
       });
     } else {
-      // Create new record
-      return await this.prisma.attendance.create({
+      record = await this.prisma.attendance.create({
         data: {
           student_id: Number(data.student_id),
           group_id: Number(data.group_id),
@@ -537,6 +552,27 @@ export class AttendanceService {
         }
       });
     }
+
+    try {
+      await this.logService.create(
+        {
+          event: 'TAKE_ATTENDANCE',
+          student_id: Number(data.student_id),
+          group_id: Number(data.group_id),
+          notes: `تم تسجيل حضور للطالب ${data.student_id}`,
+          metadata: {
+            student_id: Number(data.student_id),
+            status: data.status,
+            attendance_id: record.id,
+          },
+        },
+        Number(data.campaign_id),
+      );
+    } catch (e) {
+      console.error('Failed to log createOrUpdateAttendance:', e);
+    }
+
+    return record;
   }
 
   async upsertAttendance(
@@ -597,8 +633,9 @@ export class AttendanceService {
     try {
       await this.logService.create(
         {
-          event: 'ATTENDANCE_MARKED',
+          event: 'TAKE_ATTENDANCE',
           teacher_id: teacherId,
+          student_id: dto.student_id,
           group_id: dto.group_id,
           notes: `تم تسجيل حضور للطالب ${dto.student_id} في المجموعة`,
           metadata: {

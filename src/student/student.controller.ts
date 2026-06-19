@@ -24,7 +24,12 @@ import {
   ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { StudentService } from './student.service';
-import { CreateStudentDto, ListStudentsQueryDto, AssignStudentCampaignDto } from './student.dto';
+import {
+  CreateStudentDto,
+  ListStudentsQueryDto,
+  AssignStudentCampaignDto,
+  PaginatedStudentsBasicResponseDto,
+} from './student.dto';
 import { UpdateStudentDto } from '../dto/student.dto';
 
 @ApiTags('students')
@@ -36,7 +41,7 @@ export class StudentsController {
   @ApiOperation({
     summary: 'Get all students (paginated, all mosques)',
     description:
-      'Returns all students across all mosques with pagination, search, and filters',
+      'Returns students with basic profile fields. Supports pagination, search, and filters. When campaign_id is provided, results are limited to students enrolled in that campaign and include their assigned group.',
   })
   @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
   @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
@@ -54,13 +59,26 @@ export class StudentsController {
   })
   @ApiQuery({ name: 'educational_class', required: false, type: Number })
   @ApiQuery({ name: 'in_another_mosque', required: false, type: Boolean })
-  @ApiResponse({ status: 200, description: 'Paginated list of all students' })
+  @ApiQuery({
+    name: 'campaign_id',
+    required: false,
+    type: Number,
+    description:
+      'Filter by campaign enrollment. When provided, each student includes their group assignment for this campaign.',
+    example: 1,
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated list of students with basic profile fields',
+    type: PaginatedStudentsBasicResponseDto,
+  })
   async findAll(@Query() query: ListStudentsQueryDto) {
     const filters: {
       mosqueIds?: number[];
       search?: string;
       educational_class?: number;
       in_another_mosque?: boolean;
+      campaign_id?: number;
       page?: number;
       limit?: number;
     } = {
@@ -84,6 +102,10 @@ export class StudentsController {
       filters.in_another_mosque =
         query.in_another_mosque === true ||
         String(query.in_another_mosque) === 'true';
+    }
+
+    if (query.campaign_id !== undefined) {
+      filters.campaign_id = Number(query.campaign_id);
     }
 
     return this.studentService.findAll(filters);

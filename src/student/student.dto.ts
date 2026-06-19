@@ -182,4 +182,65 @@ export class ListStudentsQueryDto {
 
   @ApiProperty({ example: false, required: false })
   in_another_mosque?: boolean;
+
+  @ApiProperty({
+    example: 1,
+    required: false,
+    description:
+      'Filter students enrolled in this campaign. When provided, each student includes their assigned group for this campaign.',
+  })
+  campaign_id?: number;
+}
+
+export class StudentBasicGroupDto {
+  @ApiProperty({ example: 3 })
+  id: number;
+
+  @ApiProperty({ example: 'Group A' })
+  name: string;
+}
+
+export class StudentBasicDto {
+  @ApiProperty({ example: 'Ahmed' })
+  first_name?: string;
+
+  @ApiProperty({ example: 'Mohammed' })
+  last_name?: string;
+
+  @ApiProperty({ example: 'Ali Mohammed' })
+  father_name?: string;
+
+  @ApiProperty({ example: '+1234567890' })
+  student_mobile: string;
+
+  @ApiProperty({ example: 5 })
+  educational_class?: number;
+
+  @ApiProperty({ example: '2010-05-15T00:00:00.000Z' })
+  birth_date?: Date;
+
+  @ApiProperty({
+    type: StudentBasicGroupDto,
+    required: false,
+    nullable: true,
+    description: 'Present only when campaign_id query param is provided',
+  })
+  group?: StudentBasicGroupDto | null;
+}
+
+export class PaginatedStudentsBasicResponseDto {
+  @ApiProperty({ type: [StudentBasicDto] })
+  data: StudentBasicDto[];
+
+  @ApiProperty({ example: 100 })
+  total: number;
+
+  @ApiProperty({ example: 1 })
+  page: number;
+
+  @ApiProperty({ example: 20 })
+  limit: number;
+
+  @ApiProperty({ example: 5 })
+  totalPages: number;
 }

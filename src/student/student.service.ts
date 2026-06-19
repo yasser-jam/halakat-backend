@@ -16,6 +16,7 @@ export class StudentService {
     search?: string;
     educational_class?: number;
     in_another_mosque?: boolean;
+    campaign_id?: number;
     page?: number;
     limit?: number;
   }) {
@@ -33,6 +34,15 @@ export class StudentService {
       whereClause.in_another_mosque = filters.in_another_mosque;
     }
 
+    if (filters?.campaign_id !== undefined) {
+      whereClause.campaign_enrollments = {
+        some: {
+          campaign_id: filters.campaign_id,
+          is_active: true,
+        },
+      };
+    }
+
     if (filters?.search) {
       whereClause.OR = [
         { first_name: { contains: filters.search, mode: 'insensitive' } },
@@ -44,17 +54,29 @@ export class StudentService {
     const page = filters?.page && filters.page > 0 ? filters.page : 1;
     const limit = filters?.limit && filters.limit > 0 ? filters.limit : 20;
     const skip = (page - 1) * limit;
+    const includeGroup = filters?.campaign_id !== undefined;
 
     const [students, total] = await Promise.all([
       this.prisma.student.findMany({
         where: whereClause,
-        include: {
-          mosque: {
-            select: {
-              id: true,
-              name: true,
+        select: {
+          first_name: true,
+          last_name: true,
+          father_name: true,
+          student_mobile: true,
+          educational_class: true,
+          birth_date: true,
+          ...(includeGroup && {
+            groups: {
+              where: { campaign_id: filters.campaign_id },
+              take: 1,
+              select: {
+                group: {
+                  select: { id: true, title: true },
+                },
+              },
             },
-          },
+          }),
         },
         skip,
         take: limit,
@@ -63,8 +85,27 @@ export class StudentService {
       this.prisma.student.count({ where: whereClause }),
     ]);
 
+    const data = students.map((student) => {
+      const { groups, ...basic } = student as typeof student & {
+        groups?: { group: { id: number; title: string } }[];
+      };
+
+      if (!includeGroup) {
+        return basic;
+      }
+
+      const assignedGroup = groups?.[0]?.group;
+
+      return {
+        ...basic,
+        group: assignedGroup
+          ? { id: assignedGroup.id, name: assignedGroup.title }
+          : null,
+      };
+    });
+
     return {
-      data: students,
+      data,
       total,
       page,
       limit,

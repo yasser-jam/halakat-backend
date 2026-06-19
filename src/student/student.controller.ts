@@ -18,9 +18,13 @@ import {
   ApiBody,
   ApiHeader,
   ApiQuery,
+  ApiCreatedResponse,
+  ApiNotFoundResponse,
+  ApiConflictResponse,
+  ApiBadRequestResponse,
 } from '@nestjs/swagger';
 import { StudentService } from './student.service';
-import { CreateStudentDto, ListStudentsQueryDto } from './student.dto';
+import { CreateStudentDto, ListStudentsQueryDto, AssignStudentCampaignDto } from './student.dto';
 import { UpdateStudentDto } from '../dto/student.dto';
 
 @ApiTags('students')
@@ -86,34 +90,78 @@ export class StudentsController {
   }
 
   @Post()
-  @ApiOperation({ summary: 'Create a new student' })
-  @ApiResponse({
-    status: 201,
-    description: 'The student has been successfully created.',
+  @ApiOperation({
+    summary: 'Create a new student',
+    description:
+      'Creates a student profile. Optionally enroll the student in a campaign by passing `campaign_id` in the request body or `campaign_id` header.',
+  })
+  @ApiCreatedResponse({
+    description:
+      'Student created. Message indicates whether the student was also enrolled in a campaign.',
   })
   @ApiBody({ type: CreateStudentDto })
   @ApiHeader({
     name: 'campaign_id',
-    description: 'Campaign ID to auto-enroll the student (optional)',
+    description:
+      'Optional campaign ID — used when `campaign_id` is not provided in the body',
     required: false,
+    schema: { type: 'integer', example: 1 },
   })
   async create(
     @Body() createStudentDto: CreateStudentDto,
-    @Headers('campaign_id') campaignId?: string,
+    @Headers('campaign_id') campaignIdHeader?: string,
   ) {
-    return this.studentService.create(
-      createStudentDto,
-      campaignId ? Number(campaignId) : undefined,
-    );
+    const campaignId =
+      createStudentDto.campaign_id ??
+      (campaignIdHeader ? Number(campaignIdHeader) : undefined);
+
+    return this.studentService.create({
+      ...createStudentDto,
+      campaign_id: campaignId,
+    });
+  }
+
+  @Post(':id/assign-campaign')
+  @ApiOperation({
+    summary: 'Assign an existing student to a campaign',
+    description:
+      'Enrolls a student in the given campaign. A student may only be actively enrolled in one campaign at a time. Returns 409 if the student is already enrolled in this campaign or another active campaign.',
+  })
+  @ApiParam({ name: 'id', type: Number, description: 'Student ID', example: 5 })
+  @ApiBody({ type: AssignStudentCampaignDto })
+  @ApiCreatedResponse({
+    description: 'Student assigned to campaign successfully',
+  })
+  @ApiNotFoundResponse({ description: 'Student or campaign not found' })
+  @ApiConflictResponse({
+    description:
+      'Student is already assigned to this campaign or enrolled in another campaign',
+  })
+  async assignToCampaign(
+    @Param('id') id: number,
+    @Body() dto: AssignStudentCampaignDto,
+  ) {
+    return this.studentService.assignToCampaign(Number(id), dto.campaign_id);
   }
 
   // List students for campaign
   @Get('')
-  @ApiOperation({ summary: 'List students for campaign' })
+  @ApiOperation({
+    summary: 'List students enrolled in a campaign',
+    description:
+      'Returns students with an active enrollment in the campaign, including their assigned group when applicable.',
+  })
+  @ApiHeader({
+    name: 'campaign_id',
+    description: 'Campaign ID to list students for',
+    required: true,
+    schema: { type: 'integer', example: 1 },
+  })
   @ApiResponse({
     status: 200,
     description: 'List of students for the campaign',
   })
+  @ApiBadRequestResponse({ description: 'Campaign ID is required in headers' })
   async listStudentsForCampaign(@Headers('campaign_id') campaignId: string) {
     if (!campaignId) {
       throw new BadRequestException('Campaign ID is required in headers');
@@ -123,8 +171,17 @@ export class StudentsController {
 
   // List un assigned
   @Get('unassigned')
-  @ApiOperation({ summary: 'List un-assigned students in campaign' })
-  @ApiHeader({ name: 'campaign_id' })
+  @ApiOperation({
+    summary: 'List students in a campaign with no group assignment',
+    description:
+      'Returns students enrolled in the campaign who are not yet assigned to a group.',
+  })
+  @ApiHeader({
+    name: 'campaign_id',
+    description: 'Campaign ID to filter unassigned students',
+    required: true,
+    schema: { type: 'integer', example: 1 },
+  })
   @ApiResponse({ status: 200, description: 'List of unassigned students' })
   async listUnassigned(@Headers('campaign_id') campaignId: number) {
     return this.studentService.listUnassigned(Number(campaignId));

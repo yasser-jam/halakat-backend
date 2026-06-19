@@ -20,8 +20,10 @@ async function bootstrap() {
 
   // Swagger configuration
   const config = new DocumentBuilder()
-    .setTitle('Student API')
-    .setDescription('The student API description')
+    .setTitle('Halakat API')
+    .setDescription(
+      'Halakat backend API for managing students, teachers, campaigns, groups, attendance, and curriculum.',
+    )
     .setVersion('1.0')
     .addBearerAuth(
       {

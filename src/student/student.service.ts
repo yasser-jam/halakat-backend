@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { CreateStudentDto } from './student.dto';
 import { UpdateStudentDto } from '../dto/student.dto';
@@ -103,27 +107,114 @@ export class StudentService {
     }));
   }
 
-  async create(createStudentDto: CreateStudentDto, campaignId?: number) {
-    const student = await this.prisma.student.create({
-      data: createStudentDto,
-    });
+  async create(createStudentDto: CreateStudentDto) {
+    const { campaign_id, ...studentData } = createStudentDto;
 
-    if (campaignId) {
-      await this.prisma.studentCampaign.create({
-        data: {
-          student_id: student.id,
-          campaign_id: campaignId,
-        },
+    if (campaign_id) {
+      const campaign = await this.prisma.campaign.findUnique({
+        where: { id: Number(campaign_id) },
       });
+
+      if (!campaign) {
+        throw new NotFoundException(
+          `Campaign with ID ${campaign_id} not found`,
+        );
+      }
+
+      const student = await this.prisma.$transaction(async (tx) => {
+        const created = await tx.student.create({ data: studentData });
+        await tx.studentCampaign.create({
+          data: {
+            student_id: created.id,
+            campaign_id: Number(campaign_id),
+          },
+        });
+        return created;
+      });
+
       return {
         message: 'Student created and assigned to campaign',
         data: student,
       };
     }
 
+    const student = await this.prisma.student.create({
+      data: studentData,
+    });
+
     return {
       message: 'Student created',
       data: student,
+    };
+  }
+
+  async assignToCampaign(studentId: number, campaignId: number) {
+    const student = await this.prisma.student.findUnique({
+      where: { id: studentId },
+    });
+
+    if (!student) {
+      throw new NotFoundException(`Student with ID ${studentId} not found`);
+    }
+
+    const campaign = await this.prisma.campaign.findUnique({
+      where: { id: campaignId },
+    });
+
+    if (!campaign) {
+      throw new NotFoundException(`Campaign with ID ${campaignId} not found`);
+    }
+
+    const existingEnrollment = await this.prisma.studentCampaign.findUnique({
+      where: {
+        student_id_campaign_id: {
+          student_id: studentId,
+          campaign_id: campaignId,
+        },
+      },
+    });
+
+    if (existingEnrollment?.is_active) {
+      throw new ConflictException(
+        `Student ${studentId} is already assigned to campaign ${campaignId}`,
+      );
+    }
+
+    const otherCampaignEnrollment =
+      await this.prisma.studentCampaign.findFirst({
+        where: {
+          student_id: studentId,
+          campaign_id: { not: campaignId },
+          is_active: true,
+        },
+      });
+
+    if (otherCampaignEnrollment) {
+      throw new ConflictException(
+        `Student ${studentId} is already enrolled in campaign ${otherCampaignEnrollment.campaign_id}`,
+      );
+    }
+
+    const enrollment = existingEnrollment
+      ? await this.prisma.studentCampaign.update({
+          where: {
+            student_id_campaign_id: {
+              student_id: studentId,
+              campaign_id: campaignId,
+            },
+          },
+          data: { is_active: true },
+        })
+      : await this.prisma.studentCampaign.create({
+          data: {
+            student_id: studentId,
+            campaign_id: campaignId,
+          },
+        });
+
+    return {
+      message: 'Student assigned to campaign',
+      data: enrollment,
     };
   }
 

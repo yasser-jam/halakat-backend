@@ -3,6 +3,15 @@ import { ApiProperty } from '@nestjs/swagger';
 // Import the enums from the dto file
 import { Status, MaritalStatus } from '../dto/student.dto';
 
+export class AssignStudentCampaignDto {
+  @ApiProperty({
+    example: 1,
+    type: Number,
+    description: 'Campaign ID to assign the student to',
+  })
+  campaign_id: number;
+}
+
 export class CreateStudentDto {
   @ApiProperty({ example: 'Al Noor Mosque', required: false })
   current_mosque_name?: string;
@@ -136,6 +145,15 @@ export class CreateStudentDto {
 
   @ApiProperty({ example: 'Student notes', required: false })
   notes?: string;
+
+  @ApiProperty({
+    example: 1,
+    type: Number,
+    required: false,
+    description:
+      'Optional campaign ID — if provided, the student is enrolled in this campaign on creation',
+  })
+  campaign_id?: number;
 }
 
 export class ListStudentsQueryDto {

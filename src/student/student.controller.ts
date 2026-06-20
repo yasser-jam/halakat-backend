@@ -115,7 +115,7 @@ export class StudentsController {
   @ApiOperation({
     summary: 'Create a new student',
     description:
-      'Creates a student profile. Optionally enroll the student in a campaign by passing `campaign_id` in the request body or `campaign_id` header.',
+      'Creates a student profile. Only `first_name` and `last_name` are required. If `student_mobile` is omitted, a random 10-digit placeholder starting with `00` is generated. Optionally enroll the student in a campaign by passing `campaign_id` in the request body or `campaign_id` header.',
   })
   @ApiCreatedResponse({
     description:
@@ -133,12 +133,22 @@ export class StudentsController {
     @Body() createStudentDto: CreateStudentDto,
     @Headers('campaign_id') campaignIdHeader?: string,
   ) {
+    if (!createStudentDto.first_name?.trim()) {
+      throw new BadRequestException('first_name is required');
+    }
+
+    if (!createStudentDto.last_name?.trim()) {
+      throw new BadRequestException('last_name is required');
+    }
+
     const campaignId =
       createStudentDto.campaign_id ??
       (campaignIdHeader ? Number(campaignIdHeader) : undefined);
 
     return this.studentService.create({
       ...createStudentDto,
+      first_name: createStudentDto.first_name.trim(),
+      last_name: createStudentDto.last_name.trim(),
       campaign_id: campaignId,
     });
   }

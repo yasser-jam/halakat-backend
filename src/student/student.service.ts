@@ -3,6 +3,7 @@ import {
   NotFoundException,
   ConflictException,
 } from '@nestjs/common';
+import { randomInt } from 'crypto';
 import { PrismaService } from '../prisma.service';
 import { CreateStudentDto } from './student.dto';
 import { UpdateStudentDto } from '../dto/student.dto';
@@ -10,6 +11,32 @@ import { UpdateStudentDto } from '../dto/student.dto';
 @Injectable()
 export class StudentService {
   constructor(private prisma: PrismaService) {}
+
+  private generatePlaceholderMobile(): string {
+    const suffix = String(randomInt(0, 100_000_000)).padStart(8, '0');
+    return `00${suffix}`;
+  }
+
+  private async resolveStudentMobile(mobile?: string): Promise<string> {
+    if (mobile?.trim()) {
+      return mobile.trim();
+    }
+
+    for (let attempt = 0; attempt < 10; attempt++) {
+      const candidate = this.generatePlaceholderMobile();
+      const existing = await this.prisma.student.findUnique({
+        where: { student_mobile: candidate },
+        select: { id: true },
+      });
+      if (!existing) {
+        return candidate;
+      }
+    }
+
+    throw new ConflictException(
+      'Failed to generate a unique placeholder student mobile',
+    );
+  }
 
   async findAll(filters?: {
     mosqueIds?: number[];
@@ -150,6 +177,12 @@ export class StudentService {
 
   async create(createStudentDto: CreateStudentDto) {
     const { campaign_id, ...studentData } = createStudentDto;
+    const data = {
+      ...studentData,
+      student_mobile: await this.resolveStudentMobile(
+        studentData.student_mobile,
+      ),
+    };
 
     if (campaign_id) {
       const campaign = await this.prisma.campaign.findUnique({
@@ -163,7 +196,7 @@ export class StudentService {
       }
 
       const student = await this.prisma.$transaction(async (tx) => {
-        const created = await tx.student.create({ data: studentData });
+        const created = await tx.student.create({ data });
         await tx.studentCampaign.create({
           data: {
             student_id: created.id,
@@ -180,7 +213,7 @@ export class StudentService {
     }
 
     const student = await this.prisma.student.create({
-      data: studentData,
+      data,
     });
 
     return {

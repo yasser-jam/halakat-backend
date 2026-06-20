@@ -20,16 +20,21 @@ export class CreateStudentDto {
   educational_class?: number;
 
   @ApiProperty({ example: 'Ahmed' })
-  first_name?: string;
+  first_name: string;
 
   @ApiProperty({ example: 'Mohammed' })
-  last_name?: string;
+  last_name: string;
 
   @ApiProperty({ example: '2010-05-15T00:00:00.000Z', required: false })
   birth_date?: Date;
 
-  @ApiProperty({ example: '+1234567890' })
-  student_mobile: string;
+  @ApiProperty({
+    example: '+1234567890',
+    required: false,
+    description:
+      'Optional. If omitted, a random 10-digit placeholder starting with 00 is generated.',
+  })
+  student_mobile?: string;
 
   @ApiProperty({ example: 'Al-Noor School', required: false })
   school?: string;

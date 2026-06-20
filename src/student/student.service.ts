@@ -87,6 +87,7 @@ export class StudentService {
       this.prisma.student.findMany({
         where: whereClause,
         select: {
+          id: true,
           first_name: true,
           last_name: true,
           father_name: true,
@@ -254,14 +255,16 @@ export class StudentService {
       );
     }
 
-    const otherCampaignEnrollment =
-      await this.prisma.studentCampaign.findFirst({
+    const otherCampaignEnrollment = {
+      
         where: {
           student_id: studentId,
           campaign_id: { not: campaignId },
           is_active: true,
         },
-      });
+      },
+    ,
+    );
 
     if (otherCampaignEnrollment) {
       throw new ConflictException(

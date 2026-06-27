@@ -25,6 +25,7 @@ model Organization {
   managers OrganizationManager[]
   Curriculum Curriculum[]
   Category   Category[]
+  Subject    Subject[]
 
   @@index([name])
 }
@@ -218,6 +219,7 @@ model Group {
   teacher_roles           TeacherRole[]
   CurriculumLessonSession CurriculumLessonSession[]
   GroupCurriculum         GroupCurriculum[]
+  SubjectSession          SubjectSession[]
   logs                    Log[]
 
   @@index([mosque_id])
@@ -261,6 +263,7 @@ model Campaign {
   CurriculumTemplate      CurriculumTemplate[]
   CurriculumLessonSession CurriculumLessonSession[]
   GroupCurriculum         GroupCurriculum[]
+  SubjectSession          SubjectSession[]
   logs                    Log[]
 
   @@index([mosque_id])
@@ -551,6 +554,38 @@ model Category {
   @@index([organization_id])
 }
 
+model Subject {
+  id              Int      @id @default(autoincrement())
+  organization_id Int? // NULL = global subject
+  title           String
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  organization Organization?   @relation(fields: [organization_id], references: [id], onDelete: Cascade)
+  sessions     SubjectSession[]
+
+  @@index([organization_id])
+}
+
+model SubjectSession {
+  id          Int      @id @default(autoincrement())
+  subject_id  Int
+  group_id    Int
+  campaign_id Int
+  title       String
+  notes       String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  subject  Subject  @relation(fields: [subject_id], references: [id], onDelete: Cascade)
+  group    Group    @relation(fields: [group_id], references: [id], onDelete: Cascade)
+  campaign Campaign @relation(fields: [campaign_id], references: [id], onDelete: Cascade)
+
+  @@index([subject_id])
+  @@index([group_id])
+  @@index([campaign_id])
+}
+
 model CurriculumCategory {
   curriculum_id Int
   category_id   Int
@@ -712,6 +747,7 @@ enum LogEvent {
   TEACHER_LOGIN
   STUDENT_LOGIN
   SAVING_SESSION_CREATED
+  SESSION_CREATED
   CURRICULUM_STARTED
   CURRICULUM_END
   ATTENDANCE_MARKED

@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "LogEvent" ADD VALUE 'SESSION_CREATED';

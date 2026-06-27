@@ -55,6 +55,10 @@ import { CurriculumTemplateController } from './curriculum-template/curriculum-t
 import { CurriculumTemplateService } from './curriculum-template/curriculum-template.service';
 import { CurriculumLessonSessionController } from './curriculum-lesson-session/curriculum-lesson-session.controller';
 import { CurriculumLessonSessionService } from './curriculum-lesson-session/curriculum-lesson-session.service';
+import { SubjectController } from './subject/subject.controller';
+import { SubjectService } from './subject/subject.service';
+import { SubjectSessionController } from './subject-session/subject-session.controller';
+import { SubjectSessionService } from './subject-session/subject-session.service';
 import { LogModule } from './log/log.module';
 import { ReportModule } from './report/report.module';
 // import { AuthController } from './auth/auth.controller';
@@ -80,6 +84,8 @@ import { ReportModule } from './report/report.module';
     CategoryController,
     CurriculumTemplateController,
     CurriculumLessonSessionController,
+    SubjectController,
+    SubjectSessionController,
   ],
   providers: [
     AppService,
@@ -100,6 +106,8 @@ import { ReportModule } from './report/report.module';
     CategoryService,
     CurriculumTemplateService,
     CurriculumLessonSessionService,
+    SubjectService,
+    SubjectSessionService,
   ],
   imports: [AuthModule, SessionSurahModule, LogModule, ReportModule],
 })

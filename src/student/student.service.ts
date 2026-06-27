@@ -255,15 +255,14 @@ export class StudentService {
       );
     }
 
-    const otherCampaignEnrollment = {
-      
+    const otherCampaignEnrollment = await this.prisma.studentCampaign.findFirst(
+      {
         where: {
           student_id: studentId,
           campaign_id: { not: campaignId },
           is_active: true,
         },
       },
-    ,
     );
 
     if (otherCampaignEnrollment) {

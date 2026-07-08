@@ -1,5 +1,5 @@
 /* eslint-disable prettier/prettier */
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma.service';
 import { LogService } from '../log/log.service';
 import { BulkUpdateAttendanceDto, UpdateAttendanceDto } from './attendance.dto';
@@ -10,6 +10,14 @@ export class AttendanceService {
     private prisma: PrismaService,
     private logService: LogService,
   ) {}
+
+  private getDayRange(date: string): { startOfDay: Date; endOfDay: Date } {
+    const dateOnly = date.includes('T') ? date.split('T')[0] : date;
+    return {
+      startOfDay: new Date(`${dateOnly}T00:00:00.000Z`),
+      endOfDay: new Date(`${dateOnly}T23:59:59.999Z`),
+    };
+  }
 
   async findAll(campaignId: number, groupId: number) {
     return await this.prisma.attendance.findMany({
@@ -483,15 +491,16 @@ export class AttendanceService {
     status: string;
     delay_time?: number;
   }) {
-    // Check if attendance record already exists
+    const { startOfDay, endOfDay } = this.getDayRange(data.taken_date);
+
     const existingAttendance = await this.prisma.attendance.findFirst({
       where: {
         student_id: Number(data.student_id),
         group_id: Number(data.group_id),
         campaign_id: Number(data.campaign_id),
         taken_date: {
-          gte: new Date(data.taken_date + 'T00:00:00.000Z'),
-          lt: new Date(data.taken_date + 'T23:59:59.999Z'),
+          gte: startOfDay,
+          lte: endOfDay,
         },
       },
     });
@@ -583,14 +592,18 @@ export class AttendanceService {
     },
     teacherId: number,
   ) {
-    const startOfDay = new Date(dto.taken_date);
-    startOfDay.setUTCHours(0, 0, 0, 0);
-    const endOfDay = new Date(dto.taken_date);
-    endOfDay.setUTCHours(23, 59, 59, 999);
+    if (!dto.student_id || !dto.group_id || !dto.campaign_id) {
+      throw new BadRequestException(
+        'student_id, group_id, and campaign_id are required',
+      );
+    }
+
+    const { startOfDay, endOfDay } = this.getDayRange(dto.taken_date);
 
     const existing = await this.prisma.attendance.findFirst({
       where: {
         student_id: dto.student_id,
+        group_id: dto.group_id,
         campaign_id: dto.campaign_id,
         taken_date: { gte: startOfDay, lte: endOfDay },
       },
